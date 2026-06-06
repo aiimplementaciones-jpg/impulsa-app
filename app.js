@@ -558,12 +558,12 @@ const App = {
       <!-- Hero Section de Ventas -->
       <section class="landing-hero">
         <div style="background-color:rgba(0,123,255,0.1); padding:6px 14px; border-radius:100px; font-size:0.75rem; font-weight:700; color:var(--color-brand); margin-bottom:16px; text-transform:uppercase; letter-spacing:0.05em;">
-          🚀 Plataforma SaaS Premium para Comercios
+          🚀 CONVIERTE CLIENTES EN RESEÑAS DE 5 ESTRELLAS
         </div>
         <h1 data-i18n="land_hero_title">Aumenta tus opiniones de 5 estrellas en Google Maps de forma inteligente</h1>
         <p data-i18n="land_hero_desc">IMPULSA es la plataforma SaaS definitiva para comercios. Obtén más reseñas positivas públicamente y mitiga las críticas negativas en canales internos antes de que afecten tu reputación.</p>
         <div class="landing-hero-ctas">
-          <a href="#register" class="btn btn-primary" data-i18n="land_cta_register">Comenzar Gratis Ahora</a>
+          <a href="#register" class="btn btn-primary" data-i18n="land_cta_register">🚀 Comenzar Gratis Ahora</a>
           <a href="#login" class="btn btn-secondary" data-i18n="land_cta_login">Ingresar a mi Consola</a>
         </div>
       </section>
@@ -571,7 +571,7 @@ const App = {
       <!-- Simulador Interactivo del Filtro Estratégico -->
       <div class="card" style="border-color:var(--color-brand); background:linear-gradient(135deg, rgba(0, 123, 255, 0.03), transparent);">
         <h3 class="card-title" style="justify-content:center; font-size:1.2rem;">
-          <i data-lucide="sparkles" style="color:var(--color-accent)"></i> Pruébalo tú mismo: Filtro de Estrellas en Vivo
+          🚀 <i data-lucide="sparkles" style="color:var(--color-accent)"></i> Pruébalo tú mismo: Filtro de Estrellas en Vivo
         </h3>
         <p style="font-size:0.85rem; text-align:center; color:var(--text-secondary); margin-bottom:20px;">
           Califica nuestra plataforma como si fueras un cliente final y mira la redirección inteligente.
@@ -627,7 +627,7 @@ const App = {
         <h2 style="font-size:1.5rem;" data-i18n="land_pricing_title">Planes diseñados para cada etapa de tu negocio</h2>
         <p style="color:var(--text-secondary); font-size:0.9rem; margin-top:6px;" data-i18n="land_pricing_desc">Comienza sin costo o expande tus sucursales con nuestros planes flexibles.</p>
         <a href="#register" class="btn btn-accent" style="margin-top:20px; max-width:320px; height:50px;">
-          <i data-lucide="sparkles"></i> <span data-i18n="land_cta_register">Registrarse Gratis</span>
+          🚀 <span data-i18n="land_cta_register">Registrarse Gratis</span>
         </a>
       </section>
     `;
@@ -673,7 +673,7 @@ const App = {
     container.innerHTML = `
       <div class="card auth-container">
         <h2 style="font-size: 1.3rem; margin-bottom: 20px; text-align:center;">
-          <span data-i18n="${isLogin ? 'auth_title_login' : 'auth_title_register'}">Identificación</span>
+          🚀 <span data-i18n="${isLogin ? 'auth_title_login' : 'auth_title_register'}">Identificación</span>
         </h2>
         
         <form id="auth-form" style="display: flex; flex-direction: column; gap: 14px;">
@@ -882,7 +882,7 @@ const App = {
     container.innerHTML = `
       <div class="card" style="background: linear-gradient(135deg, rgba(0, 123, 255, 0.1), rgba(255, 165, 0, 0.05)); border-color: rgba(0, 123, 255, 0.25);">
         <h2 style="font-size: 1.5rem; margin-bottom: 8px;">
-          <span data-i18n="dash_welcome">¡Hola de nuevo!</span>, ${user.businessName}
+          🚀 <span data-i18n="dash_welcome">¡Hola de nuevo!</span>, ${user.businessName}
         </h2>
         <p style="color: var(--text-secondary); font-size: 0.9rem;">
           <span data-i18n="dash_overview">Resumen de Reputación de</span> <strong>${user.businessName}</strong>.
@@ -1029,7 +1029,7 @@ const App = {
 
     container.innerHTML = `
       <div style="margin-bottom: 24px;">
-        <h2 style="font-size: 1.4rem;" data-i18n="loc_title">Gestión Inteligente de Sucursales</h2>
+        <h2 style="font-size: 1.4rem;" data-i18n="loc_title">🚀 Gestión Inteligente de Sucursales</h2>
         <p style="color: var(--text-secondary); font-size: 0.88rem;" data-i18n="loc_subtitle">Registra y monitoriza los puntos físicos de tu negocio.</p>
       </div>
 
