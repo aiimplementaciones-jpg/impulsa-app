@@ -3,7 +3,7 @@
 // ==========================================================================
 // 🔌 CONFIGURACIÓN DE CONEXIÓN A SUPABASE (Reemplazar con tus credenciales reales)
 // ==========================================================================
-const SUPABASE_URL = "https://qmhgmroeootlwrjfxjne.supabase.co/rest/v1/"; // Escribe aquí la URL de tu proyecto de Supabase (ej: "https://xyz.supabase.co")
+const SUPABASE_URL = "https://qmhgmroeootlwrjfxjne.supabase.co"; // Escribe aquí la URL de tu proyecto de Supabase (ej: "https://xyz.supabase.co")
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtaGdtcm9lb290bHdyamZ4am5lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2NzM4MTgsImV4cCI6MjA5NjI0OTgxOH0.nz7zQNarfFao9QfBSYWX94mxg0mEvqjfPqXmh2d_4bI"; // Escribe aquí la clave anon pública de tu proyecto
 
 let supabaseClient = null;
@@ -218,18 +218,18 @@ const App = {
         const { data: profile, error: profileErr } = await supabaseClient
           .from('profiles')
           .select('*')
-          .eq('id', session.user.id)
+          .eq('user_id', session.user.id)
           .single();
 
         if (profile) {
           this.State.currentUser = {
-            id: profile.id,
+            id: profile.user_id,
             businessName: profile.business_name,
             email: session.user.email,
-            plan: profile.plan,
-            logo: profile.logo,
-            accentColor: profile.accent_color,
-            title: profile.portal_title || `Opiniones de ${profile.business_name}`
+            plan: profile.plan || 'free',
+            logo: '🏪', // Se obtendrá de la sucursal en este esquema
+            accentColor: '#6366f1',
+            title: profile.business_name ? `Opiniones de ${profile.business_name}` : 'Portal de Opiniones'
           };
         } else if (profileErr) {
           this.addLog('SYSTEM', `Error obteniendo perfil: ${profileErr.message}`);
@@ -238,53 +238,56 @@ const App = {
         this.State.currentUser = null;
       }
 
-      // 2. Obtener los locales globales o específicos del tenant si está autenticado
-      let queryLoc = supabaseClient.from('locations').select('*');
+      // 2. Obtener los locales con sus configuraciones
+      let queryLoc = supabaseClient.from('locations').select('*, location_configs(*)');
       if (this.State.currentUser && !this.State.isSuperAdmin) {
-        queryLoc = queryLoc.eq('tenant_id', this.State.currentUser.id);
+        queryLoc = queryLoc.eq('user_id', this.State.currentUser.id);
       }
       const { data: dbLocs } = await queryLoc;
       this.State.locations = (dbLocs || []).map(l => ({
-        id: l.id,
-        userId: l.tenant_id,
+        id: l.locations_id,
+        userId: l.user_id,
         name: l.name,
         address: l.address,
-        mapsUrl: l.maps_url,
+        mapsUrl: l.location_configs?.[0]?.google_review_url || '',
+        logo: l.location_configs?.[0]?.logo_url || '🏪',
         status: l.status
       }));
 
-      // 3. Obtener los leads globales o específicos
-      let queryLeads = supabaseClient.from('leads').select('*');
+      // 3. Obtener los feedbacks (leads)
+      let queryLeads = supabaseClient.from('feedbacks').select('*, locations(*)');
       if (this.State.currentUser && !this.State.isSuperAdmin) {
-        queryLeads = queryLeads.eq('tenant_id', this.State.currentUser.id);
+        queryLeads = queryLeads.filter('locations.user_id', 'eq', this.State.currentUser.id);
       }
       const { data: dbLeads } = await queryLeads;
-      this.State.leads = (dbLeads || []).map(lead => ({
-        id: lead.id,
-        userId: lead.tenant_id,
-        date: lead.created_at,
-        locationId: lead.location_id,
-        locationName: this.State.locations.find(l => l.id === lead.location_id)?.name || 'Sucursal',
-        clientName: lead.client_name,
-        clientPhone: lead.client_phone,
-        rating: lead.rating,
-        comment: lead.comment
-      }));
+      this.State.leads = (dbLeads || [])
+        .filter(f => f.locations) // Asegurar que el join funcionó si hay filtro
+        .map(f => ({
+          id: f.feedbacks_id,
+          userId: f.locations.user_id,
+          date: f.created_at,
+          locationId: f.locations_id,
+          locationName: f.locations.name,
+          clientName: f.customer_name,
+          clientPhone: f.whatsapp_number,
+          rating: f.rating,
+          comment: f.reason || ''
+        }));
 
       // 4. Obtener todos los tenants si es Súper Administrador
       if (this.State.isSuperAdmin) {
         const { data: dbProfiles } = await supabaseClient.from('profiles').select('*');
         this.State.users = (dbProfiles || []).map(p => ({
-          id: p.id,
+          id: p.user_id,
           businessName: p.business_name,
           plan: p.plan,
-          logo: p.logo,
-          accentColor: p.accent_color,
-          title: p.portal_title
+          logo: '🏪',
+          accentColor: '#6366f1',
+          title: `Opiniones de ${p.business_name}`
         }));
       }
 
-      this.addLog('SYSTEM', `Sincronización con Supabase exitosa: ${this.State.locations.length} sucursales y ${this.State.leads.length} leads cargados.`);
+      this.addLog('SYSTEM', `Sincronización con Supabase exitosa: ${this.State.locations.length} sucursales y ${this.State.leads.length} casos cargados.`);
     } catch (err) {
       this.addLog('SYSTEM', `Error de sincronización con Supabase: ${err.message}`);
     }
@@ -768,12 +771,10 @@ const App = {
         const userId = data.user.id;
         // 1. Crear perfil de comercio en la tabla profiles
         const { error: profileError } = await supabaseClient.from('profiles').insert([{
-          id: userId,
+          user_id: userId,
           business_name: businessName,
           plan: 'free',
-          logo: '🏪',
-          accent_color: '#4F46E5',
-          portal_title: `Opiniones de ${businessName}`
+          status: 'active'
         }]);
 
         if (profileError) {
@@ -781,16 +782,23 @@ const App = {
         }
 
         // 2. Crear local inicial Starter de cortesía en la tabla locations
-        const { error: locError } = await supabaseClient.from('locations').insert([{
-          tenant_id: userId,
+        const { data: newLoc, error: locError } = await supabaseClient.from('locations').insert([{
+          user_id: userId,
           name: `Sede Principal ${businessName}`,
           address: 'Dirección Comercial Principal',
-          maps_url: 'https://maps.google.com',
           status: 'active'
-        }]);
+        }]).select().single();
 
         if (locError) {
           this.addLog('SYSTEM', `Error al crear local inicial: ${locError.message}`);
+        } else if (newLoc) {
+          // 3. Crear configuración inicial de la sucursal
+          await supabaseClient.from('location_configs').insert([{
+            user_id: userId,
+            locations_id: newLoc.locations_id,
+            business_name: businessName,
+            google_review_url: 'https://maps.google.com'
+          }]);
         }
 
         this.addLog('SYSTEM', `Nuevo comercio registrado exitosamente en Supabase.`);
@@ -985,10 +993,9 @@ const App = {
       const { error } = await supabaseClient
         .from('profiles')
         .update({
-          logo: logo,
-          portal_title: title
+          business_name: user.businessName // Actualizamos el nombre comercial si es necesario
         })
-        .eq('id', user.id);
+        .eq('user_id', user.id);
 
       if (error) {
         alert("Error al guardar en Supabase: " + error.message);
@@ -1150,18 +1157,28 @@ const App = {
 
     if (supabaseClient) {
       this.addLog('POST', `Registrando sucursal en Supabase: ${name}`);
-      const { error } = await supabaseClient.from('locations').insert([{
-        tenant_id: user.id,
+      const { data: newLoc, error } = await supabaseClient.from('locations').insert([{
+        user_id: user.id,
         name: name,
         address: address,
-        maps_url: mapsUrl,
         status: 'inactive'
-      }]);
+      }]).select().single();
 
       if (error) {
         alert("Error al guardar local en Supabase: " + error.message);
         return;
       }
+
+      if (newLoc) {
+        // Crear configuración asociada
+        await supabaseClient.from('location_configs').insert([{
+          user_id: user.id,
+          locations_id: newLoc.locations_id,
+          business_name: user.businessName,
+          google_review_url: mapsUrl
+        }]);
+      }
+
       await this.syncFromSupabase();
     } else {
       const newLoc = {
@@ -1206,7 +1223,7 @@ const App = {
       const { error } = await supabaseClient
         .from('locations')
         .update({ status: targetStatus })
-        .eq('id', id);
+        .eq('locations_id', id);
 
       if (error) {
         alert("Error al actualizar sucursal en Supabase: " + error.message);
@@ -1302,7 +1319,7 @@ const App = {
                 text-align: center;
               }
               .card-frame {
-                border: 8px solid #4F46E5;
+                border: 8px solid #6366f1;
                 padding: 40px;
                 border-radius: 24px;
                 max-width: 450px;
@@ -1314,7 +1331,7 @@ const App = {
               .logo {
                 font-size: 2.2rem;
                 font-weight: 800;
-                background: linear-gradient(135deg, #4F46E5, #06B6D4);
+                background: linear-gradient(135deg, #6366f1, #0ea5e9);
                 -webkit-background-clip: text;
                 -webkit-text-fill-color: transparent;
                 margin-bottom: 8px;
@@ -1338,7 +1355,7 @@ const App = {
           </head>
           <body>
             <div class="card-frame">
-              <div class="logo">IMPULSA</div>
+              <div class="logo">🚀 IMPULSA</div>
               <div style="font-weight: 700; font-size: 1.3rem;">${name}</div>
               <img class="qr-img" src="${qrDataUrl}" alt="QR code" />
               <div class="instructions">${this.State.lang === 'es' ? '¡Tu opinión nos ayuda a crecer!' : 'Your feedback helps us grow!'}</div>
@@ -1511,13 +1528,12 @@ const App = {
 
     if (supabaseClient) {
       this.addLog('POST', `[Proxy Secure] Enviando lead de soporte a Supabase para: ${nameInput.value}`);
-      const { error } = await supabaseClient.from('leads').insert([{
-        tenant_id: tenantId,
-        location_id: locationId,
-        client_name: nameInput.value,
-        client_phone: cleanPhone,
+      const { error } = await supabaseClient.from('feedbacks').insert([{
+        locations_id: locationId,
         rating: rating,
-        comment: commentInput.value
+        customer_name: nameInput.value,
+        whatsapp_number: cleanPhone,
+        reason: commentInput.value
       }]);
 
       if (error) {
@@ -1840,7 +1856,7 @@ const App = {
         const { error } = await supabaseClient
           .from('profiles')
           .update({ plan: plan })
-          .eq('id', user.id);
+          .eq('user_id', user.id);
 
         if (error) {
           alert("Error al actualizar plan en Supabase: " + error.message);
