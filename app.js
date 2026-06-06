@@ -58,7 +58,7 @@ const Storage = {
 const App = {
   State: {
     lang: 'es',
-    theme: 'dark',
+    theme: 'light',
     activePage: 'home',
     currentUser: null,  // Cuenta de Comercio logueada
     isSuperAdmin: false, // Logueado como Super Admin de la plataforma
@@ -100,7 +100,7 @@ const App = {
             password: '123',
             plan: 'free',
             logo: '☕',
-            accentColor: '#FFA500',
+            accentColor: '#4F46E5',
             title: 'Opiniones Pete\'s Coffee'
           },
           {
@@ -110,7 +110,7 @@ const App = {
             password: '123',
             plan: 'pro',
             logo: '🍔',
-            accentColor: '#EF4444',
+            accentColor: '#F43F5E',
             title: 'Burger Town Feedback'
           }
         ];
@@ -772,7 +772,7 @@ const App = {
           business_name: businessName,
           plan: 'free',
           logo: '🏪',
-          accent_color: '#007bff',
+          accent_color: '#4F46E5',
           portal_title: `Opiniones de ${businessName}`
         }]);
 
@@ -807,7 +807,7 @@ const App = {
         password,
         plan: 'free',
         logo: '🏪',
-        accentColor: '#007bff',
+        accentColor: '#4F46E5',
         title: `Opiniones de ${businessName}`
       };
 
@@ -1302,7 +1302,7 @@ const App = {
                 text-align: center;
               }
               .card-frame {
-                border: 8px solid #007bff;
+                border: 8px solid #4F46E5;
                 padding: 40px;
                 border-radius: 24px;
                 max-width: 450px;
@@ -1314,7 +1314,7 @@ const App = {
               .logo {
                 font-size: 2.2rem;
                 font-weight: 800;
-                background: linear-gradient(135deg, #007bff, #FFA500);
+                background: linear-gradient(135deg, #4F46E5, #06B6D4);
                 -webkit-background-clip: text;
                 -webkit-text-fill-color: transparent;
                 margin-bottom: 8px;
@@ -1368,7 +1368,7 @@ const App = {
     }
 
     // Buscar configuración de diseño del comercio (Tenant) dueño de este local
-    const tenant = this.State.users.find(u => u.id === loc.userId) || { logo: '🏪', accentColor: '#007bff', title: 'Portal de Opinión' };
+    const tenant = this.State.users.find(u => u.id === loc.userId) || { logo: '🏪', accentColor: '#4F46E5', title: 'Portal de Opinión' };
 
     this.State.visits += 1; 
     this.addLog('GET', `Cliente final accedió al portal de: "${loc.name}" (Visitas: ${this.State.visits})`);
@@ -1567,7 +1567,7 @@ const App = {
     const container = document.getElementById('confetti-container');
     if (!container) return;
 
-    const colors = ['#007bff', '#FFA500', '#FFD700', '#10B981', '#ffffff'];
+    const colors = ['#4F46E5', '#06B6D4', '#FFD700', '#10B981', '#ffffff'];
 
     for (let i = 0; i < 40; i++) {
       const piece = document.createElement('div');

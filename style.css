@@ -2,49 +2,49 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
 
 :root {
-  /* Variables de Color (Tema Claro) */
-  --bg-primary: hsl(210, 40%, 96%);
+  /* Variables de Color (Tema Claro Refinado - Sin azules oscuros) */
+  --bg-primary: hsl(210, 50%, 98%);
   --bg-secondary: hsl(0, 0%, 100%);
-  --bg-card: rgba(255, 255, 255, 0.75);
-  --bg-input: hsl(0, 0%, 100%);
-  --border-color: rgba(0, 0, 0, 0.08);
-  --text-primary: hsl(222, 47%, 12%);
-  --text-secondary: hsl(215, 16%, 45%);
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.06);
-  --glass-blur: blur(16px);
-  --glass-bg: rgba(255, 255, 255, 0.7);
+  --bg-card: rgba(255, 255, 255, 0.8);
+  --bg-input: hsl(210, 30%, 99%);
+  --border-color: rgba(0, 0, 0, 0.05);
+  --text-primary: hsl(220, 20%, 20%);
+  --text-secondary: hsl(215, 10%, 45%);
+  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.03);
+  --shadow-md: 0 12px 36px rgba(0, 0, 0, 0.06);
+  --glass-blur: blur(20px);
+  --glass-bg: rgba(255, 255, 255, 0.75);
 
-  /* Colores de Identidad (Compartidos) */
-  --color-brand: #007bff;
-  --color-brand-hover: #0056b3;
-  --color-accent: #FFA500;
-  --color-accent-hover: #cc8400;
+  /* Colores de Identidad (Claros y Vibrantes) */
+  --color-brand: #4F46E5; /* Indigo brillante en lugar de azul oscuro */
+  --color-brand-hover: #6366F1;
+  --color-accent: #06B6D4; /* Cyan vibrante */
+  --color-accent-hover: #22D3EE;
   --color-success: #10B981;
-  --color-danger: #EF4444;
+  --color-danger: #F43F5E;
   --color-warning: #F59E0B;
   
   /* Fuentes y Bordes */
   --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --radius-sm: 8px;
-  --radius-md: 16px;
-  --radius-lg: 24px;
+  --radius-sm: 10px;
+  --radius-md: 18px;
+  --radius-lg: 30px;
   --transition-fast: 0.2s ease;
-  --transition-smooth: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-smooth: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Modificaciones para Tema Oscuro */
+/* Modificaciones para Tema Oscuro (Suave, no azul oscuro profundo) */
 [data-theme="dark"] {
-  --bg-primary: hsl(222, 47%, 10%);
-  --bg-secondary: hsl(223, 47%, 14%);
-  --bg-card: rgba(30, 41, 59, 0.7);
-  --bg-input: hsl(223, 47%, 18%);
-  --border-color: rgba(255, 255, 255, 0.08);
+  --bg-primary: hsl(220, 15%, 10%);
+  --bg-secondary: hsl(220, 15%, 14%);
+  --bg-card: rgba(30, 35, 45, 0.7);
+  --bg-input: hsl(220, 15%, 18%);
+  --border-color: rgba(255, 255, 255, 0.06);
   --text-primary: hsl(210, 40%, 98%);
-  --text-secondary: hsl(215, 20%, 65%);
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
-  --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.3);
-  --glass-bg: rgba(15, 23, 42, 0.65);
+  --text-secondary: hsl(215, 15%, 65%);
+  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 12px 36px rgba(0, 0, 0, 0.4);
+  --glass-bg: rgba(20, 25, 35, 0.7);
 }
 
 /* Reset de Estilos */
@@ -316,25 +316,25 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--color-brand), #0056b3);
+  background: linear-gradient(135deg, var(--color-brand), var(--color-brand-hover));
   color: white;
-  box-shadow: 0 4px 15px rgba(0, 123, 255, 0.25);
+  box-shadow: 0 4px 15px rgba(79, 70, 229, 0.2);
 }
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 123, 255, 0.35);
+  box-shadow: 0 6px 20px rgba(79, 70, 229, 0.3);
 }
 
 .btn-accent {
   background: linear-gradient(135deg, var(--color-accent), var(--color-accent-hover));
   color: white;
-  box-shadow: 0 4px 15px rgba(255, 165, 0, 0.25);
+  box-shadow: 0 4px 15px rgba(6, 182, 212, 0.2);
 }
 
 .btn-accent:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(255, 165, 0, 0.35);
+  box-shadow: 0 6px 20px rgba(6, 182, 212, 0.3);
 }
 
 .btn-secondary {
@@ -344,13 +344,13 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .btn-secondary:hover {
-  background-color: var(--border-color);
+  background-color: var(--bg-primary);
   transform: translateY(-1px);
 }
 
 .btn-danger {
-  background-color: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.2);
+  background-color: rgba(244, 63, 94, 0.1);
+  border: 1px solid rgba(244, 63, 94, 0.2);
   color: var(--color-danger);
 }
 
@@ -387,7 +387,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .form-control:focus {
   border-color: var(--color-brand);
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
 }
 
 /* Grid de Tarjetas de Sucursales */
@@ -462,7 +462,7 @@ h1, h2, h3, h4, h5, h6 {
   top: 3px;
   left: 3px;
   transition: transform var(--transition-fast);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .switch-control input:checked + .switch-slider {
@@ -665,7 +665,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .pricing-card.featured {
   border: 2px solid var(--color-brand);
-  box-shadow: 0 4px 25px rgba(0, 123, 255, 0.12);
+  box-shadow: 0 4px 25px rgba(79, 70, 229, 0.12);
 }
 
 .pricing-featured-badge {
@@ -832,20 +832,20 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Terminal Node.js Simulator */
 .terminal-window {
-  background-color: #0b0f19;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: #1e293b;
+  border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   overflow: hidden;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--shadow-md);
 }
 
 .terminal-header {
-  background-color: #161b26;
+  background-color: #334155;
   padding: 10px 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .terminal-dots {
