@@ -79,7 +79,7 @@ const App = {
   // Inicializar Base de Datos y Preferencias
   async init() {
     this.State.lang = Storage.getItem('impulsa_lang') || 'es';
-    this.State.theme = Storage.getItem('impulsa_theme') || 'dark';
+    this.State.theme = Storage.getItem('impulsa_theme') || 'light';
 
     if (supabaseClient) {
       this.addLog('SYSTEM', '🔌 Conectando a la base de datos de Supabase en la nube...');

@@ -2,23 +2,23 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
 
 :root {
-  /* Variables de Color (Tema Claro Refinado - Más brillante y vibrante) */
-  --bg-primary: #f8fafc; /* Fondo slate muy claro */
-  --bg-secondary: #ffffff;
-  --bg-card: rgba(255, 255, 255, 0.9);
-  --bg-input: #f1f5f9;
-  --border-color: rgba(0, 0, 0, 0.04);
-  --text-primary: #0f172a; /* Slate 900 para mejor contraste */
-  --text-secondary: #64748b; /* Slate 500 */
-  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.02);
-  --shadow-md: 0 12px 36px rgba(0, 0, 0, 0.05);
-  --glass-blur: blur(20px);
-  --glass-bg: rgba(255, 255, 255, 0.8);
+  /* Variables de Color (Tema Claro Refinado - Totalmente Luminoso) */
+  --bg-primary: #ffffff; /* Blanco puro para máxima claridad */
+  --bg-secondary: #fdfdfd;
+  --bg-card: #ffffff;
+  --bg-input: #f8fafc;
+  --border-color: #f1f5f9;
+  --text-primary: #1e293b; /* Slate 800 */
+  --text-secondary: #94a3b8; /* Slate 400 */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 10px 25px rgba(0, 0, 0, 0.05);
+  --glass-blur: blur(12px);
+  --glass-bg: rgba(255, 255, 255, 0.9);
 
-  /* Colores de Identidad (Vivos y Saturados) */
-  --color-brand: #6366f1; /* Indigo vibrante */
-  --color-brand-hover: #4f46e5;
-  --color-accent: #0ea5e9; /* Sky vibrante */
+  /* Colores de Identidad (Vivos y Saturados sobre fondo blanco) */
+  --color-brand: #4f46e5; 
+  --color-brand-hover: #4338ca;
+  --color-accent: #0ea5e9; 
   --color-accent-hover: #0284c7;
   --color-success: #10b981;
   --color-danger: #f43f5e;
