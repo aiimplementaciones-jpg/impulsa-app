@@ -98,6 +98,27 @@ h1, h2, h3, h4, h5, h6 {
   gap: 8px;
 }
 
+.brand-icon {
+  width: 32px;
+  height: 32px;
+  color: var(--color-brand);
+  filter: drop-shadow(0 4px 12px rgba(79, 70, 229, 0.3));
+}
+
+.mobile-only-icon {
+  display: flex;
+}
+
+.mobile-only-name {
+  display: inline;
+}
+
+@media (min-width: 768px) {
+  .mobile-only-icon, .mobile-only-name {
+    display: none;
+  }
+}
+
 .brand-logo {
   width: 32px;
   height: 32px;
