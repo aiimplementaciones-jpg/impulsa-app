@@ -556,10 +556,37 @@ const App = {
   renderHome(container) {
     container.innerHTML = `
       <!-- Hero Section de Ventas -->
-      <section class="landing-hero">
+      <section class="landing-hero" style="padding-top: 20px;">
         <div style="background-color:rgba(0,123,255,0.1); padding:6px 14px; border-radius:100px; font-size:0.75rem; font-weight:700; color:var(--color-brand); margin-bottom:16px; text-transform:uppercase; letter-spacing:0.05em;">
           🚀 CONVIERTE CLIENTES EN RESEÑAS DE 5 ESTRELLAS
         </div>
+        
+        <!-- Simulador de Celular Realista -->
+        <div class="phone-simulator-container" style="margin-bottom: 40px; perspective: 1000px;">
+          <div class="phone-frame" style="width: 280px; height: 560px; background: #1a1a1a; border-radius: 40px; border: 8px solid #333; margin: 0 auto; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); position: relative; overflow: hidden;">
+            <div class="phone-notch" style="width: 120px; height: 25px; background: #333; position: absolute; top: 0; left: 50%; transform: translateX(-50%); border-bottom-left-radius: 15px; border-bottom-right-radius: 15px; z-index: 10;"></div>
+            
+            <div class="phone-screen" style="width: 100%; height: 100%; background: var(--bg-primary); padding: 40px 20px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 20px;">
+              <div style="font-size: 3rem;">🍔</div>
+              <h3 style="font-size: 1.2rem; margin: 0; color: var(--text-primary);">Burger Master Premium</h3>
+              <p style="font-size: 0.75rem; color: var(--text-secondary); margin: 0;">¿Cómo fue tu experiencia hoy?</p>
+              
+              <div style="display: flex; gap: 6px; margin: 10px 0;">
+                ${Array.from({ length: 5 }).map(() => `<i data-lucide="star" style="width: 24px; height: 24px; color: #FFD700; fill: #FFD700;"></i>`).join('')}
+              </div>
+              
+              <div style="background: white; padding: 12px; border-radius: 12px; border: 1px solid #eee; margin-top: 10px;">
+                <i data-lucide="qr-code" style="width: 120px; height: 120px; color: #333;"></i>
+                <p style="font-size: 0.65rem; color: #666; margin-top: 8px; font-weight: 700;">ESCANEA PARA CALIFICAR</p>
+              </div>
+
+              <div style="margin-top: auto; width: 100%; background: var(--color-brand); color: white; padding: 10px; border-radius: 8px; font-size: 0.8rem; font-weight: 700;">
+                ENVIAR OPINIÓN
+              </div>
+            </div>
+          </div>
+        </div>
+
         <h1 data-i18n="land_hero_title">Aumenta tus opiniones de 5 estrellas en Google Maps de forma inteligente</h1>
         <p data-i18n="land_hero_desc">IMPULSA es la plataforma SaaS definitiva para comercios. Obtén más reseñas positivas públicamente y mitiga las críticas negativas en canales internos antes de que afecten tu reputación.</p>
         <div class="landing-hero-ctas">
@@ -597,8 +624,8 @@ const App = {
           
           <div class="feature-item-card">
             <div class="feature-icon-wrapper"><i data-lucide="star"></i></div>
-            <h3 data-i18n="land_feat1_title">Filtro Inteligente de Reseñas</h3>
-            <p data-i18n="land_feat1_desc">Redirige automáticamente calificaciones de 4-5 estrellas a Google Maps. Las de 1-3 estrellas van a tu buzón interno para evitar crisis.</p>
+            <h3 data-i18n="land_feat1_title">Filtro de Excelencia (Solo 5⭐)</h3>
+            <p data-i18n="land_feat1_desc">Redirige exclusivamente calificaciones de 5 estrellas a Google Maps. Las de 1-4 estrellas van a tu buzón interno para resolverlas en privado.</p>
           </div>
 
           <div class="feature-item-card">
@@ -646,7 +673,7 @@ const App = {
         });
 
         demoResult.style.display = 'block';
-        if (rating >= 4) {
+        if (rating === 5) {
           demoResult.innerHTML = `
             <div style="color:var(--color-success); font-weight:700; margin-bottom:6px;"><i data-lucide="check-circle" style="width:16px; height:16px; display:inline; vertical-align:middle; margin-right:4px;"></i> Redirección de 5 Estrellas</div>
             <p style="font-size:0.82rem; color:var(--text-secondary);">El sistema detecta una reseña excelente y le muestra un botón destacado para abrir tu perfil público de <strong>Google Maps</strong>. ¡Tu puntuación aumenta!</p>
@@ -655,7 +682,7 @@ const App = {
         } else {
           demoResult.innerHTML = `
             <div style="color:var(--color-accent); font-weight:700; margin-bottom:6px;"><i data-lucide="alert-triangle" style="width:16px; height:16px; display:inline; vertical-align:middle; margin-right:4px;"></i> Intercepción de Crítica Privada</div>
-            <p style="font-size:0.82rem; color:var(--text-secondary);">El sistema intercepta la molestia y despliega un formulario confidencial. Los datos se envían a tu panel interno de soporte de forma privada.</p>
+            <p style="font-size:0.82rem; color:var(--text-secondary);">El sistema intercepta la molestia (1-4 estrellas) y despliega un formulario confidencial. Los datos se envían a tu panel interno de soporte de forma privada.</p>
             <input type="text" class="form-control" placeholder="¿Cómo podemos mejorar?" style="margin-top:8px; height:36px; font-size:0.8rem; text-align:center;" disabled>
           `;
         }
