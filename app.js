@@ -203,50 +203,6 @@ const App = {
     // Iniciar Router dinámico
     this.handleRouting();
     window.addEventListener('hashchange', () => this.handleRouting());
-
-    // Configurar persistencia y protección contra cierre accidental
-    this.setupAppPersistence();
-  },
-
-  /**
-   * Configura la persistencia de la app y evita la salida accidental
-   * Especialmente útil para simular comportamiento de App Nativa en móviles
-   */
-  setupAppPersistence() {
-    // 1. Evitar cierre accidental de la pestaña/navegador
-    window.addEventListener('beforeunload', (e) => {
-      // Solo pedimos confirmación si hay un usuario logueado o no estamos en el Home
-      if (this.State.currentUser || window.location.hash !== '#home') {
-        e.preventDefault();
-        e.returnValue = '¿Estás seguro de que deseas salir? Tus cambios podrían no guardarse.';
-        return e.returnValue;
-      }
-    });
-
-    // 2. Manejo inteligente del botón "Atrás" de Android/Navegador
-    // Empujamos un estado inicial ficticio para que el primer "atrás" sea capturable
-    if (window.history.length <= 1) {
-      window.history.pushState({ noBackExitsApp: true }, '');
-    }
-
-    window.addEventListener('popstate', (event) => {
-      // Si el usuario intenta ir hacia atrás estando logueado o en secciones internas
-      if (this.State.currentUser || (window.location.hash !== '#home' && window.location.hash !== '')) {
-        const confirmExit = confirm("¿Deseas salir de la aplicación o cerrar tu sesión actual?");
-        
-        if (!confirmExit) {
-          // Si cancela, volvemos a empujar el estado para "bloquear" el cierre
-          window.history.pushState({ noBackExitsApp: true }, '');
-        } else {
-          // Si confirma, permitimos la salida o cerramos sesión
-          if (this.State.currentUser) {
-            this.handleLogout();
-          } else {
-            window.location.hash = '#home';
-          }
-        }
-      }
-    });
   },
 
   // Sincronizar toda la data desde Supabase
@@ -269,13 +225,17 @@ const App = {
           this.State.currentUser = {
             id: profile.id,
             businessName: profile.business_name,
-            email: session.user.email,
+            fullName: profile.full_name || '',
+            email: profile.email || session.user.email,
+            whatsapp: profile.whatsapp || '',
+            address: profile.address || '',
             plan: profile.plan || 'free',
             logo: profile.logo || '🏪',
             accentColor: profile.accent_color || '#007bff',
             title: profile.portal_title || (profile.business_name ? `Opiniones de ${profile.business_name}` : 'Portal de Opiniones')
           };
-        } else if (profileErr) {
+        }
+ else if (profileErr) {
           this.addLog('SYSTEM', `Error obteniendo perfil: ${profileErr.message}`);
         }
       } else {
@@ -829,7 +789,16 @@ const App = {
 
     if (supabaseClient) {
       this.addLog('SYSTEM', `Registrando comercio en Supabase: "${businessName}" (${email})`);
-      const { data, error } = await supabaseClient.auth.signUp({ email, password });
+      const { data, error } = await supabaseClient.auth.signUp({ 
+        email, 
+        password,
+        options: {
+          data: {
+            business_name: businessName,
+            full_name: '' // Se completará después
+          }
+        }
+      });
 
       if (error) {
         alert(error.message);
@@ -838,18 +807,9 @@ const App = {
 
       if (data.user) {
         const userId = data.user.id;
-        // 1. Crear perfil de comercio en la tabla profiles según esquema público
-        const { error: profileError } = await supabaseClient.from('profiles').insert([{
-          id: userId,
-          business_name: businessName,
-          plan: 'free',
-          logo: '🏪',
-          accent_color: '#007bff'
-        }]);
-
-        if (profileError) {
-          this.addLog('SYSTEM', `Error al crear perfil en la base de datos: ${profileError.message}`);
-        }
+        
+        // Esperamos un momento a que el trigger actúe (opcional pero recomendado en client-side si se va a usar el perfil de inmediato)
+        // Aunque Supabase es rápido, a veces la consistencia eventual puede tardar milisegundos.
 
         // 2. Crear local inicial Starter de cortesía en la tabla locations (tenant_id es la FK a profiles.id)
         const { data: newLoc, error: locError } = await supabaseClient.from('locations').insert([{
@@ -862,14 +822,6 @@ const App = {
 
         if (locError) {
           this.addLog('SYSTEM', `Error al crear local inicial: ${locError.message}`);
-        } else if (newLoc) {
-          // 3. Crear configuración inicial de la sucursal
-          await supabaseClient.from('location_configs').insert([{
-            user_id: userId,
-            locations_id: newLoc.locations_id,
-            business_name: businessName,
-            google_review_url: 'https://maps.google.com'
-          }]);
         }
 
         this.addLog('SYSTEM', `Nuevo comercio registrado exitosamente en Supabase.`);
@@ -985,18 +937,30 @@ const App = {
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
         <!-- Datos de Contacto para Informes -->
         <div class="card">
-          <h3 class="card-title"><i data-lucide="user"></i> Datos de Contacto para Informes</h3>
+          <h3 class="card-title"><i data-lucide="user"></i> Datos del Perfil y Contacto</h3>
           <form id="contact-data-form" style="margin-top:16px; display:flex; flex-direction:column; gap:12px;">
             <div class="form-group">
+              <label class="form-label">Nombre del Negocio</label>
+              <input type="text" class="form-control" id="contact-business" value="${user.businessName || ''}" placeholder="Ej. Mi Cafetería">
+            </div>
+            <div class="form-group">
               <label class="form-label">Nombre del Responsable</label>
-              <input type="text" class="form-control" id="contact-name" value="${user.ownerName || ''}" placeholder="Ej. Juan Pérez">
+              <input type="text" class="form-control" id="contact-name" value="${user.fullName || ''}" placeholder="Ej. Juan Pérez">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Correo Electrónico</label>
+              <input type="email" class="form-control" id="contact-email" value="${user.email || ''}" placeholder="ejemplo@correo.com">
             </div>
             <div class="form-group">
               <label class="form-label">WhatsApp para Reportes</label>
               <input type="tel" class="form-control" id="contact-whatsapp" value="${user.whatsapp || ''}" placeholder="Ej. 573105551234">
             </div>
+            <div class="form-group">
+              <label class="form-label">Dirección (Local)</label>
+              <input type="text" class="form-control" id="contact-address" value="${user.address || ''}" placeholder="Ej. Calle 123 #45-67">
+            </div>
             <button type="submit" class="btn btn-secondary">
-              <i data-lucide="save"></i> Actualizar Datos de Informe
+              <i data-lucide="save"></i> Actualizar Perfil
             </button>
           </form>
         </div>
@@ -1148,14 +1112,38 @@ const App = {
   },
 
   async handleSaveContactData() {
-    const ownerName = document.getElementById('contact-name').value;
+    const businessName = document.getElementById('contact-business').value;
+    const fullName = document.getElementById('contact-name').value;
+    const email = document.getElementById('contact-email').value;
     const whatsapp = document.getElementById('contact-whatsapp').value;
+    const address = document.getElementById('contact-address').value;
 
     const user = this.State.currentUser;
-    user.ownerName = ownerName;
+    user.businessName = businessName;
+    user.fullName = fullName;
+    user.email = email;
     user.whatsapp = whatsapp;
+    user.address = address;
 
-    if (!supabaseClient) {
+    if (supabaseClient) {
+      this.addLog('POST', `Actualizando perfil en Supabase para: ${businessName}`);
+      const { error } = await supabaseClient
+        .from('profiles')
+        .update({
+          business_name: businessName,
+          full_name: fullName,
+          email: email,
+          whatsapp: whatsapp,
+          address: address
+        })
+        .eq('id', user.id);
+
+      if (error) {
+        alert("Error al actualizar perfil en Supabase: " + error.message);
+        return;
+      }
+      await this.syncFromSupabase();
+    } else {
       const idx = this.State.users.findIndex(u => u.id === user.id);
       if (idx !== -1) {
         this.State.users[idx] = user;
@@ -1164,7 +1152,7 @@ const App = {
     }
 
     this.addLog('POST', `Datos de contacto actualizados para: ${user.businessName}`);
-    alert("Datos de contacto actualizados correctamente. Los informes se enviarán a este destino.");
+    alert("Perfil actualizado correctamente.");
     this.renderPageContent('dashboard');
   },
 
