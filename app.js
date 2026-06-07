@@ -262,18 +262,18 @@ const App = {
         const { data: profile, error: profileErr } = await supabaseClient
           .from('profiles')
           .select('*')
-          .eq('user_id', session.user.id)
+          .eq('id', session.user.id)
           .single();
 
         if (profile) {
           this.State.currentUser = {
-            id: profile.user_id,
+            id: profile.id,
             businessName: profile.business_name,
             email: session.user.email,
             plan: profile.plan || 'free',
-            logo: '🏪', // Se obtendrá de la sucursal en este esquema
-            accentColor: '#6366f1',
-            title: profile.business_name ? `Opiniones de ${profile.business_name}` : 'Portal de Opiniones'
+            logo: profile.logo || '🏪',
+            accentColor: profile.accent_color || '#007bff',
+            title: profile.portal_title || (profile.business_name ? `Opiniones de ${profile.business_name}` : 'Portal de Opiniones')
           };
         } else if (profileErr) {
           this.addLog('SYSTEM', `Error obteniendo perfil: ${profileErr.message}`);
@@ -282,52 +282,50 @@ const App = {
         this.State.currentUser = null;
       }
 
-      // 2. Obtener los locales con sus configuraciones
-      let queryLoc = supabaseClient.from('locations').select('*, location_configs(*)');
+      // 2. Obtener los locales
+      let queryLoc = supabaseClient.from('locations').select('*');
       if (this.State.currentUser && !this.State.isSuperAdmin) {
-        queryLoc = queryLoc.eq('user_id', this.State.currentUser.id);
+        queryLoc = queryLoc.eq('tenant_id', this.State.currentUser.id);
       }
       const { data: dbLocs } = await queryLoc;
       this.State.locations = (dbLocs || []).map(l => ({
-        id: l.locations_id,
-        userId: l.user_id,
+        id: l.id,
+        userId: l.tenant_id,
         name: l.name,
         address: l.address,
-        mapsUrl: l.location_configs?.[0]?.google_review_url || '',
-        logo: l.location_configs?.[0]?.logo_url || '🏪',
+        mapsUrl: l.maps_url || '',
         status: l.status
       }));
 
       // 3. Obtener los feedbacks (leads)
-      let queryLeads = supabaseClient.from('feedbacks').select('*, locations(*)');
+      let queryLeads = supabaseClient.from('leads').select('*');
       if (this.State.currentUser && !this.State.isSuperAdmin) {
-        queryLeads = queryLeads.filter('locations.user_id', 'eq', this.State.currentUser.id);
+        queryLeads = queryLeads.eq('tenant_id', this.State.currentUser.id);
       }
       const { data: dbLeads } = await queryLeads;
       this.State.leads = (dbLeads || [])
-        .filter(f => f.locations) // Asegurar que el join funcionó si hay filtro
         .map(f => ({
-          id: f.feedbacks_id,
-          userId: f.locations.user_id,
+          id: f.id,
+          userId: f.tenant_id,
           date: f.created_at,
-          locationId: f.locations_id,
-          locationName: f.locations.name,
-          clientName: f.customer_name,
-          clientPhone: f.whatsapp_number,
+          locationId: f.location_id,
+          locationName: this.State.locations.find(l => l.id === f.location_id)?.name || 'Sucursal Desconocida',
+          clientName: f.client_name,
+          clientPhone: f.client_phone,
           rating: f.rating,
-          comment: f.reason || ''
+          comment: f.comment || ''
         }));
 
       // 4. Obtener todos los tenants si es Súper Administrador
       if (this.State.isSuperAdmin) {
         const { data: dbProfiles } = await supabaseClient.from('profiles').select('*');
         this.State.users = (dbProfiles || []).map(p => ({
-          id: p.user_id,
+          id: p.id,
           businessName: p.business_name,
           plan: p.plan,
-          logo: '🏪',
-          accentColor: '#6366f1',
-          title: `Opiniones de ${p.business_name}`
+          logo: p.logo,
+          accentColor: p.accent_color,
+          title: p.portal_title || `Opiniones de ${p.business_name}`
         }));
       }
 
@@ -840,24 +838,27 @@ const App = {
 
       if (data.user) {
         const userId = data.user.id;
-        // 1. Crear perfil de comercio en la tabla profiles
+        // 1. Crear perfil de comercio en la tabla profiles según esquema público
         const { error: profileError } = await supabaseClient.from('profiles').insert([{
-          user_id: userId,
+          id: userId,
           business_name: businessName,
           plan: 'free',
-          status: 'active'
+          logo: '🏪',
+          accent_color: '#007bff'
         }]);
 
         if (profileError) {
           this.addLog('SYSTEM', `Error al crear perfil en la base de datos: ${profileError.message}`);
         }
 
-        // 2. Crear local inicial Starter de cortesía en la tabla locations
+        // 2. Crear local inicial Starter de cortesía en la tabla locations (tenant_id es la FK a profiles.id)
         const { data: newLoc, error: locError } = await supabaseClient.from('locations').insert([{
-          user_id: userId,
+          tenant_id: userId,
           name: `Sede Principal ${businessName}`,
           address: 'Dirección Comercial Principal',
+          maps_url: 'https://maps.google.com',
           status: 'active'
+        }]);
         }]).select().single();
 
         if (locError) {
@@ -1116,7 +1117,21 @@ const App = {
 
     if (supabaseClient) {
       this.addLog('POST', `Guardando diseño del portal en Supabase para: ${user.businessName}`);
-      // Simulado para fines de la demo
+      const { error } = await supabaseClient
+        .from('profiles')
+        .update({
+          business_name: user.businessName,
+          logo: logo,
+          accent_color: accentColor,
+          portal_title: title
+        })
+        .eq('id', user.id);
+
+      if (error) {
+        alert("Error al guardar en Supabase: " + error.message);
+        return;
+      }
+      await this.syncFromSupabase();
     } else {
       // Actualizar base de datos local
       const idx = this.State.users.findIndex(u => u.id === user.id);
@@ -1297,10 +1312,11 @@ const App = {
     if (supabaseClient) {
       this.addLog('POST', `Registrando sucursal en Supabase: ${name}`);
       const { data: newLoc, error } = await supabaseClient.from('locations').insert([{
-        user_id: user.id,
+        tenant_id: user.id,
         name: name,
         address: address,
-        status: 'inactive'
+        maps_url: mapsUrl,
+        status: 'active'
       }]).select().single();
 
       if (error) {
@@ -1667,12 +1683,13 @@ const App = {
 
     if (supabaseClient) {
       this.addLog('POST', `[Proxy Secure] Enviando lead de soporte a Supabase para: ${nameInput.value}`);
-      const { error } = await supabaseClient.from('feedbacks').insert([{
-        locations_id: locationId,
+      const { error } = await supabaseClient.from('leads').insert([{
+        tenant_id: tenantId,
+        location_id: locationId,
         rating: rating,
-        customer_name: nameInput.value,
-        whatsapp_number: cleanPhone,
-        reason: commentInput.value
+        client_name: nameInput.value,
+        client_phone: cleanPhone,
+        comment: commentInput.value
       }]);
 
       if (error) {
