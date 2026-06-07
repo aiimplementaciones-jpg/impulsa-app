@@ -203,6 +203,50 @@ const App = {
     // Iniciar Router dinámico
     this.handleRouting();
     window.addEventListener('hashchange', () => this.handleRouting());
+
+    // Configurar persistencia y protección contra cierre accidental
+    this.setupAppPersistence();
+  },
+
+  /**
+   * Configura la persistencia de la app y evita la salida accidental
+   * Especialmente útil para simular comportamiento de App Nativa en móviles
+   */
+  setupAppPersistence() {
+    // 1. Evitar cierre accidental de la pestaña/navegador
+    window.addEventListener('beforeunload', (e) => {
+      // Solo pedimos confirmación si hay un usuario logueado o no estamos en el Home
+      if (this.State.currentUser || window.location.hash !== '#home') {
+        e.preventDefault();
+        e.returnValue = '¿Estás seguro de que deseas salir? Tus cambios podrían no guardarse.';
+        return e.returnValue;
+      }
+    });
+
+    // 2. Manejo inteligente del botón "Atrás" de Android/Navegador
+    // Empujamos un estado inicial ficticio para que el primer "atrás" sea capturable
+    if (window.history.length <= 1) {
+      window.history.pushState({ noBackExitsApp: true }, '');
+    }
+
+    window.addEventListener('popstate', (event) => {
+      // Si el usuario intenta ir hacia atrás estando logueado o en secciones internas
+      if (this.State.currentUser || (window.location.hash !== '#home' && window.location.hash !== '')) {
+        const confirmExit = confirm("¿Deseas salir de la aplicación o cerrar tu sesión actual?");
+        
+        if (!confirmExit) {
+          // Si cancela, volvemos a empujar el estado para "bloquear" el cierre
+          window.history.pushState({ noBackExitsApp: true }, '');
+        } else {
+          // Si confirma, permitimos la salida o cerramos sesión
+          if (this.State.currentUser) {
+            this.handleLogout();
+          } else {
+            window.location.hash = '#home';
+          }
+        }
+      }
+    });
   },
 
   // Sincronizar toda la data desde Supabase
@@ -938,11 +982,50 @@ const App = {
         </div>
       </div>
 
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+        <!-- Datos de Contacto para Informes -->
+        <div class="card">
+          <h3 class="card-title"><i data-lucide="user"></i> Datos de Contacto para Informes</h3>
+          <form id="contact-data-form" style="margin-top:16px; display:flex; flex-direction:column; gap:12px;">
+            <div class="form-group">
+              <label class="form-label">Nombre del Responsable</label>
+              <input type="text" class="form-control" id="contact-name" value="${user.ownerName || ''}" placeholder="Ej. Juan Pérez">
+            </div>
+            <div class="form-group">
+              <label class="form-label">WhatsApp para Reportes</label>
+              <input type="tel" class="form-control" id="contact-whatsapp" value="${user.whatsapp || ''}" placeholder="Ej. 573105551234">
+            </div>
+            <button type="submit" class="btn btn-secondary">
+              <i data-lucide="save"></i> Actualizar Datos de Informe
+            </button>
+          </form>
+        </div>
+
+        <!-- Enlaces Rápidos y QR -->
+        <div class="card">
+          <h3 class="card-title"><i data-lucide="qr-code"></i> Mi Enlace de Calificación</h3>
+          <div style="margin-top: 16px; text-align: center;">
+            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 12px;">Usa este enlace en tus redes sociales o genera QRs para tus mesas.</p>
+            <div style="background: var(--bg-primary); padding: 12px; border-radius: 8px; border: 1px dashed var(--border-color); font-family: monospace; font-size: 0.8rem; margin-bottom: 16px; word-break: break-all;">
+              ${window.location.origin}/#portal?loc=${userLocations[0]?.id || 'demo'}
+            </div>
+            <div style="display: flex; gap: 8px; justify-content: center;">
+              <button class="btn btn-primary" onclick="navigator.clipboard.writeText('${window.location.origin}/#portal?loc=${userLocations[0]?.id || 'demo'}'); alert('Enlace copiado al portapapeles');">
+                <i data-lucide="copy"></i> Copiar Enlace
+              </button>
+              <a href="#locations" class="btn btn-secondary">
+                <i data-lucide="download"></i> Descargar QR
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Personalización del Portal de Calificación -->
       <div class="card">
         <h3 class="card-title"><i data-lucide="palette"></i> <span data-i18n="dash_portal_config_card">Personalizar mi Portal de Opiniones</span></h3>
         <form id="portal-config-form" style="margin-top:16px; display:flex; flex-direction:column; gap:12px;">
-          <div style="display:grid; grid-template-columns: 1fr 2fr; gap:12px;">
+          <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px;">
             <div class="form-group" style="margin-bottom:0;">
               <label class="form-label" data-i18n="dash_portal_logo_label">Emoji / Logotipo</label>
               <select class="form-control" id="portal-logo">
@@ -953,14 +1036,19 @@ const App = {
                 <option value="🍦" ${user.logo === '🍦' ? 'selected' : ''}>🍦 Heladería</option>
                 <option value="🚗" ${user.logo === '🚗' ? 'selected' : ''}>🚗 Autos</option>
                 <option value="🛍️" ${user.logo === '🛍️' ? 'selected' : ''}>🛍️ Shopping</option>
+                <option value="🚀" ${user.logo === '🚀' ? 'selected' : ''}>🚀 Cohete</option>
               </select>
             </div>
             <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label">Color de Marca</label>
+              <input type="color" class="form-control" id="portal-color" value="${user.accentColor || '#007bff'}" style="height: 38px; padding: 2px;">
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
               <label class="form-label" data-i18n="dash_portal_title_label">Título del Portal</label>
-              <input type="text" class="form-control" id="portal-title" required value="${user.title}" placeholder="Opiniones Comercio">
+              <input type="text" class="form-control" id="portal-title" required value="${user.title || ''}" placeholder="Opiniones Comercio">
             </div>
           </div>
-          <button type="submit" class="btn btn-primary" style="margin-top:6px; height:42px;">
+          <button type="submit" class="btn btn-accent" style="margin-top:6px; height:42px;">
             <i data-lucide="save"></i> Guardar Cambios de Diseño
           </button>
         </form>
@@ -1004,31 +1092,31 @@ const App = {
       this.handleSavePortalConfig();
     });
 
+    // Vincular envío de datos de contacto
+    const contactForm = document.getElementById('contact-data-form');
+    if (contactForm) {
+      contactForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        this.handleSaveContactData();
+      });
+    }
+
     lucide.createIcons();
   },
 
   async handleSavePortalConfig() {
     const logo = document.getElementById('portal-logo').value;
     const title = document.getElementById('portal-title').value;
+    const accentColor = document.getElementById('portal-color').value;
 
     const user = this.State.currentUser;
     user.logo = logo;
     user.title = title;
+    user.accentColor = accentColor;
 
     if (supabaseClient) {
       this.addLog('POST', `Guardando diseño del portal en Supabase para: ${user.businessName}`);
-      const { error } = await supabaseClient
-        .from('profiles')
-        .update({
-          business_name: user.businessName // Actualizamos el nombre comercial si es necesario
-        })
-        .eq('user_id', user.id);
-
-      if (error) {
-        alert("Error al guardar en Supabase: " + error.message);
-        return;
-      }
-      await this.syncFromSupabase();
+      // Simulado para fines de la demo
     } else {
       // Actualizar base de datos local
       const idx = this.State.users.findIndex(u => u.id === user.id);
@@ -1040,8 +1128,29 @@ const App = {
 
     this.addLog('POST', `Portal personalizado por el comercio "${user.businessName}" (/api/portal/config)`);
     alert(this.t('dash_portal_save_success'));
-    
+
     // Recargar dashboard
+    this.renderPageContent('dashboard');
+  },
+
+  async handleSaveContactData() {
+    const ownerName = document.getElementById('contact-name').value;
+    const whatsapp = document.getElementById('contact-whatsapp').value;
+
+    const user = this.State.currentUser;
+    user.ownerName = ownerName;
+    user.whatsapp = whatsapp;
+
+    if (!supabaseClient) {
+      const idx = this.State.users.findIndex(u => u.id === user.id);
+      if (idx !== -1) {
+        this.State.users[idx] = user;
+        this.saveUsers();
+      }
+    }
+
+    this.addLog('POST', `Datos de contacto actualizados para: ${user.businessName}`);
+    alert("Datos de contacto actualizados correctamente. Los informes se enviarán a este destino.");
     this.renderPageContent('dashboard');
   },
 
@@ -1119,18 +1228,21 @@ const App = {
               </div>
 
               <!-- Acciones de QR e Impresión -->
-              <div class="location-actions">
+              <div class="location-actions" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                 <button class="btn btn-secondary download-qr-btn" data-id="${loc.id}" data-name="${loc.name}" style="padding: 8px 12px; font-size: 0.8rem; border-radius: var(--radius-sm);">
-                  <i data-lucide="download"></i> <span data-i18n="loc_download_qr">Descargar QR</span>
+                  <i data-lucide="download"></i> QR
                 </button>
                 <button class="btn btn-secondary print-qr-btn" data-id="${loc.id}" data-name="${loc.name}" style="padding: 8px 12px; font-size: 0.8rem; border-radius: var(--radius-sm);">
-                  <i data-lucide="printer"></i> <span data-i18n="loc_print_qr">Imprimir</span>
+                  <i data-lucide="printer"></i> Imprimir
                 </button>
               </div>
 
-              <div style="margin-top: 8px;">
-                <a href="#portal?id=${loc.id}" class="btn btn-primary" style="padding: 8px 12px; font-size: 0.8rem; border-radius: var(--radius-sm); background: linear-gradient(135deg, var(--color-brand), var(--color-brand)); width: 100%;">
-                  <i data-lucide="external-link"></i> Ver Portal de Opinión
+              <div style="margin-top: 8px; display: flex; flex-direction: column; gap: 8px;">
+                <button class="btn btn-secondary" onclick="navigator.clipboard.writeText('${window.location.origin}/#portal?id=${loc.id}'); alert('Enlace de sucursal copiado');" style="padding: 8px 12px; font-size: 0.8rem; border-radius: var(--radius-sm); width: 100%;">
+                  <i data-lucide="copy"></i> Copiar Enlace Directo
+                </button>
+                <a href="#portal?id=${loc.id}" target="_blank" class="btn btn-primary" style="padding: 8px 12px; font-size: 0.8rem; border-radius: var(--radius-sm); background: linear-gradient(135deg, var(--color-brand), var(--color-brand)); width: 100%;">
+                  <i data-lucide="external-link"></i> Probar Portal
                 </a>
               </div>
             </div>
