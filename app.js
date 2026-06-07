@@ -752,6 +752,35 @@ const App = {
     const email = document.getElementById('auth-email').value;
     const password = document.getElementById('auth-pass').value;
 
+    // 🚀 BYPASS TEMPORAL PARA DESARROLLO
+    if (email === 'mauro@prueba.com' && password === '16783399') {
+      this.addLog('SYSTEM', `Acceso bypass para desarrollo: ${email}`);
+      this.State.currentUser = {
+        id: 'dev_user_mauro',
+        businessName: 'Prueba Mauro',
+        fullName: 'Mauro Prueba',
+        email: email,
+        whatsapp: '573000000000',
+        address: 'Calle Falsa 123',
+        plan: 'pro',
+        logo: '🚀',
+        accentColor: '#6366f1',
+        title: 'Opiniones de Prueba Mauro'
+      };
+      this.State.isSuperAdmin = false;
+      Storage.setItem('impulsa_active_user', 'dev_user_mauro');
+      Storage.setItem('impulsa_is_superadmin', 'false');
+      
+      // Simular sincronización básica
+      this.State.locations = [
+        { id: 'loc_dev_1', userId: 'dev_user_mauro', name: 'Sede Central Mauro', address: 'Calle Falsa 123', mapsUrl: 'https://maps.google.com', status: 'active' }
+      ];
+      this.State.leads = [];
+      
+      window.location.hash = '#dashboard';
+      return;
+    }
+
     if (supabaseClient) {
       this.addLog('SYSTEM', `Intentando iniciar sesión en Supabase para: ${email}`);
       const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
