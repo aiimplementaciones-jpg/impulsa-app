@@ -3,9 +3,9 @@ DROP TABLE IF EXISTS public.leads;
 DROP TABLE IF EXISTS public.locations;
 DROP TABLE IF EXISTS public.profiles;
 
--- 1. Tabla de Perfiles (Extensión de auth.users)
+-- 1. Tabla de Perfiles (Sin restricción estricta a auth.users para desarrollo)
 CREATE TABLE public.profiles (
-  id UUID REFERENCES auth.users ON DELETE CASCADE PRIMARY KEY,
+  id UUID PRIMARY KEY,
   business_name TEXT,
   full_name TEXT,
   email TEXT,

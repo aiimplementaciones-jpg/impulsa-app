@@ -754,14 +754,14 @@ const App = {
 
     // 🚀 BYPASS TEMPORAL PARA DESARROLLO
     if (email === 'mauro@prueba.com' && password === '16783399') {
-      const devUserId = '00000000-0000-0000-0000-000000000001';
+      const devUserId = '36d917a3-f764-4afe-8c87-e1db8f0f1731';
       const devLocId = '00000000-0000-0000-0000-000000000002';
       
       this.addLog('SYSTEM', `Acceso bypass para desarrollo: ${email}`);
       this.State.currentUser = {
         id: devUserId,
         businessName: 'Prueba Mauro',
-        fullName: 'Mauro Prueba',
+        fullName: 'Mauro Sanchez',
         email: email,
         whatsapp: '573000000000',
         address: 'Calle Falsa 123',
