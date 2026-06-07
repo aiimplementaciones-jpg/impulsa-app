@@ -858,7 +858,6 @@ const App = {
           address: 'Dirección Comercial Principal',
           maps_url: 'https://maps.google.com',
           status: 'active'
-        }]);
         }]).select().single();
 
         if (locError) {
