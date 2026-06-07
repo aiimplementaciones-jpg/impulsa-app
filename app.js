@@ -754,9 +754,12 @@ const App = {
 
     // 🚀 BYPASS TEMPORAL PARA DESARROLLO
     if (email === 'mauro@prueba.com' && password === '16783399') {
+      const devUserId = '00000000-0000-0000-0000-000000000001';
+      const devLocId = '00000000-0000-0000-0000-000000000002';
+      
       this.addLog('SYSTEM', `Acceso bypass para desarrollo: ${email}`);
       this.State.currentUser = {
-        id: 'dev_user_mauro',
+        id: devUserId,
         businessName: 'Prueba Mauro',
         fullName: 'Mauro Prueba',
         email: email,
@@ -768,12 +771,12 @@ const App = {
         title: 'Opiniones de Prueba Mauro'
       };
       this.State.isSuperAdmin = false;
-      Storage.setItem('impulsa_active_user', 'dev_user_mauro');
+      Storage.setItem('impulsa_active_user', devUserId);
       Storage.setItem('impulsa_is_superadmin', 'false');
       
-      // Simular sincronización básica
+      // Simular sincronización básica con UUIDs válidos
       this.State.locations = [
-        { id: 'loc_dev_1', userId: 'dev_user_mauro', name: 'Sede Central Mauro', address: 'Calle Falsa 123', mapsUrl: 'https://maps.google.com', status: 'active' }
+        { id: devLocId, userId: devUserId, name: 'Sede Central Mauro', address: 'Calle Falsa 123', mapsUrl: 'https://maps.google.com', status: 'active' }
       ];
       this.State.leads = [];
       
