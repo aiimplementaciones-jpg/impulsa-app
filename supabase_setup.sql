@@ -70,15 +70,18 @@ ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.locations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.leads ENABLE ROW LEVEL SECURITY;
 
--- Políticas para Profiles
-CREATE POLICY "Tenants can view their own profile" ON public.profiles FOR SELECT USING (auth.uid() = id);
-CREATE POLICY "Tenants can update their own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);
-
 -- Políticas para Locations
-CREATE POLICY "Tenants can view their own locations" ON public.locations FOR SELECT USING (auth.uid() = tenant_id);
-CREATE POLICY "Tenants can insert their own locations" ON public.locations FOR INSERT WITH CHECK (auth.uid() = tenant_id);
-CREATE POLICY "Tenants can update their own locations" ON public.locations FOR UPDATE USING (auth.uid() = tenant_id);
+CREATE POLICY "Tenants can view their own locations" ON public.locations FOR SELECT USING (auth.uid() = tenant_id OR tenant_id = '00000000-0000-0000-0000-000000000001');
+CREATE POLICY "Tenants can insert their own locations" ON public.locations FOR INSERT WITH CHECK (auth.uid() = tenant_id OR tenant_id = '00000000-0000-0000-0000-000000000001');
+CREATE POLICY "Tenants can update their own locations" ON public.locations FOR UPDATE USING (auth.uid() = tenant_id OR tenant_id = '00000000-0000-0000-0000-000000000001');
 
+-- Políticas para Profiles (también actualizar para el bypass)
+DROP POLICY IF EXISTS "Tenants can view their own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Tenants can update their own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Tenants can insert their own profile" ON public.profiles;
+CREATE POLICY "Tenants can view their own profile" ON public.profiles FOR SELECT USING (auth.uid() = id OR id = '00000000-0000-0000-0000-000000000001');
+CREATE POLICY "Tenants can update their own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id OR id = '00000000-0000-0000-0000-000000000001');
+CREATE POLICY "Tenants can insert their own profile" ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id OR id = '00000000-0000-0000-0000-000000000001');
 -- Políticas para Leads
 CREATE POLICY "Tenants can view their own leads" ON public.leads FOR SELECT USING (auth.uid() = tenant_id);
 CREATE POLICY "Anyone can insert leads" ON public.leads FOR INSERT WITH CHECK (true);
