@@ -144,7 +144,8 @@ const App = {
             address: profile.address || '',
             plan: profile.plan || 'free',
             logo: profile.logo || '🏪',
-            accentColor: profile.accent_color || '#007bff',
+            accentColor: profile.accent_color || '#6366f1',
+            bgColor: profile.bg_color || '#ffffff',
             title: profile.portal_title || (profile.business_name ? `Opiniones de ${profile.business_name}` : 'Portal de Opiniones')
           };
         } else if (profileErr) {
@@ -941,8 +942,12 @@ const App = {
               </div>
             </div>
             <div class="form-group">
-              <label class="form-label">Color de Marca</label>
+              <label class="form-label">Color de Marca (Botones/Bordes)</label>
               <input type="color" class="form-control" id="portal-color" value="${user.accentColor || '#6366f1'}" style="height: 40px; padding: 2px;">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Color de Fondo del Portal</label>
+              <input type="color" class="form-control" id="portal-bg-color" value="${user.bgColor || '#ffffff'}" style="height: 40px; padding: 2px;">
             </div>
             <div class="form-group">
               <label class="form-label">Título del Portal</label>
@@ -1004,14 +1009,19 @@ const App = {
     // Lógica del simulador en vivo
     const titleInput = document.getElementById('portal-title');
     const colorInput = document.getElementById('portal-color');
+    const bgInput = document.getElementById('portal-bg-color');
     const simTitle = document.getElementById('sim-title');
     const simButton = document.getElementById('sim-button');
     const simLogoBox = document.getElementById('sim-logo');
+    const simScreen = document.getElementById('sim-screen');
 
     titleInput.addEventListener('input', (e) => simTitle.textContent = e.target.value || 'Mi Negocio');
     colorInput.addEventListener('input', (e) => {
       simButton.style.backgroundColor = e.target.value;
       simLogoBox.style.borderColor = e.target.value;
+    });
+    bgInput.addEventListener('input', (e) => {
+      simScreen.style.backgroundColor = e.target.value;
     });
 
     // Lógica de carga de logo
@@ -1057,11 +1067,13 @@ const App = {
     const logo = document.getElementById('portal-logo-val').value;
     const title = document.getElementById('portal-title').value;
     const accentColor = document.getElementById('portal-color').value;
+    const bgColor = document.getElementById('portal-bg-color').value;
 
     const user = this.State.currentUser;
     user.logo = logo;
     user.title = title;
     user.accentColor = accentColor;
+    user.bgColor = bgColor;
 
     if (supabaseClient) {
       this.addLog('POST', `Guardando diseño del portal en Supabase para: ${user.businessName}`);
@@ -1070,6 +1082,7 @@ const App = {
         .update({
           logo: logo,
           accent_color: accentColor,
+          bg_color: bgColor,
           portal_title: title
         })
         .eq('id', user.id);
@@ -1456,7 +1469,7 @@ const App = {
     }
 
     // Buscar configuración de diseño del comercio (Tenant) dueño de este local
-    const tenant = this.State.users.find(u => u.id === loc.userId) || { logo: '🏪', accentColor: '#4F46E5', title: 'Portal de Opinión' };
+    const tenant = this.State.users.find(u => u.id === loc.userId) || { logo: '🏪', accentColor: '#4F46E5', bgColor: '#ffffff', title: 'Portal de Opinión' };
 
     this.State.visits += 1; 
     this.addLog('GET', `Cliente final accedió al portal de: "${loc.name}" (Visitas: ${this.State.visits})`);
@@ -1465,8 +1478,8 @@ const App = {
     if (!viewContainer) return;
 
     viewContainer.innerHTML = `
-      <div class="portal-container">
-        <div class="card" style="box-shadow: var(--shadow-md); border-radius: var(--radius-lg); padding: 32px 20px; border-top: 6px solid ${tenant.accentColor || 'var(--color-brand)'};">
+      <div class="portal-container" style="background-color: ${tenant.bgColor || '#f3f4f6'}; min-height: 100vh;">
+        <div class="card" style="box-shadow: var(--shadow-md); border-radius: var(--radius-lg); padding: 32px 20px; border-top: 6px solid ${tenant.accentColor || 'var(--color-brand)'}; background-color: white;">
           
           <div class="portal-brand">
             <div class="portal-logo-container" style="border-color: ${tenant.accentColor || 'var(--border-color)'}">

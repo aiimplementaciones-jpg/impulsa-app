@@ -21,10 +21,26 @@ CREATE TABLE public.profiles (
   plan TEXT DEFAULT 'free' CHECK (plan IN ('free', 'pro', 'star')),
   logo TEXT DEFAULT '🏪',
   accent_color TEXT DEFAULT '#6366f1',
+  bg_color TEXT DEFAULT '#ffffff',
   portal_title TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- ==========================================================
+-- 🪣 CONFIGURACIÓN DE ALMACENAMIENTO (SUPABASE STORAGE)
+-- ==========================================================
+-- Nota: Ejecutar esto en el SQL Editor de Supabase.
+-- Algunos comandos de Storage pueden requerir el dashboard para la creación inicial del bucket.
+
+-- Crear el bucket 'logos' si no existe (vía rpc o manual en panel)
+-- INSERT INTO storage.buckets (id, name, public) VALUES ('logos', 'logos', true) ON CONFLICT (id) DO NOTHING;
+
+-- Políticas para el Bucket 'logos'
+CREATE POLICY "Logos son públicos" ON storage.objects FOR SELECT USING (bucket_id = 'logos');
+CREATE POLICY "Usuarios pueden subir sus propios logos" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'logos' AND (auth.uid()::text = (storage.foldername(name))[1]));
+CREATE POLICY "Usuarios pueden actualizar sus propios logos" ON storage.objects FOR UPDATE USING (bucket_id = 'logos' AND (auth.uid()::text = (storage.foldername(name))[1]));
+CREATE POLICY "Usuarios pueden borrar sus propios logos" ON storage.objects FOR DELETE USING (bucket_id = 'logos' AND (auth.uid()::text = (storage.foldername(name))[1]));
 
 -- 2. Tabla de Sucursales (Puntos físicos)
 CREATE TABLE public.locations (
