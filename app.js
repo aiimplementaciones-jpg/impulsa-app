@@ -210,15 +210,21 @@ const App = {
     try {
       // 1. Obtener la sesión activa de Supabase
       const { data: { session } } = await supabaseClient.auth.getSession();
-      
-      if (session && session.user) {
-        this.addLog('SYSTEM', `Usuario autenticado en Supabase: ${session.user.email}`);
-        
+      let activeUserId = session?.user?.id;
+
+      // Si no hay sesión real pero hay bypass, usamos el ID de Mauro
+      if (!activeUserId && this.State.currentUser) {
+        activeUserId = this.State.currentUser.id;
+      }
+
+      if (activeUserId) {
+        this.addLog('SYSTEM', `Sincronizando datos para el usuario: ${activeUserId}`);
+
         // Obtener el perfil del usuario actual (tenant)
         const { data: profile, error: profileErr } = await supabaseClient
           .from('profiles')
           .select('*')
-          .eq('id', session.user.id)
+          .eq('id', activeUserId)
           .single();
 
         if (profile) {
@@ -226,7 +232,7 @@ const App = {
             id: profile.id,
             businessName: profile.business_name,
             fullName: profile.full_name || '',
-            email: profile.email || session.user.email,
+            email: profile.email || (session?.user?.email || 'mauro@prueba.com'),
             whatsapp: profile.whatsapp || '',
             address: profile.address || '',
             plan: profile.plan || 'free',
@@ -234,15 +240,14 @@ const App = {
             accentColor: profile.accent_color || '#007bff',
             title: profile.portal_title || (profile.business_name ? `Opiniones de ${profile.business_name}` : 'Portal de Opiniones')
           };
-        }
- else if (profileErr) {
+        } else if (profileErr) {
           this.addLog('SYSTEM', `Error obteniendo perfil: ${profileErr.message}`);
         }
       } else {
         this.State.currentUser = null;
       }
 
-      // 2. Obtener los locales
+      // 2. Obtener los locales (siempre de la tabla 'locations')
       let queryLoc = supabaseClient.from('locations').select('*');
       if (this.State.currentUser && !this.State.isSuperAdmin) {
         queryLoc = queryLoc.eq('tenant_id', this.State.currentUser.id);
@@ -275,6 +280,7 @@ const App = {
           rating: f.rating,
           comment: f.comment || ''
         }));
+
 
       // 4. Obtener todos los tenants si es Súper Administrador
       if (this.State.isSuperAdmin) {
