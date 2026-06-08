@@ -169,7 +169,6 @@ const App = {
         name: l.name,
         address: l.address,
         mapsUrl: l.maps_url || '',
-        logo: l.logo || '', // Cargar logo de la sucursal
         status: l.status
       }));
 
@@ -193,7 +192,7 @@ const App = {
         }));
 
 
-      // 4. Obtener todos los tenants si es Súper Administrador
+      // 4. Obtener todos los tenants si es Súper Administrador o poblar con el actual
       if (this.State.isSuperAdmin) {
         const { data: dbProfiles } = await supabaseClient.from('profiles').select('*');
         this.State.users = (dbProfiles || []).map(p => ({
@@ -202,8 +201,19 @@ const App = {
           plan: p.plan,
           logo: p.logo,
           accentColor: p.accent_color,
+          bgColor: p.bg_color,
           title: p.portal_title || `Opiniones de ${p.business_name}`
         }));
+      } else if (this.State.currentUser) {
+        this.State.users = [{
+          id: this.State.currentUser.id,
+          businessName: this.State.currentUser.businessName,
+          plan: this.State.currentUser.plan,
+          logo: this.State.currentUser.logo,
+          accentColor: this.State.currentUser.accentColor,
+          bgColor: this.State.currentUser.bgColor,
+          title: this.State.currentUser.title
+        }];
       }
 
       this.addLog('SYSTEM', `Sincronización con Supabase exitosa: ${this.State.locations.length} sucursales y ${this.State.leads.length} casos cargados.`);
@@ -1288,16 +1298,6 @@ const App = {
         return;
       }
 
-      if (newLoc) {
-        // Crear configuración asociada
-        await supabaseClient.from('location_configs').insert([{
-          user_id: user.id,
-          locations_id: newLoc.locations_id,
-          business_name: user.businessName,
-          google_review_url: mapsUrl
-        }]);
-      }
-
       await this.syncFromSupabase();
     } else {
       const newLoc = {
@@ -1342,7 +1342,7 @@ const App = {
       const { error } = await supabaseClient
         .from('locations')
         .update({ status: targetStatus })
-        .eq('locations_id', id);
+        .eq('id', id);
 
       if (error) {
         alert("Error al actualizar sucursal en Supabase: " + error.message);
@@ -1452,6 +1452,7 @@ const App = {
   printQRCode(id, name) {
     const portalUrl = `${window.location.origin}${window.location.pathname}#portal?id=${id}`;
     const user = this.State.currentUser;
+    const logo = user.logo || '🏪';
     
     this.generateQRCodeCanvas(portalUrl, (canvas) => {
       const qrDataUrl = canvas.toDataURL("image/png");
@@ -1487,21 +1488,39 @@ const App = {
                 background: linear-gradient(135deg, ${accentColor}, #4f46e5);
                 padding: 40px 20px;
                 color: white;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
               }
-              .rocket {
+              .business-logo {
+                width: 80px;
+                height: 80px;
+                background: white;
+                border-radius: 20px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
                 font-size: 3rem;
-                margin-bottom: 10px;
+                overflow: hidden;
+                box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+              }
+              .business-logo img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
               }
               .brand-name {
                 font-weight: 800;
-                font-size: 1.5rem;
+                font-size: 1.2rem;
                 letter-spacing: 2px;
                 opacity: 0.9;
+                text-transform: uppercase;
               }
               .content {
                 padding: 40px 30px;
               }
-              .business-name {
+              .business-name-main {
                 font-weight: 800;
                 font-size: 2rem;
                 color: #111827;
@@ -1551,11 +1570,13 @@ const App = {
           <body>
             <div class="stand">
               <div class="header">
-                <div class="rocket">🚀</div>
+                <div class="business-logo">
+                  ${logo.startsWith('http') ? `<img src="${logo}">` : logo}
+                </div>
                 <div class="brand-name">IMPULSA</div>
               </div>
               <div class="content">
-                <div class="business-name">${user.businessName}</div>
+                <div class="business-name-main">${user.businessName}</div>
                 <div class="location-name">${name}</div>
                 <div class="qr-container">
                   <img src="${qrDataUrl}" class="qr-img" />
@@ -1580,18 +1601,53 @@ const App = {
   // ==========================================================================
   // 🎨 PORTAL DE OPINIÓN CLIENTE (OpinionPortal) - Móvil-First Standalone View
   // ==========================================================================
-  renderOpinionPortal(locationId) {
-    const loc = this.State.locations.find(l => l.id === locationId);
+  async renderOpinionPortal(locationId) {
+    let loc = this.State.locations.find(l => l.id === locationId);
+    
+    // Si no está en estado (ej: cliente entra directo por URL), lo buscamos en Supabase
+    if (!loc && supabaseClient) {
+      const { data, error } = await supabaseClient.from('locations').select('*').eq('id', locationId).single();
+      if (data) {
+        loc = {
+          id: data.id,
+          userId: data.tenant_id,
+          name: data.name,
+          address: data.address,
+          mapsUrl: data.maps_url || '',
+          status: data.status
+        };
+        this.State.locations.push(loc);
+      }
+    }
+
     if (!loc) {
       document.body.innerHTML = `<div style="padding:40px; text-align:center;"><h2>Sucursal no encontrada o inactiva</h2></div>`;
       return;
     }
 
     // Buscar configuración de diseño del comercio (Tenant) dueño de este local
-    const tenant = this.State.users.find(u => u.id === loc.userId) || { logo: '🏪', accentColor: '#4F46E5', bgColor: '#ffffff', title: 'Portal de Opinión' };
+    let tenant = this.State.users.find(u => u.id === loc.userId);
+    
+    // Si no tenemos al tenant en el estado, lo buscamos en Supabase
+    if (!tenant && supabaseClient) {
+      const { data, error } = await supabaseClient.from('profiles').select('*').eq('id', loc.userId).single();
+      if (data) {
+        tenant = {
+          id: data.id,
+          businessName: data.business_name,
+          logo: data.logo || '🏪',
+          accentColor: data.accent_color || '#6366f1',
+          bgColor: data.bg_color || '#ffffff',
+          title: data.portal_title || `Opiniones de ${data.business_name}`
+        };
+        this.State.users.push(tenant);
+      }
+    }
 
-    // El logo de la sucursal tiene prioridad sobre el del perfil general
-    const displayLogo = loc.logo || tenant.logo || '🏪';
+    if (!tenant) tenant = { logo: '🏪', accentColor: '#4F46E5', bgColor: '#ffffff', title: 'Portal de Opinión' };
+
+    // El logo ahora es solo el del perfil del cliente
+    const displayLogo = tenant.logo || '🏪';
 
     this.State.visits += 1; 
     this.addLog('GET', `Cliente final accedió al portal de: "${loc.name}" (Visitas: ${this.State.visits})`);
