@@ -67,6 +67,7 @@ CREATE TABLE public.locations (
   address TEXT NOT NULL,
   maps_url TEXT NOT NULL,
   phone TEXT,
+  logo TEXT, -- Nueva columna para logo por sucursal
   status TEXT DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
   created_at TIMESTAMPTZ DEFAULT NOW()
 );

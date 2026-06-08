@@ -169,6 +169,7 @@ const App = {
         name: l.name,
         address: l.address,
         mapsUrl: l.maps_url || '',
+        logo: l.logo || '', // Cargar logo de la sucursal
         status: l.status
       }));
 
@@ -1589,6 +1590,9 @@ const App = {
     // Buscar configuración de diseño del comercio (Tenant) dueño de este local
     const tenant = this.State.users.find(u => u.id === loc.userId) || { logo: '🏪', accentColor: '#4F46E5', bgColor: '#ffffff', title: 'Portal de Opinión' };
 
+    // El logo de la sucursal tiene prioridad sobre el del perfil general
+    const displayLogo = loc.logo || tenant.logo || '🏪';
+
     this.State.visits += 1; 
     this.addLog('GET', `Cliente final accedió al portal de: "${loc.name}" (Visitas: ${this.State.visits})`);
 
@@ -1596,12 +1600,14 @@ const App = {
     if (!viewContainer) return;
 
     viewContainer.innerHTML = `
-      <div class="portal-container" style="background-color: ${tenant.bgColor || '#f3f4f6'}; min-height: 100vh;">
-        <div class="card" style="box-shadow: var(--shadow-md); border-radius: var(--radius-lg); padding: 32px 20px; border-top: 6px solid ${tenant.accentColor || 'var(--color-brand)'}; background-color: white;">
+      <div class="portal-container" style="background-color: ${tenant.bgColor || '#ffffff'} !important; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 20px;">
+        <div class="card" style="box-shadow: var(--shadow-md); border-radius: var(--radius-lg); padding: 32px 20px; border-top: 6px solid ${tenant.accentColor || 'var(--color-brand)'}; background-color: white; width: 100%; max-width: 450px;">
           
           <div class="portal-brand">
             <div class="portal-logo-container" style="border-color: ${tenant.accentColor || 'var(--border-color)'}">
-              <div style="font-size: 2.2rem;">${tenant.logo}</div>
+              <div style="font-size: 2.2rem; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 50%;">
+                ${displayLogo.startsWith('http') ? `<img src="${displayLogo}" style="width:100%; height:100%; object-fit:cover;">` : displayLogo}
+              </div>
             </div>
             <h2 class="portal-title">${tenant.title}</h2>
             <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px; font-weight:600;">${loc.name}</div>
