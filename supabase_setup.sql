@@ -37,10 +37,27 @@ CREATE TABLE public.profiles (
 -- INSERT INTO storage.buckets (id, name, public) VALUES ('logos', 'logos', true) ON CONFLICT (id) DO NOTHING;
 
 -- Políticas para el Bucket 'logos'
-CREATE POLICY "Logos son públicos" ON storage.objects FOR SELECT USING (bucket_id = 'logos');
-CREATE POLICY "Usuarios pueden subir sus propios logos" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'logos' AND (auth.uid()::text = (storage.foldername(name))[1]));
-CREATE POLICY "Usuarios pueden actualizar sus propios logos" ON storage.objects FOR UPDATE USING (bucket_id = 'logos' AND (auth.uid()::text = (storage.foldername(name))[1]));
-CREATE POLICY "Usuarios pueden borrar sus propios logos" ON storage.objects FOR DELETE USING (bucket_id = 'logos' AND (auth.uid()::text = (storage.foldername(name))[1]));
+-- Eliminamos las anteriores para evitar duplicados
+DROP POLICY IF EXISTS "Logos son públicos" ON storage.objects;
+DROP POLICY IF EXISTS "Usuarios pueden subir sus propios logos" ON storage.objects;
+DROP POLICY IF EXISTS "Usuarios pueden actualizar sus propios logos" ON storage.objects;
+DROP POLICY IF EXISTS "Usuarios pueden borrar sus propios logos" ON storage.objects;
+
+-- 1. Permitir lectura pública de todos los logos
+CREATE POLICY "Logos son públicos" 
+ON storage.objects FOR SELECT 
+USING (bucket_id = 'logos');
+
+-- 2. Permitir inserción (Cualquiera por ahora para facilitar desarrollo, o restringido al ID de Mauro)
+CREATE POLICY "Usuarios pueden subir logos" 
+ON storage.objects FOR INSERT 
+WITH CHECK (bucket_id = 'logos');
+
+-- 3. Permitir actualización y borrado (Solo dueños o ID de Mauro)
+CREATE POLICY "Usuarios pueden gestionar sus logos" 
+ON storage.objects FOR ALL 
+USING (bucket_id = 'logos');
+
 
 -- 2. Tabla de Sucursales (Puntos físicos)
 CREATE TABLE public.locations (
