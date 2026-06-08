@@ -1091,6 +1091,27 @@ const App = {
       // 1. Si el logo es una imagen nueva (base64), subirla a Supabase Storage
       if (logoBase64.startsWith('data:image')) {
         try {
+          // --- NUEVA LÓGICA: Borrar logo anterior si existe ---
+          if (user.logo && user.logo.includes('/storage/v1/object/')) {
+            try {
+              // Extraer el path del archivo de la URL firmada o pública
+              // Las URLs de Supabase suelen tener el formato: .../logos/public/ID_USER/file.ext o con tokens
+              // Intentamos extraer la parte relativa al bucket
+              const urlParts = user.logo.split('/logos/');
+              if (urlParts.length > 1) {
+                let filePath = urlParts[1].split('?')[0]; // Quitar parámetros de firma
+                // Limpiar posibles prefijos como 'public/' o 'sign/' si existen en la URL
+                filePath = filePath.replace(/^(public\/|sign\/)/, '');
+                
+                await supabaseClient.storage.from('logos').remove([filePath]);
+                this.addLog('SYSTEM', `Logo anterior eliminado para limpieza: ${filePath}`);
+              }
+            } catch (err) {
+              console.warn("No se pudo borrar el logo anterior, procediendo con la subida:", err);
+            }
+          }
+          // ---------------------------------------------------
+
           const fileExt = logoBase64.split(';')[0].split('/')[1];
           const fileName = `${user.id}/logo_${Date.now()}.${fileExt}`;
           
@@ -1108,16 +1129,20 @@ const App = {
 
           if (uploadError) throw uploadError;
 
-          // Obtener URL pública
-          const { data: { publicUrl } } = supabaseClient
+          // Obtener URL firmada de larga duración (10 años)
+          const { data: signedData, error: signedError } = await supabaseClient
             .storage
             .from('logos')
-            .getPublicUrl(fileName);
+            .createSignedUrl(fileName, 315360000); 
           
-          finalLogoUrl = publicUrl;
+          if (signedError) throw signedError;
+          finalLogoUrl = signedData.signedUrl;
         } catch (err) {
-          console.error("Error subiendo logo:", err);
-          alert("Error al subir el logo al servidor: " + err.message);
+          console.error("Error gestionando logo:", err);
+          alert("Error al gestionar el logo en el servidor: " + err.message);
+          return;
+        }
+      }
           return;
         }
       }
