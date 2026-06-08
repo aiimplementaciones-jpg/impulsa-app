@@ -66,7 +66,7 @@ const App = {
     locations: [],      // Locales registrados
     leads: [],          // Reseñas negativas capturadas
     proxyLogs: [],      // Logs del Servidor seguro /api/support
-    visits: 184         // Semilla global de visitas
+    visits: 0           // Semilla global de visitas (Reset a 0 para datos reales)
   },
 
   // Límites de locales por plan
@@ -838,9 +838,10 @@ const App = {
     const userLocIds = userLocations.map(l => l.id);
     const userLeads = this.State.leads.filter(lead => userLocIds.includes(lead.locationId));
 
-    // Métricas rápidas
-    const userVisits = this.State.visits; // Simulado
+    // Métricas reales
     const totalLeads = userLeads.length;
+    // Las visitas son 0 a menos que haya leads (mínimo real detectable)
+    const userVisits = Math.max(this.State.visits, totalLeads); 
     const conversionRate = userVisits > 0 ? Math.round(((userVisits - totalLeads) / userVisits) * 100) : 100;
     const avgRating = totalLeads > 0 
       ? (userLeads.reduce((acc, curr) => acc + curr.rating, 0) / totalLeads).toFixed(1)
@@ -859,7 +860,7 @@ const App = {
       <!-- Métricas del Negocio -->
       <div class="metrics-row">
         <div class="metric-card">
-          <span class="metric-label" data-i18n="dash_total_reviews">Visitas al Portal</span>
+          <span class="metric-label" data-i18n="dash_total_reviews">Visitas Detectadas</span>
           <div class="metric-value">${userVisits}</div>
         </div>
         <div class="metric-card">
@@ -879,29 +880,21 @@ const App = {
       </div>
 
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
-        <!-- Datos de Contacto para Informes -->
+        <!-- Datos del Perfil -->
         <div class="card">
           <h3 class="card-title"><i data-lucide="user"></i> Datos del Perfil y Contacto</h3>
           <form id="contact-data-form" style="margin-top:16px; display:flex; flex-direction:column; gap:12px;">
             <div class="form-group">
               <label class="form-label">Nombre del Negocio</label>
-              <input type="text" class="form-control" id="contact-business" value="${user.businessName || ''}" placeholder="Ej. Mi Cafetería">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Nombre del Responsable</label>
-              <input type="text" class="form-control" id="contact-name" value="${user.fullName || ''}" placeholder="Ej. Juan Pérez">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Correo Electrónico</label>
-              <input type="email" class="form-control" id="contact-email" value="${user.email || ''}" placeholder="ejemplo@correo.com">
+              <input type="text" class="form-control" id="contact-business" value="${user.businessName || ''}">
             </div>
             <div class="form-group">
               <label class="form-label">WhatsApp para Reportes</label>
-              <input type="tel" class="form-control" id="contact-whatsapp" value="${user.whatsapp || ''}" placeholder="Ej. 573105551234">
+              <input type="tel" class="form-control" id="contact-whatsapp" value="${user.whatsapp || ''}">
             </div>
             <div class="form-group">
               <label class="form-label">Dirección (Local)</label>
-              <input type="text" class="form-control" id="contact-address" value="${user.address || ''}" placeholder="Ej. Calle 123 #45-67">
+              <input type="text" class="form-control" id="contact-address" value="${user.address || ''}">
             </div>
             <button type="submit" class="btn btn-secondary">
               <i data-lucide="save"></i> Actualizar Perfil
@@ -913,79 +906,93 @@ const App = {
         <div class="card">
           <h3 class="card-title"><i data-lucide="qr-code"></i> Mi Enlace de Calificación</h3>
           <div style="margin-top: 16px; text-align: center;">
-            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 12px;">Usa este enlace en tus redes sociales o genera QRs para tus mesas.</p>
+            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 12px;">Usa este enlace en tus redes sociales.</p>
             <div style="background: var(--bg-primary); padding: 12px; border-radius: 8px; border: 1px dashed var(--border-color); font-family: monospace; font-size: 0.8rem; margin-bottom: 16px; word-break: break-all;">
-              ${window.location.origin}/#portal?loc=${userLocations[0]?.id || 'demo'}
+              ${window.location.origin}/#portal?id=${userLocations[0]?.id || 'demo'}
             </div>
             <div style="display: flex; gap: 8px; justify-content: center;">
-              <button class="btn btn-primary" onclick="navigator.clipboard.writeText('${window.location.origin}/#portal?loc=${userLocations[0]?.id || 'demo'}'); alert('Enlace copiado al portapapeles');">
-                <i data-lucide="copy"></i> Copiar Enlace
+              <button class="btn btn-primary" onclick="navigator.clipboard.writeText('${window.location.origin}/#portal?id=${userLocations[0]?.id || 'demo'}'); alert('Enlace copiado');">
+                <i data-lucide="copy"></i> Copiar
               </button>
               <a href="#locations" class="btn btn-secondary">
-                <i data-lucide="download"></i> Descargar QR
+                <i data-lucide="map-pin"></i> Ver Sedes
               </a>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Personalización del Portal de Calificación -->
-      <div class="card">
-        <h3 class="card-title"><i data-lucide="palette"></i> <span data-i18n="dash_portal_config_card">Personalizar mi Portal de Opiniones</span></h3>
-        <form id="portal-config-form" style="margin-top:16px; display:flex; flex-direction:column; gap:12px;">
-          <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px;">
-            <div class="form-group" style="margin-bottom:0;">
-              <label class="form-label" data-i18n="dash_portal_logo_label">Emoji / Logotipo</label>
-              <select class="form-control" id="portal-logo">
-                <option value="🏪" ${user.logo === '🏪' ? 'selected' : ''}>🏪 Tienda</option>
-                <option value="☕" ${user.logo === '☕' ? 'selected' : ''}>☕ Café</option>
-                <option value="🍔" ${user.logo === '🍔' ? 'selected' : ''}>🍔 Hamburguesería</option>
-                <option value="🍕" ${user.logo === '🍕' ? 'selected' : ''}>🍕 Pizzería</option>
-                <option value="🍦" ${user.logo === '🍦' ? 'selected' : ''}>🍦 Heladería</option>
-                <option value="🚗" ${user.logo === '🚗' ? 'selected' : ''}>🚗 Autos</option>
-                <option value="🛍️" ${user.logo === '🛍️' ? 'selected' : ''}>🛍️ Shopping</option>
-                <option value="🚀" ${user.logo === '🚀' ? 'selected' : ''}>🚀 Cohete</option>
-              </select>
+      <!-- Personalización con Simulador en Vivo -->
+      <div style="display: grid; grid-template-columns: 1fr 320px; gap: 20px; margin-bottom: 24px;">
+        <div class="card">
+          <h3 class="card-title"><i data-lucide="palette"></i> Personalizar mi Portal</h3>
+          <form id="portal-config-form" style="margin-top:16px; display:flex; flex-direction:column; gap:12px;">
+            <div class="form-group">
+              <label class="form-label">Logotipo del Portal</label>
+              <div style="display: flex; gap: 10px; align-items: center;">
+                <div id="logo-preview-box" style="width: 50px; height: 50px; border: 1px solid var(--border-color); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; background: white; overflow: hidden;">
+                  ${user.logo && user.logo.startsWith('http') ? `<img src="${user.logo}" style="width:100%; height:100%; object-fit:cover;">` : user.logo || '🏪'}
+                </div>
+                <input type="file" id="logo-upload" accept="image/*" style="display:none;">
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('logo-upload').click()">
+                  <i data-lucide="upload"></i> Subir Logo
+                </button>
+                <input type="text" id="portal-logo-val" value="${user.logo || '🏪'}" style="display:none;">
+              </div>
             </div>
-            <div class="form-group" style="margin-bottom:0;">
+            <div class="form-group">
               <label class="form-label">Color de Marca</label>
-              <input type="color" class="form-control" id="portal-color" value="${user.accentColor || '#007bff'}" style="height: 38px; padding: 2px;">
+              <input type="color" class="form-control" id="portal-color" value="${user.accentColor || '#6366f1'}" style="height: 40px; padding: 2px;">
             </div>
-            <div class="form-group" style="margin-bottom:0;">
-              <label class="form-label" data-i18n="dash_portal_title_label">Título del Portal</label>
-              <input type="text" class="form-control" id="portal-title" required value="${user.title || ''}" placeholder="Opiniones Comercio">
+            <div class="form-group">
+              <label class="form-label">Título del Portal</label>
+              <input type="text" class="form-control" id="portal-title" required value="${user.title || ''}" placeholder="Ej. Opiniones Burger Master">
+            </div>
+            <button type="submit" class="btn btn-accent" style="margin-top:6px;">
+              <i data-lucide="save"></i> Guardar Cambios de Diseño
+            </button>
+          </form>
+        </div>
+
+        <!-- Simulador de Celular en Tiempo Real -->
+        <div class="card" style="padding: 20px; display: flex; flex-direction: column; align-items: center;">
+          <h4 style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 12px; text-transform: uppercase;">Vista Previa</h4>
+          <div class="phone-simulator-dashboard" style="width: 200px; height: 400px; background: #1a1a1a; border-radius: 30px; border: 6px solid #333; position: relative; overflow: hidden; box-shadow: var(--shadow-lg);">
+            <div style="width: 60px; height: 12px; background: #333; position: absolute; top: 0; left: 50%; transform: translateX(-50%); border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; z-index: 2;"></div>
+            <div id="sim-screen" style="width: 100%; height: 100%; background: white; display: flex; flex-direction: column; align-items: center; padding: 30px 10px; text-align: center; gap: 10px;">
+              <div id="sim-logo" style="width: 50px; height: 50px; border-radius: 50%; border: 2px solid #6366f1; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; overflow:hidden;">
+                ${user.logo && user.logo.startsWith('http') ? `<img src="${user.logo}" style="width:100%; height:100%; object-fit:cover;">` : user.logo || '🏪'}
+              </div>
+              <h5 id="sim-title" style="font-size: 0.8rem; margin: 0; color: #333;">${user.title || 'Mi Negocio'}</h5>
+              <p style="font-size: 0.5rem; color: #666;">¿Cómo fue tu experiencia hoy?</p>
+              <div style="display: flex; gap: 2px;">
+                ${Array.from({ length: 5 }).map(() => `<i data-lucide="star" style="width: 12px; height: 12px; color: #FFD700; fill: #FFD700;"></i>`).join('')}
+              </div>
+              <div id="sim-button" style="margin-top: auto; width: 100%; background: #6366f1; color: white; padding: 8px; border-radius: 6px; font-size: 0.6rem; font-weight: 700;">
+                ENVIAR OPINIÓN
+              </div>
             </div>
           </div>
-          <button type="submit" class="btn btn-accent" style="margin-top:6px; height:42px;">
-            <i data-lucide="save"></i> Guardar Cambios de Diseño
-          </button>
-        </form>
+        </div>
       </div>
 
-      <!-- Reseñas Recientes a Mitigar -->
+      <!-- Últimos Casos -->
       <div class="card">
-        <h3 class="card-title"><i data-lucide="alert-triangle" style="color: var(--color-accent)"></i> <span data-i18n="dash_recent_leads">Últimos Casos a Mitigar</span></h3>
+        <h3 class="card-title"><i data-lucide="alert-triangle" style="color: var(--color-accent)"></i> Casos Recientes (Reales)</h3>
         <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 16px;">
           ${userLeads.length === 0 ? `
-            <p style="text-align:center; font-size:0.88rem; color:var(--text-secondary);" data-i18n="noData">No hay leads pendientes.</p>
-          ` : userLeads.slice(-2).reverse().map(lead => `
-            <div style="padding: 14px; border-radius: var(--radius-md); background-color: var(--bg-primary); border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 6px;">
-              <div style="display: flex; justify-content: space-between; align-items: center;">
-                <strong style="font-size: 0.95rem;">${lead.clientName}</strong>
-                <div style="display: flex; gap: 2px;">
-                  ${Array.from({ length: 5 }).map((_, i) => `
-                    <i data-lucide="star" style="width: 14px; height: 14px; ${i < lead.rating ? 'fill: #FFD700; stroke: #FFD700;' : 'stroke: var(--text-secondary);'}"></i>
-                  `).join('')}
-                </div>
+            <p style="text-align:center; font-size:0.88rem; color:var(--text-secondary);">No se han detectado críticas negativas aún. ¡Buen trabajo!</p>
+          ` : userLeads.slice(-3).reverse().map(lead => `
+            <div style="padding: 14px; border-radius: var(--radius-md); background-color: var(--bg-primary); border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <strong style="font-size: 0.9rem;">${lead.clientName}</strong>
+                <div style="font-size: 0.7rem; color: var(--text-secondary);">${new Date(lead.date).toLocaleDateString()} - ${lead.locationName}</div>
+                <p style="font-size: 0.8rem; margin-top: 4px;">"${lead.comment}"</p>
               </div>
-              <div style="font-size: 0.75rem; color: var(--text-secondary); display: flex; align-items: center; gap: 4px;">
-                <i data-lucide="map-pin" style="width: 12px; height: 12px;"></i> ${lead.locationName} | 
-                <i data-lucide="calendar" style="width: 12px; height: 12px;"></i> ${new Date(lead.date).toLocaleDateString()}
-              </div>
-              <p style="font-size: 0.85rem; font-style: italic; margin-top: 4px; color: var(--text-primary);">"${lead.comment}"</p>
-              <div style="margin-top: 8px;">
-                <a href="https://wa.me/${lead.clientPhone}?text=Hola+${encodeURIComponent(lead.clientName)},+lamentamos+tu+experiencia+en+${encodeURIComponent(lead.locationName)}.+Quisiéramos+conversar..." target="_blank" class="btn btn-primary" style="padding: 6px 12px; font-size: 0.8rem; width: auto; display: inline-flex; border-radius: 8px; background: linear-gradient(135deg, #25D366, #128C7E); box-shadow: none;">
-                  <i data-lucide="phone" style="width: 14px; height: 14px;"></i> <span data-i18n="admin_wa_link">Contactar</span>
+              <div style="text-align: right;">
+                <div style="margin-bottom: 8px;">${'★'.repeat(lead.rating)}${'☆'.repeat(5 - lead.rating)}</div>
+                <a href="https://wa.me/${lead.clientPhone}" target="_blank" class="btn btn-primary" style="padding: 5px 10px; font-size: 0.7rem;">
+                  <i data-lucide="phone"></i> Contactar
                 </a>
               </div>
             </div>
@@ -994,13 +1001,44 @@ const App = {
       </div>
     `;
 
-    // Vincular envío de configuraciones del portal de opinión
+    // Lógica del simulador en vivo
+    const titleInput = document.getElementById('portal-title');
+    const colorInput = document.getElementById('portal-color');
+    const simTitle = document.getElementById('sim-title');
+    const simButton = document.getElementById('sim-button');
+    const simLogoBox = document.getElementById('sim-logo');
+
+    titleInput.addEventListener('input', (e) => simTitle.textContent = e.target.value || 'Mi Negocio');
+    colorInput.addEventListener('input', (e) => {
+      simButton.style.backgroundColor = e.target.value;
+      simLogoBox.style.borderColor = e.target.value;
+    });
+
+    // Lógica de carga de logo
+    const logoUpload = document.getElementById('logo-upload');
+    const logoPreview = document.getElementById('logo-preview-box');
+    const logoVal = document.getElementById('portal-logo-val');
+
+    logoUpload.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const base64 = event.target.result;
+          logoPreview.innerHTML = `<img src="${base64}" style="width:100%; height:100%; object-fit:cover;">`;
+          simLogoBox.innerHTML = `<img src="${base64}" style="width:100%; height:100%; object-fit:cover;">`;
+          logoVal.value = base64; // Guardamos el base64 temporalmente
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // Vincular envío de configuraciones
     document.getElementById('portal-config-form').addEventListener('submit', (e) => {
       e.preventDefault();
       this.handleSavePortalConfig();
     });
 
-    // Vincular envío de datos de contacto
     const contactForm = document.getElementById('contact-data-form');
     if (contactForm) {
       contactForm.addEventListener('submit', (e) => {
@@ -1010,10 +1048,13 @@ const App = {
     }
 
     lucide.createIcons();
+    // Aplicar color inicial al simulador
+    simButton.style.backgroundColor = colorInput.value;
+    simLogoBox.style.borderColor = colorInput.value;
   },
 
   async handleSavePortalConfig() {
-    const logo = document.getElementById('portal-logo').value;
+    const logo = document.getElementById('portal-logo-val').value;
     const title = document.getElementById('portal-title').value;
     const accentColor = document.getElementById('portal-color').value;
 
@@ -1027,7 +1068,6 @@ const App = {
       const { error } = await supabaseClient
         .from('profiles')
         .update({
-          business_name: user.businessName,
           logo: logo,
           accent_color: accentColor,
           portal_title: title
@@ -1039,64 +1079,9 @@ const App = {
         return;
       }
       await this.syncFromSupabase();
-    } else {
-      // Actualizar base de datos local
-      const idx = this.State.users.findIndex(u => u.id === user.id);
-      if (idx !== -1) {
-        this.State.users[idx] = user;
-        this.saveUsers();
-      }
     }
-
-    this.addLog('POST', `Portal personalizado por el comercio "${user.businessName}" (/api/portal/config)`);
-    alert(this.t('dash_portal_save_success'));
-
-    // Recargar dashboard
-    this.renderPageContent('dashboard');
-  },
-
-  async handleSaveContactData() {
-    const businessName = document.getElementById('contact-business').value;
-    const fullName = document.getElementById('contact-name').value;
-    const email = document.getElementById('contact-email').value;
-    const whatsapp = document.getElementById('contact-whatsapp').value;
-    const address = document.getElementById('contact-address').value;
-
-    const user = this.State.currentUser;
-    user.businessName = businessName;
-    user.fullName = fullName;
-    user.email = email;
-    user.whatsapp = whatsapp;
-    user.address = address;
-
-    if (supabaseClient) {
-      this.addLog('POST', `Actualizando perfil en Supabase para: ${businessName}`);
-      const { error } = await supabaseClient
-        .from('profiles')
-        .update({
-          business_name: businessName,
-          full_name: fullName,
-          email: email,
-          whatsapp: whatsapp,
-          address: address
-        })
-        .eq('id', user.id);
-
-      if (error) {
-        alert("Error al actualizar perfil en Supabase: " + error.message);
-        return;
-      }
-      await this.syncFromSupabase();
-    } else {
-      const idx = this.State.users.findIndex(u => u.id === user.id);
-      if (idx !== -1) {
-        this.State.users[idx] = user;
-        this.saveUsers();
-      }
-    }
-
-    this.addLog('POST', `Datos de contacto actualizados para: ${user.businessName}`);
-    alert("Perfil actualizado correctamente.");
+    
+    alert("Diseño del portal actualizado correctamente.");
     this.renderPageContent('dashboard');
   },
 
