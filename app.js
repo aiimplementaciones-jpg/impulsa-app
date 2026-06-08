@@ -1333,40 +1333,31 @@ const App = {
     }
   },
 
-  // Generador de Códigos QR de Alta Definición usando QRCode.js
+  // Generador de Códigos QR de Alta Definición usando qrcode.min.js
   generateQRCodeCanvas(text, callback) {
     const holder = document.getElementById('hidden-qr-canvas-holder');
     if (!holder) return;
     holder.innerHTML = ''; 
 
-    const container = document.createElement('div');
-    holder.appendChild(container);
+    const canvas = document.createElement('canvas');
+    holder.appendChild(canvas);
 
-    new QRCode(container, {
-      text: text,
-      width: 1024, 
-      height: 1024,
-      colorDark: "#000000",
-      colorLight: "#ffffff",
-      correctLevel: QRCode.CorrectLevel.H
-    });
-
-    setTimeout(() => {
-      const canvas = container.querySelector('canvas');
-      if (canvas) {
-        callback(canvas);
-      } else {
-        const img = container.querySelector('img');
-        if (img) {
-          const tempCanvas = document.createElement('canvas');
-          tempCanvas.width = 1024;
-          tempCanvas.height = 1024;
-          const ctx = tempCanvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, 1024, 1024);
-          callback(tempCanvas);
-        }
+    // La librería en index.html es qrcode.min.js (npm qrcode), que usa QRCode.toCanvas
+    QRCode.toCanvas(canvas, text, {
+      width: 1024,
+      margin: 2,
+      color: {
+        dark: '#000000',
+        light: '#ffffff'
+      },
+      errorCorrectionLevel: 'H'
+    }, (error) => {
+      if (error) {
+        console.error("Error generando QR: ", error);
+        return;
       }
-    }, 200);
+      callback(canvas);
+    });
   },
 
   downloadQRCode(id, name) {
@@ -1612,16 +1603,21 @@ const App = {
 
     if (supabaseClient) {
       this.addLog('POST', `[Proxy Secure] Enviando lead de soporte a Supabase para: ${nameInput.value}`);
-      const { error } = await supabaseClient.from('leads').insert([{
+      
+      const leadData = {
         tenant_id: tenantId,
         location_id: locationId,
         rating: rating,
         client_name: nameInput.value,
         client_phone: cleanPhone,
-        comment: commentInput.value
-      }]);
+        comment: commentInput.value,
+        status: 'pending'
+      };
+
+      const { error } = await supabaseClient.from('leads').insert([leadData]);
 
       if (error) {
+        console.error("Error Supabase Leads:", error);
         alert("Error al enviar comentarios: " + error.message);
         return;
       }
