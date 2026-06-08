@@ -1,9 +1,15 @@
--- Limpiar tablas existentes (CUIDADO: Esto borra datos actuales)
+-- ==========================================================
+-- 🚀 IMPULSA: ESQUEMA DEFINITIVO DE BASE DE DATOS
+-- ==========================================================
+-- Este script recrea toda la estructura, eliminando datos previos.
+
+-- 0. Limpieza Total
 DROP TABLE IF EXISTS public.leads;
 DROP TABLE IF EXISTS public.locations;
 DROP TABLE IF EXISTS public.profiles;
 
--- 1. Tabla de Perfiles (Sin restricción estricta a auth.users para desarrollo)
+-- 1. Tabla de Perfiles (Cuentas de Comercio)
+-- Se quita REFERENCES auth.users para máxima compatibilidad en desarrollo
 CREATE TABLE public.profiles (
   id UUID PRIMARY KEY,
   business_name TEXT,
@@ -20,7 +26,7 @@ CREATE TABLE public.profiles (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 2. Tabla de Sucursales
+-- 2. Tabla de Sucursales (Puntos físicos)
 CREATE TABLE public.locations (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   tenant_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
@@ -32,7 +38,7 @@ CREATE TABLE public.locations (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 3. Tabla de Leads (Reseñas interceptadas)
+-- 3. Tabla de Leads (Opiniones/Soporte interceptado)
 CREATE TABLE public.leads (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   tenant_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
@@ -46,7 +52,7 @@ CREATE TABLE public.leads (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 4. Funciones y Triggers de Automatización
+-- 4. Automatización de Perfil (Solo para usuarios reales de Supabase Auth)
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger AS $$
 BEGIN
@@ -56,7 +62,8 @@ BEGIN
     new.raw_user_meta_data->>'full_name', 
     new.email,
     new.raw_user_meta_data->>'business_name'
-  );
+  )
+  ON CONFLICT (id) DO NOTHING;
   RETURN new;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -65,24 +72,31 @@ CREATE OR REPLACE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
 
--- 5. Seguridad de Nivel de Fila (RLS)
+-- 5. Configuración de Seguridad (RLS)
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.locations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.leads ENABLE ROW LEVEL SECURITY;
 
--- Políticas para Locations
-CREATE POLICY "Tenants can view their own locations" ON public.locations FOR SELECT USING (auth.uid() = tenant_id OR tenant_id = '00000000-0000-0000-0000-000000000001');
-CREATE POLICY "Tenants can insert their own locations" ON public.locations FOR INSERT WITH CHECK (auth.uid() = tenant_id OR tenant_id = '00000000-0000-0000-0000-000000000001');
-CREATE POLICY "Tenants can update their own locations" ON public.locations FOR UPDATE USING (auth.uid() = tenant_id OR tenant_id = '00000000-0000-0000-0000-000000000001');
+-- 🛡️ POLÍTICAS PARA PROFILES
+-- El dueño puede ver y editar su propio perfil.
+-- Se permite acceso al ID de desarrollo actual.
+CREATE POLICY "Permitir gestión de perfil propio" ON public.profiles
+  FOR ALL USING (auth.uid() = id OR id = '36d917a3-f764-4afe-8c87-e1db8f0f1731');
 
--- Políticas para Profiles (también actualizar para el bypass)
-DROP POLICY IF EXISTS "Tenants can view their own profile" ON public.profiles;
-DROP POLICY IF EXISTS "Tenants can update their own profile" ON public.profiles;
-DROP POLICY IF EXISTS "Tenants can insert their own profile" ON public.profiles;
-CREATE POLICY "Tenants can view their own profile" ON public.profiles FOR SELECT USING (auth.uid() = id OR id = '00000000-0000-0000-0000-000000000001');
-CREATE POLICY "Tenants can update their own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id OR id = '00000000-0000-0000-0000-000000000001');
-CREATE POLICY "Tenants can insert their own profile" ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id OR id = '00000000-0000-0000-0000-000000000001');
--- Políticas para Leads
-CREATE POLICY "Tenants can view their own leads" ON public.leads FOR SELECT USING (auth.uid() = tenant_id);
-CREATE POLICY "Anyone can insert leads" ON public.leads FOR INSERT WITH CHECK (true);
-CREATE POLICY "Tenants can update their own leads" ON public.leads FOR UPDATE USING (auth.uid() = tenant_id);
+-- 🛡️ POLÍTICAS PARA LOCATIONS
+-- El dueño gestiona sus locales.
+-- Lectura pública para que los clientes puedan ver el portal de opinión.
+CREATE POLICY "Dueños gestionan sus locales" ON public.locations
+  FOR ALL USING (auth.uid() = tenant_id OR tenant_id = '36d917a3-f764-4afe-8c87-e1db8f0f1731');
+
+CREATE POLICY "Lectura pública de locales para clientes" ON public.locations
+  FOR SELECT USING (true);
+
+-- 🛡️ POLÍTICAS PARA LEADS
+-- El dueño ve sus leads.
+-- Cualquiera puede insertar (el cliente final desde el portal).
+CREATE POLICY "Dueños ven sus leads" ON public.leads
+  FOR SELECT USING (auth.uid() = tenant_id OR tenant_id = '36d917a3-f764-4afe-8c87-e1db8f0f1731');
+
+CREATE POLICY "Inserción pública de leads para clientes" ON public.leads
+  FOR INSERT WITH CHECK (true);
