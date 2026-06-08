@@ -81,6 +81,14 @@ const App = {
     this.State.lang = Storage.getItem('impulsa_lang') || 'es';
     this.State.theme = Storage.getItem('impulsa_theme') || 'light';
 
+    // 🔐 RESTAURAR SESIÓN ACTIVA (Persistencia)
+    const activeUserId = Storage.getItem('impulsa_active_user');
+    if (activeUserId) {
+      // Si es el usuario de desarrollo o cualquier otro ID guardado, 
+      // lo pre-cargamos para evitar que el router nos saque al Login mientras sincronizamos.
+      this.State.currentUser = { id: activeUserId, businessName: '...' };
+    }
+
     if (supabaseClient) {
       this.addLog('SYSTEM', '🔌 Conectando a la base de datos de Supabase en la nube...');
       await this.syncFromSupabase();
@@ -89,12 +97,6 @@ const App = {
       this.State.users = [];
       this.State.locations = [];
       this.State.leads = [];
-      
-      // Restaurar sesión activa local si existe
-      const activeUserId = Storage.getItem('impulsa_active_user');
-      if (activeUserId) {
-        // En modo solo-Supabase, el usuario debe ser validado por syncFromSupabase
-      }
     }
 
     this.State.isSuperAdmin = Storage.getItem('impulsa_is_superadmin') === 'true';
@@ -629,12 +631,12 @@ const App = {
           
           <div class="form-group" style="margin-bottom:0;">
             <label class="form-label" data-i18n="auth_label_email">Correo Electrónico</label>
-            <input type="email" class="form-control" id="auth-email" required placeholder="ejemplo@comercio.com" value="${isLogin ? 'pete@coffee.com' : ''}">
+            <input type="email" class="form-control" id="auth-email" required placeholder="ejemplo@comercio.com" value="">
           </div>
 
           <div class="form-group" style="margin-bottom:0;">
             <label class="form-label" data-i18n="auth_label_pass">Contraseña</label>
-            <input type="password" class="form-control" id="auth-pass" required placeholder="••••••••" value="${isLogin ? '123' : ''}">
+            <input type="password" class="form-control" id="auth-pass" required placeholder="••••••••" value="">
           </div>
 
           <button type="submit" class="btn btn-primary" style="margin-top:8px; height:46px;">
@@ -1064,23 +1066,55 @@ const App = {
   },
 
   async handleSavePortalConfig() {
-    const logo = document.getElementById('portal-logo-val').value;
+    const logoBase64 = document.getElementById('portal-logo-val').value;
     const title = document.getElementById('portal-title').value;
     const accentColor = document.getElementById('portal-color').value;
     const bgColor = document.getElementById('portal-bg-color').value;
 
     const user = this.State.currentUser;
-    user.logo = logo;
-    user.title = title;
-    user.accentColor = accentColor;
-    user.bgColor = bgColor;
+    let finalLogoUrl = logoBase64;
 
     if (supabaseClient) {
       this.addLog('POST', `Guardando diseño del portal en Supabase para: ${user.businessName}`);
+
+      // 1. Si el logo es una imagen nueva (base64), subirla a Supabase Storage
+      if (logoBase64.startsWith('data:image')) {
+        try {
+          const fileExt = logoBase64.split(';')[0].split('/')[1];
+          const fileName = `${user.id}/logo_${Date.now()}.${fileExt}`;
+          
+          // Convertir base64 a Blob para subir
+          const base64Data = logoBase64.split(',')[1];
+          const blob = await (await fetch(logoBase64)).blob();
+
+          const { data: uploadData, error: uploadError } = await supabaseClient
+            .storage
+            .from('logos')
+            .upload(fileName, blob, {
+              contentType: `image/${fileExt}`,
+              upsert: true
+            });
+
+          if (uploadError) throw uploadError;
+
+          // Obtener URL pública
+          const { data: { publicUrl } } = supabaseClient
+            .storage
+            .from('logos')
+            .getPublicUrl(fileName);
+          
+          finalLogoUrl = publicUrl;
+        } catch (err) {
+          console.error("Error subiendo logo:", err);
+          alert("Error al subir el logo al servidor: " + err.message);
+          return;
+        }
+      }
+
       const { error } = await supabaseClient
         .from('profiles')
         .update({
-          logo: logo,
+          logo: finalLogoUrl,
           accent_color: accentColor,
           bg_color: bgColor,
           portal_title: title
@@ -1362,10 +1396,51 @@ const App = {
 
   downloadQRCode(id, name) {
     const portalUrl = `${window.location.origin}${window.location.pathname}#portal?id=${id}`;
-    this.addLog('GET', `Descargando QR para: "${name}"`);
+    const user = this.State.currentUser;
+    this.addLog('GET', `Generando QR HD para: "${name}"`);
 
     this.generateQRCodeCanvas(portalUrl, (canvas) => {
-      const image = canvas.toDataURL("image/png");
+      // Crear un canvas final con un diseño tipo tarjeta
+      const finalCanvas = document.createElement('canvas');
+      finalCanvas.width = 1200;
+      finalCanvas.height = 1600;
+      const ctx = finalCanvas.getContext('2d');
+
+      // Fondo
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, 1200, 1600);
+
+      // Cabecera con Degradado
+      const grad = ctx.createLinearGradient(0, 0, 1200, 0);
+      grad.addColorStop(0, user.accentColor || '#6366f1');
+      grad.addColorStop(1, '#4f46e5');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 1200, 300);
+
+      // Texto "IMPULSA" y Cohete
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 80px sans-serif';
+      ctx.fillText('🚀 IMPULSA', 100, 180);
+
+      // Nombre del Negocio
+      ctx.fillStyle = '#1f2937';
+      ctx.font = 'bold 90px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(user.businessName.toUpperCase(), 600, 480);
+      
+      ctx.font = '60px sans-serif';
+      ctx.fillStyle = '#6b7280';
+      ctx.fillText(name, 600, 580);
+
+      // Dibujar el QR
+      ctx.drawImage(canvas, 100, 650, 1000, 1000);
+
+      // Pie de página
+      ctx.font = '50px sans-serif';
+      ctx.fillStyle = '#9ca3af';
+      ctx.fillText('¡Tu opinión nos ayuda a mejorar!', 600, 1500);
+
+      const image = finalCanvas.toDataURL("image/png");
       const link = document.createElement('a');
       link.download = `QR_IMPULSA_${name.replace(/\s+/g, '_')}.png`;
       link.href = image;
@@ -1375,71 +1450,123 @@ const App = {
 
   printQRCode(id, name) {
     const portalUrl = `${window.location.origin}${window.location.pathname}#portal?id=${id}`;
+    const user = this.State.currentUser;
+    
     this.generateQRCodeCanvas(portalUrl, (canvas) => {
       const qrDataUrl = canvas.toDataURL("image/png");
       const printWindow = window.open('', '_blank');
+      
+      const accentColor = user.accentColor || '#6366f1';
+      
       printWindow.document.write(`
         <html>
           <head>
-            <title>Imprimir Hablador - IMPULSA</title>
+            <title>Imprimir Hablador - ${user.businessName}</title>
+            <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;800&display=swap" rel="stylesheet">
             <style>
               body {
                 font-family: 'Outfit', sans-serif;
                 display: flex;
-                flex-direction: column;
                 align-items: center;
                 justify-content: center;
                 height: 100vh;
                 margin: 0;
+                background-color: #f9fafb;
+              }
+              .stand {
+                width: 450px;
+                background: white;
+                border-radius: 40px;
+                overflow: hidden;
+                box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15);
+                border: 1px solid #e5e7eb;
                 text-align: center;
               }
-              .card-frame {
-                border: 8px solid #6366f1;
-                padding: 40px;
-                border-radius: 24px;
-                max-width: 450px;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+              .header {
+                background: linear-gradient(135deg, ${accentColor}, #4f46e5);
+                padding: 40px 20px;
+                color: white;
               }
-              .logo {
-                font-size: 2.2rem;
+              .rocket {
+                font-size: 3rem;
+                margin-bottom: 10px;
+              }
+              .brand-name {
                 font-weight: 800;
-                background: linear-gradient(135deg, #6366f1, #0ea5e9);
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-                margin-bottom: 8px;
+                font-size: 1.5rem;
+                letter-spacing: 2px;
+                opacity: 0.9;
+              }
+              .content {
+                padding: 40px 30px;
+              }
+              .business-name {
+                font-weight: 800;
+                font-size: 2rem;
+                color: #111827;
+                margin-bottom: 5px;
+                text-transform: uppercase;
+              }
+              .location-name {
+                font-weight: 500;
+                font-size: 1.1rem;
+                color: #6b7280;
+                margin-bottom: 30px;
+              }
+              .qr-container {
+                padding: 20px;
+                background: white;
+                border-radius: 30px;
+                border: 2px dashed ${accentColor}44;
+                margin-bottom: 30px;
+                display: inline-block;
               }
               .qr-img {
-                width: 300px;
-                height: 300px;
-                margin: 24px 0;
+                width: 280px;
+                height: 280px;
+                display: block;
               }
-              .instructions {
-                font-size: 1.1rem;
-                font-weight: 600;
-                color: #333;
-                margin-bottom: 4px;
+              .cta-text {
+                font-weight: 700;
+                font-size: 1.4rem;
+                color: #111827;
+                margin-bottom: 10px;
               }
-              .sub-instructions {
-                font-size: 0.9rem;
-                color: #666;
+              .sub-text {
+                font-size: 1rem;
+                color: #6b7280;
+                line-height: 1.5;
+              }
+              .footer-decor {
+                height: 15px;
+                background: linear-gradient(90deg, ${accentColor}, #4f46e5, ${accentColor});
+              }
+              @media print {
+                body { background: white; }
+                .stand { box-shadow: none; border: 1px solid #eee; }
               }
             </style>
           </head>
           <body>
-            <div class="card-frame">
-              <div class="logo">🚀 IMPULSA</div>
-              <div style="font-weight: 700; font-size: 1.3rem;">${name}</div>
-              <img class="qr-img" src="${qrDataUrl}" alt="QR code" />
-              <div class="instructions">${this.State.lang === 'es' ? '¡Tu opinión nos ayuda a crecer!' : 'Your feedback helps us grow!'}</div>
-              <div class="sub-instructions">${this.State.lang === 'es' ? 'Escanea este código QR con tu celular y califica nuestro servicio.' : 'Scan this QR code with your mobile and rate our service.'}</div>
+            <div class="stand">
+              <div class="header">
+                <div class="rocket">🚀</div>
+                <div class="brand-name">IMPULSA</div>
+              </div>
+              <div class="content">
+                <div class="business-name">${user.businessName}</div>
+                <div class="location-name">${name}</div>
+                <div class="qr-container">
+                  <img src="${qrDataUrl}" class="qr-img" />
+                </div>
+                <div class="cta-text">¡Tu opinión nos ayuda a crecer!</div>
+                <div class="sub-text">Escanea este código con tu celular y cuéntanos cómo fue tu experiencia hoy.</div>
+              </div>
+              <div class="footer-decor"></div>
             </div>
             <script>
               window.onload = function() {
-                window.print();
-                setTimeout(function() { window.close(); }, 500);
+                setTimeout(function() { window.print(); window.close(); }, 500);
               };
             </script>
           </body>
