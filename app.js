@@ -85,108 +85,15 @@ const App = {
       this.addLog('SYSTEM', '🔌 Conectando a la base de datos de Supabase en la nube...');
       await this.syncFromSupabase();
     } else {
-      this.addLog('SYSTEM', '⚠️ Supabase no configurado. Utilizando base de datos local simulada (localStorage).');
+      this.addLog('SYSTEM', '⚠️ Supabase no configurado o inaccesible.');
+      this.State.users = [];
+      this.State.locations = [];
+      this.State.leads = [];
       
-      // 1. Cargar base de datos de comercios (Tenants) o sembrar semillas
-      const storedUsers = Storage.getItem('impulsa_users');
-      if (storedUsers) {
-        this.State.users = JSON.parse(storedUsers);
-      } else {
-        this.State.users = [
-          {
-            id: 'user_pete',
-            businessName: 'Pete\'s Coffee',
-            email: 'pete@coffee.com',
-            password: '123',
-            plan: 'free',
-            logo: '☕',
-            accentColor: '#4F46E5',
-            title: 'Opiniones Pete\'s Coffee'
-          },
-          {
-            id: 'user_burger',
-            businessName: 'Burger Town',
-            email: 'burger@town.com',
-            password: '123',
-            plan: 'pro',
-            logo: '🍔',
-            accentColor: '#F43F5E',
-            title: 'Burger Town Feedback'
-          }
-        ];
-        Storage.setItem('impulsa_users', JSON.stringify(this.State.users));
-      }
-
-      // 2. Cargar locales comerciales o sembrar semillas
-      const storedLocations = Storage.getItem('impulsa_locations');
-      if (storedLocations) {
-        this.State.locations = JSON.parse(storedLocations);
-      } else {
-        this.State.locations = [
-          {
-            id: 'loc_1',
-            userId: 'user_pete',
-            name: 'Pete\'s Laureles',
-            address: 'Av. Nutibara #38-12, Medellín',
-            mapsUrl: 'https://maps.google.com/?q=Laureles+Medellin',
-            status: 'active'
-          },
-          {
-            id: 'loc_2',
-            userId: 'user_pete',
-            name: 'Pete\'s Poblado',
-            address: 'Calle 10 #43A-30, Medellín',
-            mapsUrl: 'https://maps.google.com/?q=El+Poblado+Medellin',
-            status: 'inactive'
-          },
-          {
-            id: 'loc_3',
-            userId: 'user_burger',
-            name: 'Burger Centro',
-            address: 'Av. Oriental #48-12, Medellín',
-            mapsUrl: 'https://maps.google.com/?q=Centro+Medellin',
-            status: 'active'
-          }
-        ];
-        Storage.setItem('impulsa_locations', JSON.stringify(this.State.locations));
-      }
-
-      // 3. Cargar leads de soporte o sembrar semillas
-      const storedLeads = Storage.getItem('impulsa_leads');
-      if (storedLeads) {
-        this.State.leads = JSON.parse(storedLeads);
-      } else {
-        this.State.leads = [
-          {
-            id: 'lead_1',
-            userId: 'user_pete',
-            date: '2026-05-28T14:32:00.000Z',
-            locationId: 'loc_1',
-            locationName: 'Pete\'s Laureles',
-            clientName: 'Carlos Mendoza',
-            clientPhone: '573105551234',
-            rating: 2,
-            comment: 'El capuchino estaba frío y tardaron 20 minutos en entregarlo. Pésimo servicio.'
-          },
-          {
-            id: 'lead_2',
-            userId: 'user_burger',
-            date: '2026-05-29T09:15:00.000Z',
-            locationId: 'loc_3',
-            locationName: 'Burger Centro',
-            clientName: 'Alejandra Gómez',
-            clientPhone: '573004445678',
-            rating: 1,
-            comment: 'La hamburguesa estaba cruda en el centro y las papas fritas muy grasosas.'
-          }
-        ];
-        Storage.setItem('impulsa_leads', JSON.stringify(this.State.leads));
-      }
-
       // Restaurar sesión activa local si existe
       const activeUserId = Storage.getItem('impulsa_active_user');
       if (activeUserId) {
-        this.State.currentUser = this.State.users.find(u => u.id === activeUserId) || null;
+        // En modo solo-Supabase, el usuario debe ser validado por syncFromSupabase
       }
     }
 
@@ -780,12 +687,11 @@ const App = {
       Storage.setItem('impulsa_active_user', devUserId);
       Storage.setItem('impulsa_is_superadmin', 'false');
       
-      // Simular sincronización básica con UUIDs válidos
-      this.State.locations = [
-        { id: devLocId, userId: devUserId, name: 'Sede Central Mauro', address: 'Calle Falsa 123', mapsUrl: 'https://maps.google.com', status: 'active' }
-      ];
+      // Simular sincronización básica con UUIDs válidos (Datos reales vendrán de syncFromSupabase)
+      this.State.locations = [];
       this.State.leads = [];
       
+      await this.syncFromSupabase();
       window.location.hash = '#dashboard';
       return;
     }
