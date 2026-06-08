@@ -1143,9 +1143,6 @@ const App = {
           return;
         }
       }
-          return;
-        }
-      }
 
       const { error } = await supabaseClient
         .from('profiles')
