@@ -65,6 +65,7 @@ const App = {
     users: [],          // Base de datos de Comercios (Tenants)
     locations: [],      // Locales registrados
     leads: [],          // Reseñas negativas capturadas
+    locationRequests: [], // Solicitudes de creación de sucursales
     proxyLogs: [],      // Logs del Servidor seguro /api/support
     visits: 0           // Semilla global de visitas (Reset a 0 para datos reales)
   },
@@ -228,6 +229,28 @@ const App = {
       }
 
       this.addLog('SYSTEM', `Sincronización con Supabase exitosa: ${this.State.locations.length} sucursales y ${this.State.leads.length} casos cargados.`);
+
+      // 5. Obtener solicitudes de sucursales (Location Requests)
+      let queryReq = supabaseClient.from('location_requests').select('*');
+      if (this.State.currentUser && !this.State.isSuperAdmin) {
+        queryReq = queryReq.eq('tenant_id', this.State.currentUser.id);
+      }
+      const { data: dbReqs } = await queryReq;
+      this.State.locationRequests = (dbReqs || []).map(r => ({
+        id: r.id,
+        tenantId: r.tenant_id,
+        businessName: r.business_name,
+        contactName: r.contact_name,
+        contactEmail: r.contact_email,
+        contactPhone: r.contact_phone,
+        locName: r.loc_name,
+        locAddress: r.loc_address,
+        locAccentColor: r.loc_accent_color,
+        locLogo: r.loc_logo,
+        status: r.status,
+        date: r.created_at
+      }));
+
     } catch (err) {
       this.addLog('SYSTEM', `Error de sincronización con Supabase: ${err.message}`);
     }
@@ -1285,14 +1308,9 @@ const App = {
         <div class="card" style="border: 1px dashed var(--color-brand); background-color: rgba(79, 70, 229, 0.02);">
           <h3 class="card-title" style="color: var(--color-brand);"><i data-lucide="sparkles"></i> ¿Lo hacemos por ti?</h3>
           <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 12px;">Si prefieres que nosotros configuremos tu sucursal con el mejor diseño, solicita una creación profesional.</p>
-          <form id="request-location-form" style="display: flex; flex-direction: column; gap: 10px;">
-            <div class="form-group" style="margin-bottom: 0;">
-              <input type="text" class="form-control" id="req-loc-details" required placeholder="Ej: Nueva sede en el Centro, Calle 50..." style="font-size: 0.85rem;">
-            </div>
-            <button type="submit" class="btn btn-secondary" style="border-color: var(--color-brand); color: var(--color-brand);">
-              <i data-lucide="send"></i> Solicitar Creación Profesional
-            </button>
-          </form>
+          <button id="open-req-modal" class="btn btn-secondary" style="border-color: var(--color-brand); color: var(--color-brand); height: 44px;">
+            <i data-lucide="clipboard-list"></i> Llenar Cuestionario de Solicitud
+          </button>
           <div style="margin-top: 12px; font-size: 0.75rem; color: var(--color-brand); font-weight: 500; display: flex; align-items: center; gap: 4px;">
             <i data-lucide="check-circle" style="width: 14px; height: 14px;"></i> Nuestro equipo la creará en menos de 24h.
           </div>
@@ -1379,15 +1397,9 @@ const App = {
       this.handleAddLocation();
     });
 
-    const reqForm = document.getElementById('request-location-form');
-    if (reqForm) {
-      reqForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const details = document.getElementById('req-loc-details').value;
-        this.addLog('SYSTEM', `SOLICITUD DE CREACIÓN: El cliente ${user.businessName} ha solicitado crear profesionalmente una sucursal: ${details}`);
-        alert("¡Solicitud enviada! Nuestro equipo se pondrá en contacto contigo pronto.");
-        document.getElementById('req-loc-details').value = '';
-      });
+    const openModalBtn = document.getElementById('open-req-modal');
+    if (openModalBtn) {
+      openModalBtn.addEventListener('click', () => this.handleRequestLocationModal());
     }
 
     // Vincular switches de activación inteligente
@@ -1589,6 +1601,94 @@ const App = {
     }
 
     this.renderPageContent('locations');
+  },
+
+  handleRequestLocationModal() {
+    const user = this.State.currentUser;
+    const modalHTML = `
+      <div id="req-modal" class="checkout-modal active">
+        <div class="checkout-sheet" style="max-height: 90vh; overflow-y: auto; padding-bottom: 40px;">
+          <div class="checkout-header">
+            <div class="checkout-brand">
+              <i data-lucide="sparkles" style="color: var(--color-brand);"></i>
+              <h3 style="font-size: 1.2rem;">Cuestionario de Sucursal</h3>
+            </div>
+            <button class="header-btn" onclick="document.getElementById('req-modal').remove()">
+              <i data-lucide="x"></i>
+            </button>
+          </div>
+
+          <form id="full-request-form" style="display: flex; flex-direction: column; gap: 15px; margin-top: 10px;">
+            <div class="form-group">
+              <label class="form-label">Nombre de la Nueva Sucursal</label>
+              <input type="text" id="req-name" class="form-control" placeholder="Ej: Sede Norte Express" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Dirección Completa (con Ciudad)</label>
+              <input type="text" id="req-address" class="form-control" placeholder="Carrera 45 # 10-20, Medellín" required>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+              <div class="form-group">
+                <label class="form-label">Color de Marca (Hex)</label>
+                <input type="color" id="req-color" class="form-control" value="#6366f1" style="height: 46px; padding: 5px;">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Teléfono de Contacto</label>
+                <input type="tel" id="req-phone" class="form-control" placeholder="3001234567" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Nombre del Responsable en Sede</label>
+              <input type="text" id="req-contact-name" class="form-control" placeholder="Carlos Mario" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Correo Electrónico de Notificaciones</label>
+              <input type="email" id="req-email" class="form-control" placeholder="sede@tucomercio.com" required>
+            </div>
+            
+            <div style="background: rgba(79, 70, 229, 0.05); padding: 12px; border-radius: 12px; border: 1px dashed var(--color-brand); font-size: 0.8rem; color: var(--color-brand);">
+              <i data-lucide="info" style="width: 14px; height: 14px; display: inline; vertical-align: middle;"></i> Una vez enviada, crearemos tu módulo profesional y te avisaremos por WhatsApp.
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="height: 50px;">
+              <i data-lucide="send"></i> Enviar Solicitud de Creación
+            </button>
+          </form>
+        </div>
+      </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    lucide.createIcons();
+
+    document.getElementById('full-request-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const payload = {
+        tenant_id: user.id,
+        business_name: user.businessName,
+        contact_name: document.getElementById('req-contact-name').value,
+        contact_email: document.getElementById('req-email').value,
+        contact_phone: document.getElementById('req-phone').value,
+        loc_name: document.getElementById('req-name').value,
+        loc_address: document.getElementById('req-address').value,
+        loc_accent_color: document.getElementById('req-color').value,
+        status: 'pending'
+      };
+
+      if (supabaseClient) {
+        const { error } = await supabaseClient.from('location_requests').insert([payload]);
+        if (error) {
+          alert("Error al enviar solicitud: " + error.message);
+          return;
+        }
+        this.addLog('SYSTEM', `NUEVA SOLICITUD: ${user.businessName} solicitó creación de ${payload.loc_name}`);
+      }
+
+      alert("¡Solicitud recibida con éxito! La procesaremos de inmediato.");
+      document.getElementById('req-modal').remove();
+      this.syncFromSupabase();
+    });
   },
 
   // Generador de Códigos QR de Alta Definición usando qrcode.min.js
@@ -2447,9 +2547,10 @@ const App = {
       </div>
 
       <div class="admin-tabs">
-        <button class="admin-tab-btn active" data-tab="leads" data-i18n="admin_leads_tab">Opiniones Globales</button>
-        <button class="admin-tab-btn" data-tab="terminal" data-i18n="admin_logs_tab">Consola de Servidor</button>
-        <button class="admin-tab-btn" data-tab="tenants" data-i18n="admin_users_tab">Cuentas de Comercios</button>
+        <button class="admin-tab-btn active" data-tab="leads"><i data-lucide="message-square"></i> <span data-i18n="admin_leads_tab">Opiniones Globales</span></button>
+        <button class="admin-tab-btn" data-tab="requests"><i data-lucide="sparkles"></i> <span>Solicitudes</span></button>
+        <button class="admin-tab-btn" data-tab="tenants"><i data-lucide="users"></i> <span data-i18n="admin_users_tab">Cuentas de Comercios</span></button>
+        <button class="admin-tab-btn" data-tab="terminal"><i data-lucide="terminal"></i> <span data-i18n="admin_logs_tab">Consola de Servidor</span></button>
       </div>
 
       <div id="admin-tab-content">
@@ -2502,12 +2603,101 @@ const App = {
                     </a>
                   </td>
                 </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </div>
-      `;
-    } else if (tab === 'terminal') {
+              }).join('')}
+                    </tbody>
+                  </table>
+                </div>
+              `;
+              } else if (tab === 'requests') {
+              this.addLog('GET', `Súper Admin: Revisando solicitudes de creación profesional`);
+              tabContent.innerHTML = `
+                <div class="leads-table-container">
+                  <table class="leads-table">
+                    <thead>
+                      <tr>
+                        <th>Comercio</th>
+                        <th>Datos Nueva Sucursal</th>
+                        <th>Responsable Sede</th>
+                        <th>Estado</th>
+                        <th>Acción</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${this.State.locationRequests.length === 0 ? '<tr><td colspan="5" style="text-align:center; padding:20px;">No hay solicitudes pendientes.</td></tr>' : ''}
+                      ${this.State.locationRequests.map(r => `
+                        <tr>
+                          <td>
+                            <strong>${r.businessName}</strong><br>
+                            <span style="font-size:0.75rem; color:var(--text-secondary);">${new Date(r.date).toLocaleDateString()}</span>
+                          </td>
+                          <td>
+                            <div style="display:flex; flex-direction:column; gap:2px;">
+                              <strong>${r.locName}</strong>
+                              <span style="font-size:0.8rem; color:var(--text-secondary);"><i data-lucide="map-pin" style="width:12px; height:12px;"></i> ${r.locAddress}</span>
+                              <div style="display:flex; align-items:center; gap:5px; font-size:0.75rem;">
+                                <span style="width:12px; height:12px; background:${r.locAccentColor}; border-radius:3px;"></span> Color: ${r.locAccentColor}
+                              </div>
+                            </div>
+                          </td>
+                          <td>
+                            <strong>${r.contactName}</strong><br>
+                            <span style="font-size:0.8rem;">${r.contactEmail}</span><br>
+                            <a href="https://wa.me/${r.contactPhone}" target="_blank" style="color:var(--color-success); font-size:0.8rem; text-decoration:none;">
+                              <i data-lucide="message-circle" style="width:12px; height:12px;"></i> ${r.contactPhone}
+                            </a>
+                          </td>
+                          <td>
+                            <span class="status-badge ${r.status === 'pending' ? 'inactive' : 'active'}" style="font-size:0.7rem;">${r.status.toUpperCase()}</span>
+                          </td>
+                          <td>
+                            ${r.status === 'pending' ? `
+                              <button class="btn btn-primary create-from-req-btn" data-id="${r.id}" style="padding:6px 12px; font-size:0.75rem; width:auto;">
+                                <i data-lucide="plus"></i> Crear Sucursal
+                              </button>
+                            ` : '<span style="color:var(--color-success); font-weight:700;">PROCESADA</span>'}
+                          </td>
+                        </tr>
+                      `).join('')}
+                    </tbody>
+                  </table>
+                </div>
+              `;
+
+              // Vincular botones de creación directa
+              document.querySelectorAll('.create-from-req-btn').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                  const reqId = btn.getAttribute('data-id');
+                  const req = this.State.locationRequests.find(r => r.id === reqId);
+                  if (!req) return;
+
+                  if (confirm(`¿Deseas crear oficialmente la sucursal "${req.locName}" para ${req.businessName}?`)) {
+                    if (supabaseClient) {
+                      // 1. Crear la sucursal real
+                      const { error: locErr } = await supabaseClient.from('locations').insert([{
+                        tenant_id: req.tenantId,
+                        name: req.locName,
+                        address: req.locAddress,
+                        maps_url: 'https://maps.google.com', // Placeholder para ser editado
+                        status: 'active'
+                      }]);
+
+                      if (locErr) {
+                        alert("Error al crear sucursal: " + locErr.message);
+                        return;
+                      }
+
+                      // 2. Marcar solicitud como completada
+                      await supabaseClient.from('location_requests').update({ status: 'completed' }).eq('id', reqId);
+
+                      this.addLog('SYSTEM', `ADMIN: Sucursal "${req.locName}" creada exitosamente desde solicitud.`);
+                      alert("¡Sucursal creada y solicitud marcada como completada!");
+                      await this.syncFromSupabase();
+                      this.renderSuperAdminTabContent('requests');
+                    }
+                  }
+                });
+              });
+              } else if (tab === 'tenants') {
       this.addLog('GET', `Súper Admin: Cargando consola segura de API Proxy`);
       tabContent.innerHTML = `
         <div class="terminal-window">

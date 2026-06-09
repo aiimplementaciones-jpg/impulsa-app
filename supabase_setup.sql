@@ -87,7 +87,23 @@ CREATE TABLE public.leads (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 4. Automatización de Perfil (Solo para usuarios reales de Supabase Auth)
+-- 4. Tabla de Solicitudes de Sucursal (Para creación delegada)
+CREATE TABLE public.location_requests (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  tenant_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  business_name TEXT NOT NULL,
+  contact_name TEXT NOT NULL,
+  contact_email TEXT NOT NULL,
+  contact_phone TEXT NOT NULL,
+  loc_name TEXT NOT NULL,
+  loc_address TEXT NOT NULL,
+  loc_accent_color TEXT DEFAULT '#6366f1',
+  loc_logo TEXT,
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed')),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 5. Automatización de Perfil (Solo para usuarios reales de Supabase Auth)
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger AS $$
 BEGIN
@@ -111,16 +127,15 @@ CREATE OR REPLACE TRIGGER on_auth_user_created
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.locations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.leads ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.location_requests ENABLE ROW LEVEL SECURITY;
 
 -- 🛡️ POLÍTICAS PARA PROFILES
--- El dueño puede ver y editar su propio perfil.
--- Se permite acceso al ID de desarrollo actual.
+-- ... (mismo código)
 CREATE POLICY "Permitir gestión de perfil propio" ON public.profiles
   FOR ALL USING (auth.uid() = id OR id = '36d917a3-f764-4afe-8c87-e1db8f0f1731');
 
 -- 🛡️ POLÍTICAS PARA LOCATIONS
--- El dueño gestiona sus locales.
--- Lectura pública para que los clientes puedan ver el portal de opinión.
+-- ... (mismo código)
 CREATE POLICY "Dueños gestionan sus locales" ON public.locations
   FOR ALL USING (auth.uid() = tenant_id OR tenant_id = '36d917a3-f764-4afe-8c87-e1db8f0f1731');
 
@@ -128,10 +143,17 @@ CREATE POLICY "Lectura pública de locales para clientes" ON public.locations
   FOR SELECT USING (true);
 
 -- 🛡️ POLÍTICAS PARA LEADS
--- El dueño ve sus leads.
--- Cualquiera puede insertar (el cliente final desde el portal).
+-- ... (mismo código)
 CREATE POLICY "Dueños ven sus leads" ON public.leads
   FOR SELECT USING (auth.uid() = tenant_id OR tenant_id = '36d917a3-f764-4afe-8c87-e1db8f0f1731');
 
 CREATE POLICY "Inserción pública de leads para clientes" ON public.leads
   FOR INSERT WITH CHECK (true);
+
+-- 🛡️ POLÍTICAS PARA LOCATION_REQUESTS
+CREATE POLICY "Dueños gestionan sus solicitudes" ON public.location_requests
+  FOR ALL USING (auth.uid() = tenant_id OR tenant_id = '36d917a3-f764-4afe-8c87-e1db8f0f1731');
+
+CREATE POLICY "SuperAdmin ve todas las solicitudes" ON public.location_requests
+  FOR SELECT USING (auth.uid() = '36d917a3-f764-4afe-8c87-e1db8f0f1731'); -- ID de Admin Mauro
+
