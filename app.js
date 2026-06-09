@@ -1165,6 +1165,36 @@ const App = {
     this.renderPageContent('dashboard');
   },
 
+  async handleSaveContactData() {
+    const businessName = document.getElementById('contact-business').value;
+    const whatsapp = document.getElementById('contact-whatsapp').value;
+    const address = document.getElementById('contact-address').value;
+
+    const user = this.State.currentUser;
+
+    if (supabaseClient) {
+      this.addLog('POST', `Actualizando datos de contacto en Supabase para: ${user.businessName}`);
+
+      const { error } = await supabaseClient
+        .from('profiles')
+        .update({
+          business_name: businessName,
+          whatsapp: whatsapp,
+          address: address
+        })
+        .eq('id', user.id);
+
+      if (error) {
+        alert("Error al guardar datos de contacto: " + error.message);
+        return;
+      }
+      await this.syncFromSupabase();
+    }
+    
+    alert("Datos de contacto actualizados correctamente.");
+    this.renderPageContent('dashboard');
+  },
+
   // ==========================================================================
   // 📍 VISTA: MIS SUCURSALES COMERCIALES (LocationsPage)
   // ==========================================================================
