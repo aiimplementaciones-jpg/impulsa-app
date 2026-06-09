@@ -2340,7 +2340,7 @@ const App = {
           <form id="superadmin-auth-form" style="margin-top:20px; display:flex; flex-direction:column; gap:12px;">
             <div class="form-group" style="margin-bottom:0; text-align:left;">
               <label class="form-label" data-i18n="admin_restrict_pass_label">Ingresa la contraseña de Super Admin</label>
-              <input type="password" class="form-control" id="superadmin-pass" required placeholder="Clave de prueba: admin123" style="text-align:center;">
+              <input type="password" class="form-control" id="superadmin-pass" required placeholder="••••••••" style="text-align:center;">
             </div>
             <button type="submit" class="btn btn-danger" style="height:44px;" data-i18n="admin_restrict_btn">
               Ingresar como Super Admin
@@ -2353,7 +2353,7 @@ const App = {
       document.getElementById('superadmin-auth-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const pass = document.getElementById('superadmin-pass').value;
-        if (pass === 'admin123') {
+        if (pass === 'Estrella2026+') {
           this.State.isSuperAdmin = true;
           this.State.currentUser = null; // Quitar sesión de comercio
           Storage.setItem('impulsa_is_superadmin', 'true');
