@@ -2603,12 +2603,12 @@ const App = {
                     </a>
                   </td>
                 </tr>
-              }).join('')}
-                    </tbody>
-                  </table>
-                </div>
-              `;
-              } else if (tab === 'requests') {
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    } else if (tab === 'requests') {
               this.addLog('GET', `Súper Admin: Revisando solicitudes de creación profesional`);
               tabContent.innerHTML = `
                 <div class="leads-table-container">
