@@ -1074,6 +1074,7 @@ const App = {
     // Aplicar color inicial al simulador
     simButton.style.backgroundColor = colorInput.value;
     simLogoBox.style.borderColor = colorInput.value;
+    simScreen.style.backgroundColor = bgInput.value;
   },
 
   async handleSavePortalConfig() {
@@ -1450,30 +1451,36 @@ const App = {
   downloadQRCode(id, name) {
     const portalUrl = `${window.location.origin}${window.location.pathname}#portal?id=${id}`;
     const user = this.State.currentUser;
+    const logo = user.logo || '🏪';
     this.addLog('GET', `Generando QR HD para: "${name}"`);
 
     this.generateQRCodeCanvas(portalUrl, (canvas) => {
-      // Crear un canvas final con un diseño tipo tarjeta
+      // Crear un canvas final con un diseño tipo tarjeta (Más alto para mejor margen)
       const finalCanvas = document.createElement('canvas');
       finalCanvas.width = 1200;
-      finalCanvas.height = 1600;
+      finalCanvas.height = 1800; // Aumentado de 1600 a 1800 para margen inferior
       const ctx = finalCanvas.getContext('2d');
 
       // Fondo
       ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, 1200, 1600);
+      ctx.fillRect(0, 0, 1200, 1800);
 
       // Cabecera con Degradado
       const grad = ctx.createLinearGradient(0, 0, 1200, 0);
       grad.addColorStop(0, user.accentColor || '#6366f1');
       grad.addColorStop(1, '#4f46e5');
       ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, 1200, 300);
+      ctx.fillRect(0, 0, 1200, 320);
 
-      // Texto "IMPULSA" y Cohete
+      // Texto "IMPULSA" y Logo/Emoji
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 80px sans-serif';
-      ctx.fillText('🚀 IMPULSA', 100, 180);
+      ctx.font = 'bold 70px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('IMPULSA', 220, 190);
+      
+      // Dibujar Emoji o Placeholder de logo en la cabecera
+      ctx.font = '90px sans-serif';
+      ctx.fillText(logo.startsWith('http') ? '🖼️' : logo, 80, 200);
 
       // Nombre del Negocio
       ctx.fillStyle = '#1f2937';
@@ -1485,13 +1492,13 @@ const App = {
       ctx.fillStyle = '#6b7280';
       ctx.fillText(name, 600, 580);
 
-      // Dibujar el QR
+      // Dibujar el QR (Centrado y con buen tamaño)
       ctx.drawImage(canvas, 100, 650, 1000, 1000);
 
-      // Pie de página
-      ctx.font = '50px sans-serif';
-      ctx.fillStyle = '#9ca3af';
-      ctx.fillText('¡Tu opinión nos ayuda a mejorar!', 600, 1500);
+      // Pie de página (Con más aire abajo)
+      ctx.font = 'bold 55px sans-serif';
+      ctx.fillStyle = '#111827';
+      ctx.fillText('¡Tu opinión nos ayuda a crecer!', 600, 1720);
 
       const image = finalCanvas.toDataURL("image/png");
       const link = document.createElement('a');
