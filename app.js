@@ -144,6 +144,7 @@ const App = {
             email: profile.email || (session?.user?.email || 'mauro@prueba.com'),
             whatsapp: profile.whatsapp || '',
             address: profile.address || '',
+            city: profile.city || '',
             plan: profile.plan || 'free',
             logo: profile.logo || '🏪',
             accentColor: profile.accent_color || '#6366f1',
@@ -198,6 +199,11 @@ const App = {
         this.State.users = (dbProfiles || []).map(p => ({
           id: p.id,
           businessName: p.business_name,
+          fullName: p.full_name,
+          email: p.email,
+          whatsapp: p.whatsapp,
+          address: p.address,
+          city: p.city,
           plan: p.plan,
           logo: p.logo,
           accentColor: p.accent_color,
@@ -208,6 +214,11 @@ const App = {
         this.State.users = [{
           id: this.State.currentUser.id,
           businessName: this.State.currentUser.businessName,
+          fullName: this.State.currentUser.fullName,
+          email: this.State.currentUser.email,
+          whatsapp: this.State.currentUser.whatsapp,
+          address: this.State.currentUser.address,
+          city: this.State.currentUser.city,
           plan: this.State.currentUser.plan,
           logo: this.State.currentUser.logo,
           accentColor: this.State.currentUser.accentColor,
@@ -874,6 +885,17 @@ const App = {
       : '5.0';
 
     container.innerHTML = `
+      ${(!user.city || !user.fullName) ? `
+        <div class="card" style="border-left: 6px solid var(--color-warning); background-color: rgba(245, 158, 11, 0.05); margin-bottom: 20px;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <i data-lucide="alert-circle" style="color: var(--color-warning);"></i>
+            <div>
+              <h4 style="margin: 0; font-size: 0.95rem;">Perfil Incompleto</h4>
+              <p style="margin: 4px 0 0 0; font-size: 0.82rem; color: var(--text-secondary);">Completa tu información (Ciudad y Nombre Completo) para una mejor experiencia y soporte.</p>
+            </div>
+          </div>
+        </div>
+      ` : ''}
       <div class="card" style="background: linear-gradient(135deg, rgba(0, 123, 255, 0.1), rgba(255, 165, 0, 0.05)); border-color: rgba(0, 123, 255, 0.25);">
         <h2 style="font-size: 1.5rem; margin-bottom: 8px;">
           🚀 <span data-i18n="dash_welcome">¡Hola de nuevo!</span>, ${user.businessName}
@@ -911,19 +933,29 @@ const App = {
           <h3 class="card-title"><i data-lucide="user"></i> Datos del Perfil y Contacto</h3>
           <form id="contact-data-form" style="margin-top:16px; display:flex; flex-direction:column; gap:12px;">
             <div class="form-group">
-              <label class="form-label">Nombre del Negocio</label>
-              <input type="text" class="form-control" id="contact-business" value="${user.businessName || ''}">
+              <label class="form-label">Nombre del Negocio / Marca</label>
+              <input type="text" class="form-control" id="contact-business" value="${user.businessName || ''}" required>
             </div>
             <div class="form-group">
-              <label class="form-label">WhatsApp para Reportes</label>
-              <input type="tel" class="form-control" id="contact-whatsapp" value="${user.whatsapp || ''}">
+              <label class="form-label">Nombre Completo del Responsable</label>
+              <input type="text" class="form-control" id="contact-fullname" value="${user.fullName || ''}" required placeholder="Ej: Juan Pérez">
             </div>
             <div class="form-group">
-              <label class="form-label">Dirección (Local)</label>
-              <input type="text" class="form-control" id="contact-address" value="${user.address || ''}">
+              <label class="form-label">WhatsApp Corporativo (Reportes)</label>
+              <input type="tel" class="form-control" id="contact-whatsapp" value="${user.whatsapp || ''}" required>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+              <div class="form-group">
+                <label class="form-label">Ciudad</label>
+                <input type="text" class="form-control" id="contact-city" value="${user.city || ''}" required placeholder="Medellín">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Dirección Principal</label>
+                <input type="text" class="form-control" id="contact-address" value="${user.address || ''}" required>
+              </div>
             </div>
             <button type="submit" class="btn btn-secondary">
-              <i data-lucide="save"></i> Actualizar Perfil
+              <i data-lucide="save"></i> Actualizar Perfil Completo
             </button>
           </form>
         </div>
@@ -1180,7 +1212,9 @@ const App = {
 
   async handleSaveContactData() {
     const businessName = document.getElementById('contact-business').value;
+    const fullName = document.getElementById('contact-fullname').value;
     const whatsapp = document.getElementById('contact-whatsapp').value;
+    const city = document.getElementById('contact-city').value;
     const address = document.getElementById('contact-address').value;
 
     const user = this.State.currentUser;
@@ -1192,7 +1226,9 @@ const App = {
         .from('profiles')
         .update({
           business_name: businessName,
+          full_name: fullName,
           whatsapp: whatsapp,
+          city: city,
           address: address
         })
         .eq('id', user.id);
@@ -1224,25 +1260,43 @@ const App = {
       </div>
 
       <!-- Tarjeta del Formulario de Creación -->
-      <div class="card">
-        <h3 class="card-title"><i data-lucide="plus-circle"></i> <span data-i18n="loc_add_btn">Agregar Nueva Sucursal</span></h3>
-        <form id="add-location-form" style="margin-top: 16px; display: flex; flex-direction: column; gap: 12px;">
-          <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label" data-i18n="loc_name_placeholder">Nombre de la sucursal</label>
-            <input type="text" class="form-control" id="new-loc-name" required placeholder="Mi Sede Laureles">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+        <div class="card">
+          <h3 class="card-title"><i data-lucide="plus-circle"></i> <span data-i18n="loc_add_btn">Agregar Nueva Sucursal</span></h3>
+          <form id="add-location-form" style="margin-top: 16px; display: flex; flex-direction: column; gap: 12px;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" data-i18n="loc_name_placeholder">Nombre de la sucursal</label>
+              <input type="text" class="form-control" id="new-loc-name" required placeholder="Mi Sede Laureles">
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" data-i18n="loc_address_placeholder">Dirección física</label>
+              <input type="text" class="form-control" id="new-loc-address" required placeholder="Av. Nutibara #38-12">
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" data-i18n="loc_maps_placeholder">Enlace de Google Maps</label>
+              <input type="url" class="form-control" id="new-loc-maps" required placeholder="https://maps.google.com/...">
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-top: 8px;">
+              <i data-lucide="plus"></i> <span data-i18n="loc_add_btn">Agregar Sucursal</span>
+            </button>
+          </form>
+        </div>
+
+        <div class="card" style="border: 1px dashed var(--color-brand); background-color: rgba(79, 70, 229, 0.02);">
+          <h3 class="card-title" style="color: var(--color-brand);"><i data-lucide="sparkles"></i> ¿Lo hacemos por ti?</h3>
+          <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 12px;">Si prefieres que nosotros configuremos tu sucursal con el mejor diseño, solicita una creación profesional.</p>
+          <form id="request-location-form" style="display: flex; flex-direction: column; gap: 10px;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <input type="text" class="form-control" id="req-loc-details" required placeholder="Ej: Nueva sede en el Centro, Calle 50..." style="font-size: 0.85rem;">
+            </div>
+            <button type="submit" class="btn btn-secondary" style="border-color: var(--color-brand); color: var(--color-brand);">
+              <i data-lucide="send"></i> Solicitar Creación Profesional
+            </button>
+          </form>
+          <div style="margin-top: 12px; font-size: 0.75rem; color: var(--color-brand); font-weight: 500; display: flex; align-items: center; gap: 4px;">
+            <i data-lucide="check-circle" style="width: 14px; height: 14px;"></i> Nuestro equipo la creará en menos de 24h.
           </div>
-          <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label" data-i18n="loc_address_placeholder">Dirección física</label>
-            <input type="text" class="form-control" id="new-loc-address" required placeholder="Av. Nutibara #38-12">
-          </div>
-          <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label" data-i18n="loc_maps_placeholder">Enlace de Google Maps</label>
-            <input type="url" class="form-control" id="new-loc-maps" required placeholder="https://maps.google.com/...">
-          </div>
-          <button type="submit" class="btn btn-primary" style="margin-top: 8px;">
-            <i data-lucide="plus"></i> <span data-i18n="loc_add_btn">Agregar Sucursal</span>
-          </button>
-        </form>
+        </div>
       </div>
 
       <!-- Alerta de Límites de Plan -->
@@ -1324,6 +1378,17 @@ const App = {
       e.preventDefault();
       this.handleAddLocation();
     });
+
+    const reqForm = document.getElementById('request-location-form');
+    if (reqForm) {
+      reqForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const details = document.getElementById('req-loc-details').value;
+        this.addLog('SYSTEM', `SOLICITUD DE CREACIÓN: El cliente ${user.businessName} ha solicitado crear profesionalmente una sucursal: ${details}`);
+        alert("¡Solicitud enviada! Nuestro equipo se pondrá en contacto contigo pronto.");
+        document.getElementById('req-loc-details').value = '';
+      });
+    }
 
     // Vincular switches de activación inteligente
     document.querySelectorAll('.loc-toggle').forEach(chk => {
@@ -2484,9 +2549,10 @@ const App = {
               <tr>
                 <th>ID</th>
                 <th>Nombre del Comercio</th>
-                <th>Correo Electrónico</th>
+                <th>Responsable / Contacto</th>
+                <th>Ubicación</th>
                 <th>Plan Activo</th>
-                <th>Sucursales Registradas</th>
+                <th>Sucursales</th>
               </tr>
             </thead>
             <tbody>
@@ -2494,11 +2560,32 @@ const App = {
                 const count = this.State.locations.filter(loc => loc.userId === u.id).length;
                 return `
                   <tr>
-                    <td><code>${u.id}</code></td>
-                    <td><strong>${u.logo} ${u.businessName}</strong></td>
-                    <td><code>${u.email}</code></td>
+                    <td><strong>${u.id.substring(0, 8)}...</strong></td>
+                    <td style="display: flex; align-items: center; gap: 10px;">
+                      <div style="width: 32px; height: 32px; border-radius: 50%; overflow: hidden; border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; background: white;">
+                        ${u.logo && u.logo.startsWith('http') ? `<img src="${u.logo}" style="width:100%; height:100%; object-fit:cover;">` : u.logo || '🏪'}
+                      </div>
+                      <div style="display: flex; flex-direction: column;">
+                        <strong>${u.businessName}</strong>
+                        <span style="font-size: 0.75rem; color: var(--text-secondary);">${u.email}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div style="display: flex; flex-direction: column;">
+                        <span>${u.fullName || 'No registrado'}</span>
+                        <a href="https://wa.me/${u.whatsapp}" target="_blank" style="color: var(--color-success); font-size: 0.75rem; text-decoration: none;">
+                          <i data-lucide="message-circle" style="width: 12px; height: 12px; display: inline; vertical-align: middle;"></i> ${u.whatsapp || 'Sin WA'}
+                        </a>
+                      </div>
+                    </td>
+                    <td>
+                      <div style="display: flex; flex-direction: column;">
+                        <span>${u.city || 'Sin Ciudad'}</span>
+                        <span style="font-size: 0.72rem; color: var(--text-secondary);">${u.address || ''}</span>
+                      </div>
+                    </td>
                     <td><span class="status-badge active" style="background-color:rgba(16,185,129,0.1); color:var(--color-success); text-transform:uppercase; font-size:0.75rem;">${u.plan.toUpperCase()}</span></td>
-                    <td>${count} sucursales</td>
+                    <td style="text-align: center;"><strong>${count}</strong></td>
                   </tr>
                 `;
               }).join('')}

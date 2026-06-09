@@ -17,6 +17,7 @@ CREATE TABLE public.profiles (
   email TEXT,
   whatsapp TEXT,
   address TEXT,
+  city TEXT,
   business_description TEXT,
   plan TEXT DEFAULT 'free' CHECK (plan IN ('free', 'pro', 'star')),
   logo TEXT DEFAULT '🏪',
