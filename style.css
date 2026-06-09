@@ -4,12 +4,13 @@
 :root {
   /* Variables de Color (Tema Claro Refinado - Totalmente Luminoso) */
   --bg-primary: #ffffff; /* Blanco puro para máxima claridad */
-  --bg-secondary: #fdfdfd;
+  --bg-secondary: #f8fafc;
   --bg-card: #ffffff;
-  --bg-input: #f8fafc;
-  --border-color: #f1f5f9;
+  --bg-input: #ffffff;
+  --border-color: #e2e8f0; /* Slate 200 - Más contraste que el f1f5f9 anterior */
+  --border-focus: #4f46e5;
   --text-primary: #1e293b; /* Slate 800 */
-  --text-secondary: #94a3b8; /* Slate 400 */
+  --text-secondary: #64748b; /* Slate 500 - Más oscuro para mejor legibilidad */
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
   --shadow-md: 0 10px 25px rgba(0, 0, 0, 0.05);
   --glass-blur: blur(12px);
@@ -57,7 +58,7 @@
   --bg-secondary: hsl(220, 15%, 14%);
   --bg-card: rgba(30, 35, 45, 0.7);
   --bg-input: hsl(220, 15%, 18%);
-  --border-color: rgba(255, 255, 255, 0.06);
+  --border-color: rgba(255, 255, 255, 0.15); /* Aumentado de 0.06 a 0.15 para mejor visibilidad */
   --text-primary: hsl(210, 40%, 98%);
   --text-secondary: hsl(215, 15%, 65%);
   --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.3);
@@ -256,7 +257,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .card:hover {
   box-shadow: var(--shadow-md);
-  border-color: rgba(0, 123, 255, 0.2);
+  border-color: var(--color-brand);
 }
 
 .card-title {
@@ -391,7 +392,7 @@ h1, h2, h3, h4, h5, h6 {
   font-size: 16px; /* CRÍTICO: Previene zoom automático en iOS */
   background-color: var(--bg-input);
   color: var(--text-primary);
-  border: 1px solid var(--border-color);
+  border: 1.5px solid var(--border-color); /* Aumentado grosor para contraste */
   border-radius: var(--radius-md);
   outline: none;
   transition: all var(--transition-fast);
@@ -399,7 +400,8 @@ h1, h2, h3, h4, h5, h6 {
 
 .form-control:focus {
   border-color: var(--color-brand);
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.15); /* Foco más pronunciado */
+  background-color: var(--bg-card);
 }
 
 /* Grid de Tarjetas de Sucursales */
