@@ -408,6 +408,10 @@ const App = {
           <i data-lucide="user-plus"></i>
           <span data-i18n="register">Registrar</span>
         </button>
+        <button class="nav-item ${this.State.activePage === 'admin' ? 'active' : ''}" data-page="admin">
+          <i data-lucide="shield-check"></i>
+          <span data-i18n="nav_admin">Admin</span>
+        </button>
       `;
     }
 
@@ -679,7 +683,15 @@ const App = {
     const email = document.getElementById('auth-email').value;
     const password = document.getElementById('auth-pass').value;
 
-    // 🚀 BYPASS TEMPORAL PARA DESARROLLO
+    // 🚀 BYPASS SUPER ADMIN Y DESARROLLO
+    if (email === 'admin@impulsa.com' && password === 'Estrella2026+') {
+      this.addLog('SYSTEM', `Acceso Super Administrador concedido.`);
+      this.State.isSuperAdmin = true;
+      Storage.setItem('impulsa_is_superadmin', 'true');
+      window.location.hash = '#admin';
+      return;
+    }
+
     if (email === 'mauro@prueba.com' && password === '16783399') {
       const devUserId = '36d917a3-f764-4afe-8c87-e1db8f0f1731';
       const devLocId = '00000000-0000-0000-0000-000000000002';
@@ -1279,6 +1291,16 @@ const App = {
                 </button>
               </div>
 
+              <!-- Acciones de Gestión (Editar/Borrar) -->
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px;">
+                <button class="btn btn-secondary edit-loc-btn" data-id="${loc.id}" style="padding: 8px 12px; font-size: 0.8rem; border-radius: var(--radius-sm);">
+                  <i data-lucide="edit"></i> Editar
+                </button>
+                <button class="btn btn-danger delete-loc-btn" data-id="${loc.id}" style="padding: 8px 12px; font-size: 0.8rem; border-radius: var(--radius-sm);">
+                  <i data-lucide="trash-2"></i> Borrar
+                </button>
+              </div>
+
               <div style="margin-top: 8px; display: flex; flex-direction: column; gap: 8px;">
                 <button class="btn btn-secondary" onclick="navigator.clipboard.writeText('${window.location.origin}/#portal?id=${loc.id}'); alert('Enlace de sucursal copiado');" style="padding: 8px 12px; font-size: 0.8rem; border-radius: var(--radius-sm); width: 100%;">
                   <i data-lucide="copy"></i> Copiar Enlace Directo
@@ -1326,6 +1348,22 @@ const App = {
         const id = btn.getAttribute('data-id');
         const name = btn.getAttribute('data-name');
         this.printQRCode(id, name);
+      });
+    });
+
+    // Vincular botones de Editar
+    document.querySelectorAll('.edit-loc-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id');
+        this.handleEditLocation(id);
+      });
+    });
+
+    // Vincular botones de Borrar
+    document.querySelectorAll('.delete-loc-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id');
+        this.handleDeleteLocation(id);
       });
     });
   },
@@ -1419,6 +1457,73 @@ const App = {
       badge.className = isNowActive ? 'status-badge active' : 'status-badge inactive';
       badgeText.textContent = this.t(isNowActive ? 'active' : 'inactive');
     }
+  },
+
+  async handleEditLocation(id) {
+    const loc = this.State.locations.find(l => l.id === id);
+    if (!loc) return;
+
+    const newName = prompt("Nuevo nombre de la sucursal:", loc.name);
+    if (newName === null) return; // Cancelado
+
+    const newAddress = prompt("Nueva dirección física:", loc.address);
+    if (newAddress === null) return;
+
+    const newMapsUrl = prompt("Nuevo enlace de Google Maps:", loc.mapsUrl);
+    if (newMapsUrl === null) return;
+
+    if (supabaseClient) {
+      this.addLog('PUT', `Editando sucursal en Supabase: ${loc.name}`);
+      const { error } = await supabaseClient
+        .from('locations')
+        .update({
+          name: newName,
+          address: newAddress,
+          maps_url: newMapsUrl
+        })
+        .eq('id', id);
+
+      if (error) {
+        alert("Error al editar sucursal: " + error.message);
+        return;
+      }
+      await this.syncFromSupabase();
+    } else {
+      loc.name = newName;
+      loc.address = newAddress;
+      loc.mapsUrl = newMapsUrl;
+      this.saveLocations();
+    }
+
+    this.renderPageContent('locations');
+  },
+
+  async handleDeleteLocation(id) {
+    const loc = this.State.locations.find(l => l.id === id);
+    if (!loc) return;
+
+    if (!confirm(`¿Estás seguro de que deseas eliminar la sucursal "${loc.name}"? Esta acción no se puede deshacer.`)) {
+      return;
+    }
+
+    if (supabaseClient) {
+      this.addLog('DELETE', `Eliminando sucursal en Supabase: ${loc.name}`);
+      const { error } = await supabaseClient
+        .from('locations')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        alert("Error al eliminar sucursal: " + error.message);
+        return;
+      }
+      await this.syncFromSupabase();
+    } else {
+      this.State.locations = this.State.locations.filter(l => l.id !== id);
+      this.saveLocations();
+    }
+
+    this.renderPageContent('locations');
   },
 
   // Generador de Códigos QR de Alta Definición usando qrcode.min.js
