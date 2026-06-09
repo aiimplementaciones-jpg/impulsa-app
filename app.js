@@ -1066,7 +1066,7 @@ const App = {
     if (contactForm) {
       contactForm.addEventListener('submit', (e) => {
         e.preventDefault();
-        this.handleSaveContactData();
+        App.handleSaveContactData();
       });
     }
 
