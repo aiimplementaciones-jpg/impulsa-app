@@ -3,16 +3,16 @@
 
 :root {
   /* Variables de Color (Tema Claro Refinado - Totalmente Luminoso) */
-  --bg-primary: #ffffff; /* Blanco puro para máxima claridad */
+  --bg-primary: #f1f5f9; /* Slate 100 - Fondo ligeramente gris para que las cajas resalten */
   --bg-secondary: #f8fafc;
   --bg-card: #ffffff;
   --bg-input: #ffffff;
-  --border-color: #e2e8f0; /* Slate 200 - Más contraste que el f1f5f9 anterior */
+  --border-color: #cbd5e1; /* Slate 300 - Bordes más definidos */
   --border-focus: #4f46e5;
-  --text-primary: #1e293b; /* Slate 800 */
-  --text-secondary: #64748b; /* Slate 500 - Más oscuro para mejor legibilidad */
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 10px 25px rgba(0, 0, 0, 0.05);
+  --text-primary: #0f172a; /* Slate 900 - Texto más oscuro para contraste */
+  --text-secondary: #475569; /* Slate 600 */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+  --shadow-md: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
   --glass-blur: blur(12px);
   --glass-bg: rgba(255, 255, 255, 0.9);
 
@@ -251,7 +251,7 @@ h1, h2, h3, h4, h5, h6 {
   border-radius: var(--radius-md);
   padding: 20px;
   margin-bottom: 16px;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   transition: all var(--transition-smooth);
 }
 
