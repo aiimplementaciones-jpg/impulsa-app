@@ -75,11 +75,19 @@ const App = {
     }
   },
 
-  // Configuración de planes dinámica (Se puebla desde Supabase)
-  plansConfig: {},
+  // Configuración de planes dinámica (Se puebla desde Supabase, con valores por defecto)
+  plansConfig: {
+    free: { name: 'Plan Starter', price: 0, limit: 1, features: ['Indicador LED animado', 'Códigos QR de Alta Definición', 'Portal móvil personalizable'] },
+    pro: { name: 'Plan Pro Profesional', price: 29, limit: 3, features: ['Indicador LED animado', 'Códigos QR de Alta Definición', 'Portal móvil personalizable', 'Filtro estratégico de reseñas', 'Simulador de servidor de API'] },
+    star: { name: 'Plan Star Ilimitado', price: 79, limit: Infinity, features: ['Indicador LED animado', 'Códigos QR de Alta Definición', 'Portal móvil personalizable', 'Filtro estratégico de reseñas', 'Simulador de servidor de API', 'Soporte prioritario'] }
+  },
 
   // Límites de locales por plan (Se actualizan desde Supabase)
-  PlanLimits: {},
+  PlanLimits: {
+    free: 1,
+    pro: 3,
+    star: Infinity
+  },
 
   // Inicializar Base de Datos y Preferencias
   async init() {
@@ -124,8 +132,8 @@ const App = {
     try {
       // 1. Obtener configuración de planes dinámicos (NUEVO)
       const { data: dbPlans, error: plansErr } = await supabaseClient.from('plans').select('*');
-      if (!plansErr && dbPlans) {
-        this.plansConfig = {}; // Limpiar configuración actual
+      if (!plansErr && dbPlans && dbPlans.length > 0) {
+        // Solo limpiamos si recibimos datos válidos de la nube
         dbPlans.forEach(p => {
           this.plansConfig[p.id] = {
             name: p.name,
