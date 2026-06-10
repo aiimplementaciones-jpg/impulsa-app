@@ -1283,7 +1283,7 @@ const App = {
       </div>
 
       <!-- Tarjeta del Formulario de Creación -->
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+      <div class="responsive-grid">
         <div class="card">
           <h3 class="card-title"><i data-lucide="plus-circle"></i> <span data-i18n="loc_add_btn">Agregar Nueva Sucursal</span></h3>
           <form id="add-location-form" style="margin-top: 16px; display: flex; flex-direction: column; gap: 12px;">
