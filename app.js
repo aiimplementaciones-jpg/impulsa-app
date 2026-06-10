@@ -950,7 +950,7 @@ const App = {
         </div>
       </div>
 
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+      <div class="responsive-grid">
         <!-- Datos del Perfil -->
         <div class="card">
           <h3 class="card-title"><i data-lucide="user"></i> Datos del Perfil y Contacto</h3>
@@ -967,7 +967,7 @@ const App = {
               <label class="form-label">WhatsApp Corporativo (Reportes)</label>
               <input type="tel" class="form-control" id="contact-whatsapp" value="${user.whatsapp || ''}" required>
             </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div class="form-row">
               <div class="form-group">
                 <label class="form-label">Ciudad</label>
                 <input type="text" class="form-control" id="contact-city" value="${user.city || ''}" required placeholder="Medellín">
@@ -1004,7 +1004,7 @@ const App = {
       </div>
 
       <!-- Personalización con Simulador en Vivo -->
-      <div style="display: grid; grid-template-columns: 1fr 320px; gap: 20px; margin-bottom: 24px;">
+      <div class="customization-grid">
         <div class="card">
           <h3 class="card-title"><i data-lucide="palette"></i> Personalizar mi Portal</h3>
           <form id="portal-config-form" style="margin-top:16px; display:flex; flex-direction:column; gap:12px;">
@@ -1354,7 +1354,7 @@ const App = {
               </div>
 
               <!-- Acciones de QR e Impresión -->
-              <div class="location-actions" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+              <div class="location-actions">
                 <button class="btn btn-secondary download-qr-btn" data-id="${loc.id}" data-name="${loc.name}" style="padding: 8px 12px; font-size: 0.8rem; border-radius: var(--radius-sm);">
                   <i data-lucide="download"></i> QR
                 </button>
@@ -1364,7 +1364,7 @@ const App = {
               </div>
 
               <!-- Acciones de Gestión (Editar/Borrar) -->
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px;">
+              <div class="location-actions">
                 <button class="btn btn-secondary edit-loc-btn" data-id="${loc.id}" style="padding: 8px 12px; font-size: 0.8rem; border-radius: var(--radius-sm);">
                   <i data-lucide="edit"></i> Editar
                 </button>
@@ -1627,7 +1627,7 @@ const App = {
               <label class="form-label">Dirección Completa (con Ciudad)</label>
               <input type="text" id="req-address" class="form-control" placeholder="Carrera 45 # 10-20, Medellín" required>
             </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div class="form-row">
               <div class="form-group">
                 <label class="form-label">Color de Marca (Hex)</label>
                 <input type="color" id="req-color" class="form-control" value="#6366f1" style="height: 46px; padding: 5px;">
@@ -2222,7 +2222,7 @@ const App = {
 
       <!-- Filtros por Fechas -->
       <div class="card" style="padding: 16px;">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: flex-end;">
+        <div class="form-row" style="align-items: flex-end;">
           <div class="form-group" style="margin-bottom: 0;">
             <label class="form-label" data-i18n="stat_date_start">Fecha de inicio</label>
             <input type="date" class="form-control" id="filter-start-date" value="2026-05-01">
@@ -2233,7 +2233,7 @@ const App = {
           </div>
         </div>
         
-        <div style="margin-top: 14px; display: grid; grid-template-columns: 1fr; gap: 8px;">
+        <div style="margin-top: 14px;">
           <button class="btn btn-primary" id="export-csv-btn">
             <i data-lucide="file-spreadsheet"></i>
             <span data-i18n="stat_export_csv">Exportar Reporte (CSV)</span>

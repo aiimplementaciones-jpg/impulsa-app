@@ -439,7 +439,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .location-actions {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 8px;
   margin-top: 8px;
 }
@@ -1120,10 +1120,49 @@ h1, h2, h3, h4, h5, h6 {
   100% { transform: translateY(105vh) rotate(360deg); opacity: 0; }
 }
 
+/* Grids Responsivos para Dashboard y Secciones */
+.responsive-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.customization-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
 /* ==========================================================================
    MEDIA QUERIES (ADAPTACIÓN A TABLETAS Y ESCRITORIOS)
    ========================================================================== */
 @media (min-width: 768px) {
+  .responsive-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  .customization-grid {
+    grid-template-columns: 1fr 320px;
+    gap: 20px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .location-actions {
+    grid-template-columns: 1fr 1fr;
+  }
   /* Ocultar Barra de Navegación Inferior en pantallas grandes */
   .bottom-nav {
     display: none;
