@@ -8,8 +8,29 @@ DROP TABLE IF EXISTS public.leads;
 DROP TABLE IF EXISTS public.locations;
 DROP TABLE IF EXISTS public.profiles;
 
--- 1. Tabla de Perfiles (Cuentas de Comercio)
--- Se quita REFERENCES auth.users para máxima compatibilidad en desarrollo
+-- 1. Tabla de Planes (Configuración dinámica de la plataforma)
+CREATE TABLE public.plans (
+  id TEXT PRIMARY KEY, -- 'free', 'pro', 'star'
+  name TEXT NOT NULL,
+  price NUMERIC(10,2) NOT NULL,
+  location_limit INTEGER, -- NULL para ilimitado
+  features TEXT[] DEFAULT '{}',
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Insertar configuración inicial de planes
+INSERT INTO public.plans (id, name, price, location_limit, features) VALUES
+('free', 'Plan Starter', 0.00, 1, ARRAY['Indicador LED animado', 'Códigos QR de Alta Definición', 'Portal móvil personalizable']),
+('pro', 'Plan Pro Profesional', 29.00, 3, ARRAY['Indicador LED animado', 'Códigos QR de Alta Definición', 'Portal móvil personalizable', 'Filtro estratégico de reseñas', 'Simulador de servidor de API']),
+('star', 'Plan Star Ilimitado', 79.00, NULL, ARRAY['Indicador LED animado', 'Códigos QR de Alta Definición', 'Portal móvil personalizable', 'Filtro estratégico de reseñas', 'Simulador de servidor de API', 'Soporte prioritario'])
+ON CONFLICT (id) DO UPDATE SET
+  name = EXCLUDED.name,
+  price = EXCLUDED.price,
+  location_limit = EXCLUDED.location_limit,
+  features = EXCLUDED.features;
+
+-- 2. Tabla de Perfiles (Cuentas de Comercio)
+-- Se actualiza para incluir campos financieros
 CREATE TABLE public.profiles (
   id UUID PRIMARY KEY,
   business_name TEXT,
@@ -19,11 +40,16 @@ CREATE TABLE public.profiles (
   address TEXT,
   city TEXT,
   business_description TEXT,
-  plan TEXT DEFAULT 'free' CHECK (plan IN ('free', 'pro', 'star')),
+  plan TEXT DEFAULT 'free' REFERENCES public.plans(id),
   logo TEXT DEFAULT '🏪',
   accent_color TEXT DEFAULT '#6366f1',
   bg_color TEXT DEFAULT '#ffffff',
   portal_title TEXT,
+  -- Columnas Financieras
+  last_payment_amount NUMERIC(10,2) DEFAULT 0,
+  subscription_period INTEGER DEFAULT 1,
+  subscription_date TIMESTAMPTZ,
+  subscription_expiry TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -40,6 +66,8 @@ CREATE TABLE public.profiles (
 -- Políticas para el Bucket 'logos'
 -- Eliminamos las anteriores para evitar duplicados
 DROP POLICY IF EXISTS "Logos son públicos" ON storage.objects;
+DROP POLICY IF EXISTS "Usuarios pueden subir logos" ON storage.objects;
+DROP POLICY IF EXISTS "Usuarios pueden gestionar sus logos" ON storage.objects;
 DROP POLICY IF EXISTS "Usuarios pueden subir sus propios logos" ON storage.objects;
 DROP POLICY IF EXISTS "Usuarios pueden actualizar sus propios logos" ON storage.objects;
 DROP POLICY IF EXISTS "Usuarios pueden borrar sus propios logos" ON storage.objects;

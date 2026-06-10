@@ -130,7 +130,22 @@ const App = {
   // Sincronizar toda la data desde Supabase
   async syncFromSupabase() {
     try {
-      // 1. Obtener la sesión activa de Supabase
+      // 1. Obtener configuración de planes dinámicos (NUEVO)
+      const { data: dbPlans, error: plansErr } = await supabaseClient.from('plans').select('*');
+      if (!plansErr && dbPlans) {
+        dbPlans.forEach(p => {
+          this.plansConfig[p.id] = {
+            name: p.name,
+            price: parseFloat(p.price),
+            limit: p.location_limit === null ? Infinity : p.location_limit,
+            features: p.features || []
+          };
+          this.PlanLimits[p.id] = this.plansConfig[p.id].limit;
+        });
+        this.addLog('SYSTEM', 'Configuración de planes cargada desde la nube.');
+      }
+
+      // 1b. Obtener la sesión activa de Supabase
       const { data: { session } } = await supabaseClient.auth.getSession();
       let activeUserId = session?.user?.id;
 
@@ -221,22 +236,31 @@ const App = {
           logo: p.logo,
           accentColor: p.accent_color,
           bgColor: p.bg_color,
-          title: p.portal_title || `Opiniones de ${p.business_name}`
+          title: p.portal_title || `Opiniones de ${p.business_name}`,
+          lastPaymentAmount: p.last_payment_amount,
+          subscriptionPeriod: p.subscription_period,
+          subscriptionDate: p.subscription_date,
+          subscriptionExpiry: p.subscription_expiry
         }));
       } else if (this.State.currentUser) {
+        const p = profile; // Usar el perfil cargado anteriormente
         this.State.users = [{
-          id: this.State.currentUser.id,
-          businessName: this.State.currentUser.businessName,
-          fullName: this.State.currentUser.fullName,
-          email: this.State.currentUser.email,
-          whatsapp: this.State.currentUser.whatsapp,
-          address: this.State.currentUser.address,
-          city: this.State.currentUser.city,
-          plan: this.State.currentUser.plan,
-          logo: this.State.currentUser.logo,
-          accentColor: this.State.currentUser.accentColor,
-          bgColor: this.State.currentUser.bgColor,
-          title: this.State.currentUser.title
+          id: p.id,
+          businessName: p.business_name,
+          fullName: p.full_name,
+          email: p.email,
+          whatsapp: p.whatsapp,
+          address: p.address,
+          city: p.city,
+          plan: p.plan,
+          logo: p.logo,
+          accentColor: p.accent_color,
+          bgColor: p.bg_color,
+          title: p.portal_title || `Opiniones de ${p.business_name}`,
+          lastPaymentAmount: p.last_payment_amount,
+          subscriptionPeriod: p.subscription_period,
+          subscriptionDate: p.subscription_date,
+          subscriptionExpiry: p.subscription_expiry
         }];
       }
 
@@ -2847,18 +2871,32 @@ const App = {
       });
 
       document.querySelectorAll('.save-plan-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', async () => {
           const planKey = btn.getAttribute('data-plan');
           const priceInput = document.querySelector(`.plan-price-input[data-plan="${planKey}"]`);
           const limitInput = document.querySelector(`.plan-limit-input[data-plan="${planKey}"]`);
           
           const price = parseFloat(priceInput.value);
           const limitVal = limitInput.value;
-          const limit = limitVal.toLowerCase() === 'ilimitado' ? Infinity : parseInt(limitVal);
+          const limit = limitVal.toLowerCase() === 'ilimitado' || limitVal === 'Infinity' ? null : parseInt(limitVal);
 
+          if (supabaseClient) {
+            this.addLog('POST', `ADMIN: Actualizando plan "${planKey}" en Supabase...`);
+            const { error } = await supabaseClient
+              .from('plans')
+              .update({ price: price, location_limit: limit })
+              .eq('id', planKey);
+
+            if (error) {
+              alert("Error al actualizar plan en Supabase: " + error.message);
+              return;
+            }
+          }
+
+          // Actualizar estado local
           this.plansConfig[planKey].price = price;
-          this.plansConfig[planKey].limit = limit;
-          this.PlanLimits[planKey] = limit;
+          this.plansConfig[planKey].limit = limit === null ? Infinity : limit;
+          this.PlanLimits[planKey] = this.plansConfig[planKey].limit;
           
           this.addLog('SYSTEM', `ADMIN: Plan "${planKey}" actualizado. Nuevo precio: $${price}, Límite: ${limitVal}`);
           alert(`Plan ${planKey.toUpperCase()} actualizado correctamente.`);
