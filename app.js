@@ -75,19 +75,11 @@ const App = {
     }
   },
 
-  // Configuración de planes dinámica (Editable por Super Admin)
-  plansConfig: {
-    free: { name: 'Plan Starter', price: 0, limit: 1, features: ['Indicador LED animado', 'Códigos QR de Alta Definición', 'Portal móvil personalizable'] },
-    pro: { name: 'Plan Pro Profesional', price: 29, limit: 3, features: ['Indicador LED animado', 'Códigos QR de Alta Definición', 'Portal móvil personalizable', 'Filtro estratégico de reseñas', 'Simulador de servidor de API'] },
-    star: { name: 'Plan Star Ilimitado', price: 79, limit: Infinity, features: ['Indicador LED animado', 'Códigos QR de Alta Definición', 'Portal móvil personalizable', 'Filtro estratégico de reseñas', 'Simulador de servidor de API', 'Soporte prioritario'] }
-  },
+  // Configuración de planes dinámica (Se puebla desde Supabase)
+  plansConfig: {},
 
-  // Límites de locales por plan (Mantener compatibilidad)
-  PlanLimits: {
-    free: 1,
-    pro: 3,
-    star: Infinity
-  },
+  // Límites de locales por plan (Se actualizan desde Supabase)
+  PlanLimits: {},
 
   // Inicializar Base de Datos y Preferencias
   async init() {
@@ -133,6 +125,7 @@ const App = {
       // 1. Obtener configuración de planes dinámicos (NUEVO)
       const { data: dbPlans, error: plansErr } = await supabaseClient.from('plans').select('*');
       if (!plansErr && dbPlans) {
+        this.plansConfig = {}; // Limpiar configuración actual
         dbPlans.forEach(p => {
           this.plansConfig[p.id] = {
             name: p.name,
@@ -286,6 +279,11 @@ const App = {
         status: r.status,
         date: r.created_at
       }));
+
+      // Refrescar la página actual para mostrar los datos recién cargados (especialmente planes)
+      if (this.State.activePage) {
+        this.renderPageContent(this.State.activePage);
+      }
 
     } catch (err) {
       this.addLog('SYSTEM', `Error de sincronización con Supabase: ${err.message}`);
