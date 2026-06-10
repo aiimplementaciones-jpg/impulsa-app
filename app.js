@@ -2515,6 +2515,8 @@ const App = {
 
       if (supabaseClient) {
         const user = this.State.currentUser;
+        this.addLog('POST', `[Supabase] Actualizando perfil ID: ${user.id}...`);
+        
         const { error } = await supabaseClient
           .from('profiles')
           .update({ 
@@ -2524,9 +2526,10 @@ const App = {
             subscription_date: now.toISOString(),
             subscription_expiry: expiryDate.toISOString()
           })
-          .eq('user_id', user.id);
+          .eq('id', user.id); // Corregido de user_id a id
 
         if (error) {
+          this.addLog('SYSTEM', `Error en Supabase: ${error.message}`);
           alert("Error al actualizar plan en Supabase: " + error.message);
           modal.classList.remove('active');
           this.renderPageContent('billing');
