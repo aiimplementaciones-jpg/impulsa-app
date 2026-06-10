@@ -222,8 +222,9 @@ h1, h2, h3, h4, h5, h6 {
 /* Contenedor de Contenido Principal */
 .main-content {
   flex: 1;
-  padding: 16px 16px 80px 16px; /* 80px abajo para no solaparse con Bottom Nav */
+  padding: 16px 12px 80px 12px; /* Reducido padding lateral para ganar espacio en móviles pequeños */
   overflow-y: auto;
+  overflow-x: hidden; /* Forzar que no haya scroll horizontal */
   transition: padding var(--transition-smooth);
 }
 
@@ -249,10 +250,11 @@ h1, h2, h3, h4, h5, h6 {
   -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  padding: 20px;
+  padding: 16px; /* Reducido de 20px para móviles */
   margin-bottom: 16px;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   transition: all var(--transition-smooth);
+  width: 100%; /* Asegurar que use todo el ancho */
 }
 
 .card:hover {
@@ -661,7 +663,8 @@ h1, h2, h3, h4, h5, h6 {
 /* Billing y Planes */
 .pricing-tabs {
   display: flex;
-  gap: 8px;
+  flex-direction: column; /* Vertical en móvil */
+  gap: 16px;
   margin-bottom: 20px;
 }
 

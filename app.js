@@ -529,8 +529,8 @@ const App = {
         </div>
         
         <!-- Simulador de Celular Realista -->
-        <div class="phone-simulator-container" style="margin-bottom: 40px; perspective: 1000px;">
-          <div class="phone-frame" style="width: 280px; height: 560px; background: #1a1a1a; border-radius: 40px; border: 8px solid #333; margin: 0 auto; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); position: relative; overflow: hidden;">
+        <div class="phone-simulator-container" style="margin-bottom: 40px; perspective: 1000px; width: 100%; display: flex; justify-content: center;">
+          <div class="phone-frame" style="width: 100%; max-width: 280px; height: 560px; background: #1a1a1a; border-radius: 40px; border: 8px solid #333; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); position: relative; overflow: hidden;">
             <div class="phone-notch" style="width: 120px; height: 25px; background: #333; position: absolute; top: 0; left: 50%; transform: translateX(-50%); border-bottom-left-radius: 15px; border-bottom-right-radius: 15px; z-index: 10;"></div>
             
             <div class="phone-screen" style="width: 100%; height: 100%; background: var(--bg-primary); padding: 40px 20px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 20px;">
@@ -1040,9 +1040,9 @@ const App = {
         </div>
 
         <!-- Simulador de Celular en Tiempo Real -->
-        <div class="card" style="padding: 20px; display: flex; flex-direction: column; align-items: center;">
+        <div class="card" style="padding: 20px; display: flex; flex-direction: column; align-items: center; overflow: hidden;">
           <h4 style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 12px; text-transform: uppercase;">Vista Previa</h4>
-          <div class="phone-simulator-dashboard" style="width: 200px; height: 400px; background: #1a1a1a; border-radius: 30px; border: 6px solid #333; position: relative; overflow: hidden; box-shadow: var(--shadow-lg);">
+          <div class="phone-simulator-dashboard" style="width: 100%; max-width: 200px; height: 400px; background: #1a1a1a; border-radius: 30px; border: 6px solid #333; position: relative; overflow: hidden; box-shadow: var(--shadow-lg);">
             <div style="width: 60px; height: 12px; background: #333; position: absolute; top: 0; left: 50%; transform: translateX(-50%); border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; z-index: 2;"></div>
             <div id="sim-screen" style="width: 100%; height: 100%; background: white; display: flex; flex-direction: column; align-items: center; padding: 30px 10px; text-align: center; gap: 10px;">
               <div id="sim-logo" style="width: 50px; height: 50px; border-radius: 50%; border: 2px solid #6366f1; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; overflow:hidden;">
