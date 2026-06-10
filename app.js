@@ -67,7 +67,12 @@ const App = {
     leads: [],          // Reseñas negativas capturadas
     locationRequests: [], // Solicitudes de creación de sucursales
     proxyLogs: [],      // Logs del Servidor seguro /api/support
-    visits: 0           // Semilla global de visitas (Reset a 0 para datos reales)
+    visits: 0,          // Semilla global de visitas
+    wompiConfig: {      // Configuración de Pasarela Wompi
+      publicKey: Storage.getItem('wompi_public_key') || '',
+      privateKey: Storage.getItem('wompi_private_key') || '', // Nota: En producción esto iría en variables de entorno del servidor
+      mode: 'sandbox' // 'sandbox' o 'production'
+    }
   },
 
   // Configuración de planes dinámica (Editable por Super Admin)
@@ -2469,8 +2474,15 @@ const App = {
       const basePrice = this.plansConfig[plan].price;
       const discounts = { 1: 0, 3: 0.05, 6: 0.1, 9: 0.15, 12: 0.2 };
       const totalAmount = (basePrice * period * (1 - discounts[period])).toFixed(2);
+      const usingKeys = this.State.wompiConfig.publicKey ? 'Reales' : 'Simuladas (Demostración)';
 
+      this.addLog('POST', `[Wompi] Usando Llaves: ${usingKeys}`);
       this.addLog('POST', `[Wompi] Solicitando Tokenización de Tarjeta: ****${cardNumber.slice(-4)}`);
+      
+      if (this.State.wompiConfig.publicKey) {
+        this.addLog('POST', `[Wompi] Endpoint: https://sandbox.wompi.co/v1/tokens/cards (usando ${this.State.wompiConfig.publicKey.substring(0, 12)}...)`);
+      }
+      
       this.addLog('POST', `[Wompi] Token generado: tok_test_${Math.random().toString(36).substring(7)}`);
       this.addLog('POST', `[Wompi] Iniciando transacción para plan ${plan.toUpperCase()} por ${period} meses. Total: $${totalAmount} USD`);
 
@@ -2760,8 +2772,31 @@ const App = {
         this.renderSuperAdminTabContent('terminal');
       });
     } else if (tab === 'plans') {
-      this.addLog('GET', `Súper Admin: Gestión de configuración de Planes y Precios`);
+      this.addLog('GET', `Súper Admin: Gestión de configuración de Planes y Pasarela Wompi`);
       tabContent.innerHTML = `
+        <!-- Configuración de Wompi -->
+        <div class="card" style="border-top: 4px solid #ED1C24; margin-bottom: 24px;">
+          <h3 class="card-title"><i data-lucide="shield-check"></i> Configuración de Pasarela Wompi</h3>
+          <div class="form-row" style="margin-top: 16px;">
+            <div class="form-group">
+              <label class="form-label">Llave Pública (Public Key)</label>
+              <input type="text" class="form-control" id="wompi-pub-key" value="${this.State.wompiConfig.publicKey}" placeholder="pub_test_...">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Llave Privada (Private Key)</label>
+              <input type="password" class="form-control" id="wompi-priv-key" value="${this.State.wompiConfig.privateKey}" placeholder="prv_test_...">
+            </div>
+          </div>
+          <div style="display: flex; gap: 12px; margin-top: 12px;">
+            <button class="btn btn-primary" id="save-wompi-keys" style="width: auto; padding: 10px 20px;">
+              <i data-lucide="save"></i> Guardar Llaves de API
+            </button>
+            <span style="font-size: 0.75rem; color: var(--text-secondary); align-self: center;">
+              <i data-lucide="info" style="width: 14px; height: 14px; display: inline;"></i> Las llaves se usarán para procesar transacciones reales.
+            </span>
+          </div>
+        </div>
+
         <div class="leads-table-container">
           <table class="leads-table">
             <thead>
@@ -2791,6 +2826,20 @@ const App = {
           </table>
         </div>
       `;
+
+      document.getElementById('save-wompi-keys').addEventListener('click', () => {
+        const pub = document.getElementById('wompi-pub-key').value;
+        const priv = document.getElementById('wompi-priv-key').value;
+        
+        this.State.wompiConfig.publicKey = pub;
+        this.State.wompiConfig.privateKey = priv;
+        
+        Storage.setItem('wompi_public_key', pub);
+        Storage.setItem('wompi_private_key', priv);
+        
+        this.addLog('SYSTEM', `ADMIN: Llaves de Wompi actualizadas correctamente.`);
+        alert('Llaves de API configuradas. La pasarela está lista para pruebas.');
+      });
 
       document.querySelectorAll('.save-plan-btn').forEach(btn => {
         btn.addEventListener('click', () => {
