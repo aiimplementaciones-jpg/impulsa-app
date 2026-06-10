@@ -70,7 +70,14 @@ const App = {
     visits: 0           // Semilla global de visitas (Reset a 0 para datos reales)
   },
 
-  // Límites de locales por plan
+  // Configuración de planes dinámica (Editable por Super Admin)
+  plansConfig: {
+    free: { name: 'Plan Starter', price: 0, limit: 1, features: ['Indicador LED animado', 'Códigos QR de Alta Definición', 'Portal móvil personalizable'] },
+    pro: { name: 'Plan Pro Profesional', price: 29, limit: 3, features: ['Indicador LED animado', 'Códigos QR de Alta Definición', 'Portal móvil personalizable', 'Filtro estratégico de reseñas', 'Simulador de servidor de API'] },
+    star: { name: 'Plan Star Ilimitado', price: 79, limit: Infinity, features: ['Indicador LED animado', 'Códigos QR de Alta Definición', 'Portal móvil personalizable', 'Filtro estratégico de reseñas', 'Simulador de servidor de API', 'Soporte prioritario'] }
+  },
+
+  // Límites de locales por plan (Mantener compatibilidad)
   PlanLimits: {
     free: 1,
     pro: 3,
@@ -2220,6 +2227,41 @@ const App = {
         <p style="color: var(--text-secondary); font-size: 0.88rem;" data-i18n="stat_subtitle">Visualiza el rendimiento de tus sucursales y exporta reportes de leads.</p>
       </div>
 
+      <!-- Filtros Estratégicos (Plan Star) -->
+      <div class="card" style="padding: 16px; border: 1px solid var(--color-brand); background-color: rgba(79, 70, 229, 0.02);">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+          <i data-lucide="sparkles" style="color: var(--color-brand); width: 18px;"></i>
+          <h3 style="font-size: 0.9rem; color: var(--color-brand); font-weight: 700;">Filtro Estratégico de Reseñas</h3>
+          ${user.plan !== 'star' ? `<span style="font-size: 0.65rem; background: var(--color-brand); color: white; padding: 2px 6px; border-radius: 4px; text-transform: uppercase;">Premium Star</span>` : ''}
+        </div>
+        
+        <div class="form-row" style="align-items: flex-end;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Calificación mínima</label>
+            <select class="form-control" id="filter-rating" ${user.plan !== 'star' ? 'disabled' : ''}>
+              <option value="0">Todas las estrellas</option>
+              <option value="5">Solo 5 estrellas ★</option>
+              <option value="4">4 estrellas o menos</option>
+              <option value="3">3 estrellas o menos (Críticas)</option>
+              <option value="1">Solo 1 estrella (Urgentes)</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Sucursal específica</label>
+            <select class="form-control" id="filter-location" ${user.plan !== 'star' ? 'disabled' : ''}>
+              <option value="all">Todas las sedes</option>
+              ${userLocations.map(l => `<option value="${l.id}">${l.name}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        
+        ${user.plan !== 'star' ? `
+          <div style="margin-top: 12px; font-size: 0.75rem; color: var(--text-secondary);">
+            <i data-lucide="lock" style="width: 12px; height: 12px;"></i> Actualiza al <strong>Plan Star</strong> para desbloquear filtros de inteligencia competitiva.
+          </div>
+        ` : ''}
+      </div>
+
       <!-- Filtros por Fechas -->
       <div class="card" style="padding: 16px;">
         <div class="form-row" style="align-items: flex-end;">
@@ -2292,7 +2334,21 @@ const App = {
     `;
 
     document.getElementById('export-csv-btn').addEventListener('click', () => {
-      this.exportLeadsCSV(userLeads);
+      const ratingFilter = document.getElementById('filter-rating')?.value || "0";
+      const locationFilter = document.getElementById('filter-location')?.value || "all";
+      
+      let finalLeads = userLeads;
+      
+      if (user.plan === 'star') {
+        if (ratingFilter === "5") finalLeads = finalLeads.filter(l => l.rating === 5);
+        if (ratingFilter === "4") finalLeads = finalLeads.filter(l => l.rating <= 4);
+        if (ratingFilter === "3") finalLeads = finalLeads.filter(l => l.rating <= 3);
+        if (ratingFilter === "1") finalLeads = finalLeads.filter(l => l.rating === 1);
+        
+        if (locationFilter !== "all") finalLeads = finalLeads.filter(l => l.locationId === locationFilter);
+      }
+
+      this.exportLeadsCSV(finalLeads);
     });
   },
 
@@ -2354,66 +2410,26 @@ const App = {
       </div>
 
       <div class="pricing-tabs">
-        
-        <!-- PLAN FREE -->
-        <div class="pricing-card ${activePlan === 'free' ? 'featured' : ''}">
-          ${activePlan === 'free' ? `<span class="pricing-featured-badge" data-i18n="bill_active_tag">Activo</span>` : ''}
-          <div class="pricing-header">
-            <h3 data-i18n="bill_plan_free">Plan Starter</h3>
-            <span style="font-size: 0.8rem; color: var(--text-secondary);" data-i18n="bill_limit_locations" data-i18n-val="1">Límite: 1 sucursal</span>
+        ${Object.entries(this.plansConfig).map(([key, plan]) => `
+          <div class="pricing-card ${activePlan === key ? 'featured' : ''}">
+            ${activePlan === key ? `<span class="pricing-featured-badge" data-i18n="bill_active_tag">Activo</span>` : ''}
+            <div class="pricing-header">
+              <h3>${plan.name}</h3>
+              <span style="font-size: 0.8rem; color: var(--text-secondary);">
+                ${plan.limit === Infinity ? 'Sucursales ilimitadas' : `Límite: ${plan.limit} ${plan.limit === 1 ? 'sucursal' : 'sucursales'}`}
+              </span>
+            </div>
+            <div class="pricing-price">${plan.price === 0 ? 'Gratis' : `$${plan.price} USD / mes`}</div>
+            <ul class="pricing-features-list">
+              ${plan.features.map(f => `<li><i data-lucide="check"></i> <span>${f}</span></li>`).join('')}
+            </ul>
+            <button class="btn ${key === 'star' ? 'btn-accent' : key === 'pro' ? 'btn-primary' : 'btn-secondary'} upgrade-plan-trigger" 
+                    data-plan="${key}" 
+                    ${activePlan === key ? 'disabled style="background:var(--bg-primary); color:var(--text-secondary); cursor:default; box-shadow:none;"' : ''}>
+              ${activePlan === key ? 'Plan Activo' : 'Seleccionar Plan'}
+            </button>
           </div>
-          <div class="pricing-price" data-i18n="bill_price_free">Gratis</div>
-          <ul class="pricing-features-list">
-            <li><i data-lucide="check"></i> <span data-i18n="bill_feat_1">Indicador LED animado</span></li>
-            <li><i data-lucide="check"></i> <span data-i18n="bill_feat_2">Códigos QR de Alta Definición</span></li>
-            <li><i data-lucide="check"></i> <span data-i18n="bill_feat_3">Portal móvil personalizable</span></li>
-          </ul>
-          <button class="btn btn-secondary" disabled style="opacity: 0.5;">
-            ${activePlan === 'free' ? 'Plan Activo' : 'Starter'}
-          </button>
-        </div>
-
-        <!-- PLAN PRO -->
-        <div class="pricing-card ${activePlan === 'pro' ? 'featured' : ''}">
-          ${activePlan === 'pro' ? `<span class="pricing-featured-badge" data-i18n="bill_active_tag">Activo</span>` : ''}
-          <div class="pricing-header">
-            <h3 data-i18n="bill_plan_pro">Plan Pro Profesional</h3>
-            <span style="font-size: 0.8rem; color: var(--text-secondary);" data-i18n="bill_limit_locations_plural" data-i18n-val="3">Límite: Hasta 3 sucursales</span>
-          </div>
-          <div class="pricing-price" data-i18n="bill_price_pro">$29 USD / mes</div>
-          <ul class="pricing-features-list">
-            <li><i data-lucide="check"></i> <span data-i18n="bill_feat_1">Indicador LED animado</span></li>
-            <li><i data-lucide="check"></i> <span data-i18n="bill_feat_2">Códigos QR de Alta Definición</span></li>
-            <li><i data-lucide="check"></i> <span data-i18n="bill_feat_3">Portal móvil personalizable</span></li>
-            <li><i data-lucide="check"></i> <span data-i18n="bill_feat_4">Filtro estratégico de reseñas</span></li>
-            <li><i data-lucide="check"></i> <span data-i18n="bill_feat_5">Simulador de servidor de API</span></li>
-          </ul>
-          <button class="btn btn-primary upgrade-plan-trigger" data-plan="pro" ${activePlan === 'pro' ? 'disabled style="background:var(--bg-primary); color:var(--text-secondary); cursor:default; box-shadow:none;"' : ''}>
-            ${activePlan === 'pro' ? 'Plan Activo' : this.t('bill_upgrade_btn')}
-          </button>
-        </div>
-
-        <!-- PLAN STAR -->
-        <div class="pricing-card ${activePlan === 'star' ? 'featured' : ''}">
-          ${activePlan === 'star' ? `<span class="pricing-featured-badge" data-i18n="bill_active_tag">Activo</span>` : ''}
-          <div class="pricing-header">
-            <h3 data-i18n="bill_plan_star">Plan Star Ilimitado</h3>
-            <span style="font-size: 0.8rem; color: var(--text-secondary);" data-i18n="bill_limit_unlimited">Sucursales ilimitadas</span>
-          </div>
-          <div class="pricing-price" data-i18n="bill_price_star">$79 USD / mes</div>
-          <ul class="pricing-features-list">
-            <li><i data-lucide="check"></i> <span data-i18n="bill_feat_1">Indicador LED animado</span></li>
-            <li><i data-lucide="check"></i> <span data-i18n="bill_feat_2">Códigos QR de Alta Definición</span></li>
-            <li><i data-lucide="check"></i> <span data-i18n="bill_feat_3">Portal móvil personalizable</span></li>
-            <li><i data-lucide="check"></i> <span data-i18n="bill_feat_4">Filtro estratégico de reseñas</span></li>
-            <li><i data-lucide="check"></i> <span data-i18n="bill_feat_5">Simulador de servidor de API</span></li>
-            <li><i data-lucide="check"></i> <span data-i18n="bill_feat_6">Soporte prioritario</span></li>
-          </ul>
-          <button class="btn btn-accent upgrade-plan-trigger" data-plan="star" ${activePlan === 'star' ? 'disabled style="background:var(--bg-primary); color:var(--text-secondary); cursor:default; box-shadow:none;"' : ''}>
-            ${activePlan === 'star' ? 'Plan Activo' : this.t('bill_upgrade_btn')}
-          </button>
-        </div>
-
+        `).join('')}
       </div>
     `;
 
@@ -2440,6 +2456,8 @@ const App = {
 
     const handler = async () => {
       const cardNumber = document.getElementById('card-number').value;
+      const period = parseInt(document.getElementById('subscription-period').value);
+      
       if (cardNumber.length < 14) {
         alert(this.State.lang === 'es' ? 'Ingresa una tarjeta de crédito válida' : 'Enter a valid credit card');
         return;
@@ -2448,13 +2466,23 @@ const App = {
       formContainer.style.display = 'none';
       processingContainer.style.display = 'block';
       
-      this.addLog('POST', `[Pasarela] Iniciando transacción Wompi / Bancolombia para plan: ${plan.toUpperCase()}`);
+      const basePrice = this.plansConfig[plan].price;
+      const discounts = { 1: 0, 3: 0.05, 6: 0.1, 9: 0.15, 12: 0.2 };
+      const totalAmount = (basePrice * period * (1 - discounts[period])).toFixed(2);
+
+      this.addLog('POST', `[Wompi] Solicitando Tokenización de Tarjeta: ****${cardNumber.slice(-4)}`);
+      this.addLog('POST', `[Wompi] Token generado: tok_test_${Math.random().toString(36).substring(7)}`);
+      this.addLog('POST', `[Wompi] Iniciando transacción para plan ${plan.toUpperCase()} por ${period} meses. Total: $${totalAmount} USD`);
 
       if (supabaseClient) {
         const user = this.State.currentUser;
         const { error } = await supabaseClient
           .from('profiles')
-          .update({ plan: plan })
+          .update({ 
+            plan: plan,
+            subscription_period: period,
+            last_payment_amount: totalAmount
+          })
           .eq('user_id', user.id);
 
         if (error) {
@@ -2550,6 +2578,7 @@ const App = {
         <button class="admin-tab-btn active" data-tab="leads"><i data-lucide="message-square"></i> <span data-i18n="admin_leads_tab">Opiniones Globales</span></button>
         <button class="admin-tab-btn" data-tab="requests"><i data-lucide="sparkles"></i> <span>Solicitudes</span></button>
         <button class="admin-tab-btn" data-tab="tenants"><i data-lucide="users"></i> <span data-i18n="admin_users_tab">Cuentas de Comercios</span></button>
+        <button class="admin-tab-btn" data-tab="plans"><i data-lucide="credit-card"></i> <span>Gestionar Planes</span></button>
         <button class="admin-tab-btn" data-tab="terminal"><i data-lucide="terminal"></i> <span data-i18n="admin_logs_tab">Consola de Servidor</span></button>
       </div>
 
@@ -2697,7 +2726,7 @@ const App = {
                   }
                 });
               });
-              } else if (tab === 'tenants') {
+    } else if (tab === 'terminal') {
       this.addLog('GET', `Súper Admin: Cargando consola segura de API Proxy`);
       tabContent.innerHTML = `
         <div class="terminal-window">
@@ -2729,6 +2758,57 @@ const App = {
         this.State.proxyLogs = [];
         this.addLog('SYSTEM', 'Terminal limpiada por el super administrador.');
         this.renderSuperAdminTabContent('terminal');
+      });
+    } else if (tab === 'plans') {
+      this.addLog('GET', `Súper Admin: Gestión de configuración de Planes y Precios`);
+      tabContent.innerHTML = `
+        <div class="leads-table-container">
+          <table class="leads-table">
+            <thead>
+              <tr>
+                <th>Plan</th>
+                <th>Precio (USD)</th>
+                <th>Límite de Sedes</th>
+                <th>Características</th>
+                <th>Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${Object.entries(this.plansConfig).map(([key, plan]) => `
+                <tr>
+                  <td><strong>${plan.name}</strong></td>
+                  <td><input type="number" class="form-control plan-price-input" data-plan="${key}" value="${plan.price}" style="width: 80px; padding: 4px;"></td>
+                  <td><input type="text" class="form-control plan-limit-input" data-plan="${key}" value="${plan.limit === Infinity ? 'Ilimitado' : plan.limit}" style="width: 100px; padding: 4px;"></td>
+                  <td style="font-size: 0.75rem;">${plan.features.join(', ')}</td>
+                  <td>
+                    <button class="btn btn-primary save-plan-btn" data-plan="${key}" style="padding: 6px 12px; font-size: 0.75rem; width: auto;">
+                      <i data-lucide="save"></i> Guardar
+                    </button>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      document.querySelectorAll('.save-plan-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const planKey = btn.getAttribute('data-plan');
+          const priceInput = document.querySelector(`.plan-price-input[data-plan="${planKey}"]`);
+          const limitInput = document.querySelector(`.plan-limit-input[data-plan="${planKey}"]`);
+          
+          const price = parseFloat(priceInput.value);
+          const limitVal = limitInput.value;
+          const limit = limitVal.toLowerCase() === 'ilimitado' ? Infinity : parseInt(limitVal);
+
+          this.plansConfig[planKey].price = price;
+          this.plansConfig[planKey].limit = limit;
+          this.PlanLimits[planKey] = limit;
+          
+          this.addLog('SYSTEM', `ADMIN: Plan "${planKey}" actualizado. Nuevo precio: $${price}, Límite: ${limitVal}`);
+          alert(`Plan ${planKey.toUpperCase()} actualizado correctamente.`);
+        });
       });
     } else if (tab === 'tenants') {
       this.addLog('GET', `Súper Admin: Auditando base de datos de Tenants registrados`);

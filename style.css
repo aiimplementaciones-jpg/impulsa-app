@@ -304,12 +304,14 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .status-badge.active .led-dot {
-  animation: ledPulse 1.5s infinite alternate;
+  animation: ledPulseStar 2s infinite ease-in-out;
+  box-shadow: 0 0 10px var(--color-success);
 }
 
-@keyframes ledPulse {
-  0% { transform: scale(0.9); opacity: 0.4; }
-  100% { transform: scale(1.3); opacity: 1; box-shadow: 0 0 8px currentColor; }
+@keyframes ledPulseStar {
+  0% { transform: scale(0.85); opacity: 0.5; box-shadow: 0 0 2px var(--color-success); }
+  50% { transform: scale(1.2); opacity: 1; box-shadow: 0 0 12px var(--color-success); }
+  100% { transform: scale(0.85); opacity: 0.5; box-shadow: 0 0 2px var(--color-success); }
 }
 
 /* Botones Premium */
@@ -1147,7 +1149,7 @@ h1, h2, h3, h4, h5, h6 {
 /* ==========================================================================
    MEDIA QUERIES (ADAPTACIÓN A TABLETAS Y ESCRITORIOS)
    ========================================================================== */
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
   .responsive-grid {
     grid-template-columns: 1fr 1fr;
     gap: 20px;
@@ -1167,8 +1169,8 @@ h1, h2, h3, h4, h5, h6 {
     grid-template-columns: 1fr 1fr;
   }
   /* Ocultar Barra de Navegación Inferior en pantallas grandes */
-  .bottom-nav {
-    display: none;
+  .bottom-nav, .brand-logo-mobile {
+    display: none !important;
   }
 
   .app-container {
@@ -1253,19 +1255,45 @@ h1, h2, h3, h4, h5, h6 {
 
   /* Grid layouts expandidos en pantallas grandes */
   .locations-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr; /* Mantener una columna en tablets por defecto */
     gap: 20px;
+  }
+
+  @media (min-width: 1024px) {
+    .locations-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (min-width: 1400px) {
+    .locations-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
   }
 
   .metrics-row {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
+    grid-template-columns: 1fr;
+  }
+
+  @media (min-width: 1024px) {
+    .metrics-row {
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+    }
   }
 
   .pricing-tabs {
-    grid-template-columns: repeat(3, 1fr);
-    display: grid;
-    gap: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  @media (min-width: 1024px) {
+    .pricing-tabs {
+      grid-template-columns: repeat(3, 1fr);
+      display: grid;
+      gap: 20px;
+    }
   }
 
   /* Ajustes del modal de pasarela en tablet/desktop */
