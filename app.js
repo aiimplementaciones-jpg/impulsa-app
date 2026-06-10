@@ -133,7 +133,7 @@ const App = {
       // 1. Obtener configuración de planes dinámicos (NUEVO)
       const { data: dbPlans, error: plansErr } = await supabaseClient.from('plans').select('*');
       if (!plansErr && dbPlans && dbPlans.length > 0) {
-        // Solo limpiamos si recibimos datos válidos de la nube
+        this.plansConfig = {}; // LIMPIEZA TOTAL antes de poblar
         dbPlans.forEach(p => {
           this.plansConfig[p.id] = {
             name: p.name,
@@ -289,10 +289,10 @@ const App = {
       }));
 
       // Refrescar la página actual para mostrar los datos recién cargados (especialmente planes)
+      this.addLog('SYSTEM', 'Interfaz de usuario actualizada con datos de la nube.');
       if (this.State.activePage) {
         this.renderPageContent(this.State.activePage);
       }
-
     } catch (err) {
       this.addLog('SYSTEM', `Error de sincronización con Supabase: ${err.message}`);
     }
