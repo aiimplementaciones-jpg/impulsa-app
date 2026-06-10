@@ -2474,7 +2474,10 @@ const App = {
       const basePrice = this.plansConfig[plan].price;
       const discounts = { 1: 0, 3: 0.05, 6: 0.1, 9: 0.15, 12: 0.2 };
       const totalAmount = (basePrice * period * (1 - discounts[period])).toFixed(2);
-      const usingKeys = this.State.wompiConfig.publicKey ? 'Reales' : 'Simuladas (Demostración)';
+      
+      const now = new Date();
+      const expiryDate = new Date();
+      expiryDate.setMonth(now.getMonth() + period);
 
       this.addLog('POST', `[Wompi] Usando Llaves: ${usingKeys}`);
       this.addLog('POST', `[Wompi] Solicitando Tokenización de Tarjeta: ****${cardNumber.slice(-4)}`);
@@ -2493,7 +2496,9 @@ const App = {
           .update({ 
             plan: plan,
             subscription_period: period,
-            last_payment_amount: totalAmount
+            last_payment_amount: totalAmount,
+            subscription_date: now.toISOString(),
+            subscription_expiry: expiryDate.toISOString()
           })
           .eq('user_id', user.id);
 
@@ -2877,6 +2882,10 @@ const App = {
             <tbody>
               ${this.State.users.map(u => {
                 const count = this.State.locations.filter(loc => loc.userId === u.id).length;
+                const expiryDate = u.subscriptionExpiry ? new Date(u.subscriptionExpiry) : null;
+                const isExpired = expiryDate && expiryDate < new Date();
+                const statusColor = isExpired ? 'var(--color-danger)' : 'var(--color-success)';
+                
                 return `
                   <tr>
                     <td><strong>${u.id.substring(0, 8)}...</strong></td>
@@ -2898,12 +2907,21 @@ const App = {
                       </div>
                     </td>
                     <td>
-                      <div style="display: flex; flex-direction: column;">
-                        <span>${u.city || 'Sin Ciudad'}</span>
-                        <span style="font-size: 0.72rem; color: var(--text-secondary);">${u.address || ''}</span>
+                      <div style="display: flex; flex-direction: column; font-size: 0.8rem;">
+                        <span style="font-weight: 700; color: ${statusColor};">
+                          ${u.plan.toUpperCase()} (${u.subscriptionPeriod || 1} Meses)
+                        </span>
+                        <span style="color: var(--text-secondary); font-size: 0.7rem;">
+                          Vence: ${expiryDate ? expiryDate.toLocaleDateString() : 'N/A'}
+                        </span>
                       </div>
                     </td>
-                    <td><span class="status-badge active" style="background-color:rgba(16,185,129,0.1); color:var(--color-success); text-transform:uppercase; font-size:0.75rem;">${u.plan.toUpperCase()}</span></td>
+                    <td>
+                      <div style="display: flex; flex-direction: column; text-align: right;">
+                        <strong style="color: var(--color-brand);">$${u.lastPaymentAmount || '0.00'}</strong>
+                        <span style="font-size: 0.7rem; color: var(--text-secondary);">Pagado: ${u.subscriptionDate ? new Date(u.subscriptionDate).toLocaleDateString() : 'N/A'}</span>
+                      </div>
+                    </td>
                     <td style="text-align: center;"><strong>${count}</strong></td>
                   </tr>
                 `;
