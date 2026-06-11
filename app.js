@@ -2654,7 +2654,7 @@ const App = {
         'amount-in-cents': amountInCents,
         'reference': reference,
         'redirect-url': redirectUrl,
-        'signature:integrity': signature
+        'signature': signature
       };
 
       for (const [key, value] of Object.entries(params)) {
