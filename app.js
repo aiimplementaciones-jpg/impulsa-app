@@ -355,6 +355,13 @@ const App = {
       return;
     }
 
+    // Manejo de la ruta de Respuesta de Pago Wompi
+    if (hash.startsWith('#billing-response')) {
+      const urlParams = new URLSearchParams(hash.substring(hash.indexOf('?')));
+      this.renderBillingResponse(pageContainer || document.getElementById('app-view'), urlParams);
+      return;
+    }
+
     const pageName = hash.replace('#', '').split('?')[0];
     this.State.activePage = pageName;
 
@@ -1028,9 +1035,13 @@ const App = {
         <!-- Enlaces Rápidos y QR -->
         <div class="card">
           <h3 class="card-title"><i data-lucide="qr-code"></i> Mi Enlace de Calificación</h3>
-          <div style="margin-top: 16px; text-align: center;">
+          <div style="margin-top: 16px; text-align: center; display: flex; flex-direction: column; align-items: center;">
+            <div style="width: 60px; height: 60px; border-radius: 50%; border: 2px solid ${user.accentColor || 'var(--border-color)'}; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; overflow: hidden; background: white;">
+                ${user.logo && user.logo.startsWith('http') ? `<img src="${user.logo}" style="width:100%; height:100%; object-fit:cover;">` : user.logo || '🏪'}
+            </div>
+            <strong style="font-size: 1rem; color: var(--text-primary); margin-bottom: 4px;">${user.businessName}</strong>
             <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 12px;">Usa este enlace en tus redes sociales.</p>
-            <div style="background: var(--bg-primary); padding: 12px; border-radius: 8px; border: 1px dashed var(--border-color); font-family: monospace; font-size: 0.8rem; margin-bottom: 16px; word-break: break-all;">
+            <div style="background: var(--bg-primary); padding: 12px; border-radius: 8px; border: 1px dashed var(--border-color); font-family: monospace; font-size: 0.8rem; margin-bottom: 16px; word-break: break-all; width: 100%;">
               ${window.location.origin}/#portal?id=${userLocations[0]?.id || 'demo'}
             </div>
             <div style="display: flex; gap: 8px; justify-content: center;">
@@ -1086,8 +1097,8 @@ const App = {
           <h4 style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 12px; text-transform: uppercase;">Vista Previa</h4>
           <div class="phone-simulator-dashboard" style="width: 100%; max-width: 200px; height: 400px; background: #1a1a1a; border-radius: 30px; border: 6px solid #333; position: relative; overflow: hidden; box-shadow: var(--shadow-lg);">
             <div style="width: 60px; height: 12px; background: #333; position: absolute; top: 0; left: 50%; transform: translateX(-50%); border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; z-index: 2;"></div>
-            <div id="sim-screen" style="width: 100%; height: 100%; background: white; display: flex; flex-direction: column; align-items: center; padding: 30px 10px; text-align: center; gap: 10px;">
-              <div id="sim-logo" style="width: 50px; height: 50px; border-radius: 50%; border: 2px solid #6366f1; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; overflow:hidden;">
+            <div id="sim-screen" style="width: 100%; height: 100%; background: ${user.bgColor || 'white'}; display: flex; flex-direction: column; align-items: center; padding: 30px 10px; text-align: center; gap: 10px;">
+              <div id="sim-logo" style="width: 50px; height: 50px; border-radius: 50%; border: 2px solid ${user.accentColor || '#6366f1'}; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; overflow:hidden; background: white;">
                 ${user.logo && user.logo.startsWith('http') ? `<img src="${user.logo}" style="width:100%; height:100%; object-fit:cover;">` : user.logo || '🏪'}
               </div>
               <h5 id="sim-title" style="font-size: 0.8rem; margin: 0; color: #333;">${user.title || 'Mi Negocio'}</h5>
@@ -1095,7 +1106,7 @@ const App = {
               <div style="display: flex; gap: 2px;">
                 ${Array.from({ length: 5 }).map(() => `<i data-lucide="star" style="width: 12px; height: 12px; color: #FFD700; fill: #FFD700;"></i>`).join('')}
               </div>
-              <div id="sim-button" style="margin-top: auto; width: 100%; background: #6366f1; color: white; padding: 8px; border-radius: 6px; font-size: 0.6rem; font-weight: 700;">
+              <div id="sim-button" style="margin-top: auto; width: 100%; background: ${user.accentColor || '#6366f1'}; color: white; padding: 8px; border-radius: 6px; font-size: 0.6rem; font-weight: 700;">
                 ENVIAR OPINIÓN
               </div>
             </div>
@@ -1830,6 +1841,7 @@ const App = {
       const printWindow = window.open('', '_blank');
       
       const accentColor = user.accentColor || '#6366f1';
+      const bgColor = user.bgColor || '#ffffff';
       
       printWindow.document.write(`
         <html>
@@ -1842,7 +1854,7 @@ const App = {
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                height: 100vh;
+                min-height: 100vh;
                 margin: 0;
                 background-color: #f9fafb;
               }
@@ -1856,25 +1868,25 @@ const App = {
                 text-align: center;
               }
               .header {
-                background: linear-gradient(135deg, ${accentColor}, #4f46e5);
+                background: linear-gradient(135deg, ${accentColor}, ${accentColor}dd);
                 padding: 40px 20px;
                 color: white;
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                gap: 10px;
+                gap: 15px;
               }
               .business-logo {
-                width: 80px;
-                height: 80px;
+                width: 100px;
+                height: 100px;
                 background: white;
-                border-radius: 20px;
+                border-radius: 25px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                font-size: 3rem;
+                font-size: 3.5rem;
                 overflow: hidden;
-                box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+                box-shadow: 0 8px 16px rgba(0,0,0,0.15);
               }
               .business-logo img {
                 width: 100%;
@@ -1883,58 +1895,61 @@ const App = {
               }
               .brand-name {
                 font-weight: 800;
-                font-size: 1.2rem;
-                letter-spacing: 2px;
-                opacity: 0.9;
+                font-size: 1.4rem;
+                letter-spacing: 1px;
                 text-transform: uppercase;
               }
               .content {
                 padding: 40px 30px;
+                background-color: white;
               }
               .business-name-main {
                 font-weight: 800;
-                font-size: 2rem;
+                font-size: 2.2rem;
                 color: #111827;
                 margin-bottom: 5px;
                 text-transform: uppercase;
               }
               .location-name {
-                font-weight: 500;
-                font-size: 1.1rem;
-                color: #6b7280;
+                font-weight: 600;
+                font-size: 1.2rem;
+                color: ${accentColor};
                 margin-bottom: 30px;
               }
               .qr-container {
-                padding: 20px;
+                padding: 25px;
                 background: white;
-                border-radius: 30px;
-                border: 2px dashed ${accentColor}44;
+                border-radius: 35px;
+                border: 3px solid ${accentColor}22;
                 margin-bottom: 30px;
                 display: inline-block;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.05);
               }
               .qr-img {
-                width: 280px;
-                height: 280px;
+                width: 260px;
+                height: 260px;
                 display: block;
               }
               .cta-text {
-                font-weight: 700;
-                font-size: 1.4rem;
+                font-weight: 800;
+                font-size: 1.6rem;
                 color: #111827;
                 margin-bottom: 10px;
               }
               .sub-text {
-                font-size: 1rem;
-                color: #6b7280;
-                line-height: 1.5;
+                font-size: 1.1rem;
+                color: #4b5563;
+                line-height: 1.4;
               }
               .footer-decor {
-                height: 15px;
-                background: linear-gradient(90deg, ${accentColor}, #4f46e5, ${accentColor});
+                height: 20px;
+                background: ${accentColor};
               }
               @media print {
                 body { background: white; }
                 .stand { box-shadow: none; border: 1px solid #eee; }
+                .header { -webkit-print-color-adjust: exact; }
+                .footer-decor { -webkit-print-color-adjust: exact; }
               }
             </style>
           </head>
@@ -1944,22 +1959,22 @@ const App = {
                 <div class="business-logo">
                   ${logo.startsWith('http') ? `<img src="${logo}">` : logo}
                 </div>
-                <div class="brand-name">IMPULSA</div>
+                <div class="brand-name">${user.businessName}</div>
               </div>
               <div class="content">
-                <div class="business-name-main">${user.businessName}</div>
+                <div class="business-name-main">¡CALIFÍCANOS!</div>
                 <div class="location-name">${name}</div>
                 <div class="qr-container">
                   <img src="${qrDataUrl}" class="qr-img" />
                 </div>
-                <div class="cta-text">¡Tu opinión nos ayuda a crecer!</div>
-                <div class="sub-text">Escanea este código con tu celular y cuéntanos cómo fue tu experiencia hoy.</div>
+                <div class="cta-text">Tu opinión importa</div>
+                <div class="sub-text">Escanea el código para dejarnos tu reseña y ayudarnos a mejorar.</div>
               </div>
               <div class="footer-decor"></div>
             </div>
             <script>
               window.onload = function() {
-                setTimeout(function() { window.print(); window.close(); }, 500);
+                setTimeout(function() { window.print(); window.close(); }, 700);
               };
             </script>
           </body>
@@ -2027,6 +2042,12 @@ const App = {
     if (!viewContainer) return;
 
     viewContainer.innerHTML = `
+      <style>
+        .portal-container .star-btn svg { stroke: ${tenant.accentColor || 'var(--color-brand)'}; opacity: 0.7; }
+        .portal-container .star-btn.filled svg { fill: #FFD700; stroke: #FFD700; opacity: 1; }
+        .portal-container .btn-primary { background: ${tenant.accentColor || 'var(--color-brand)'} !important; border: none; }
+        .portal-container .btn-accent { background: ${tenant.accentColor || 'var(--color-accent)'} !important; border: none; }
+      </style>
       <div class="portal-container" style="background-color: ${tenant.bgColor || '#ffffff'} !important; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 20px;">
         <div class="card" style="box-shadow: var(--shadow-md); border-radius: var(--radius-lg); padding: 32px 20px; border-top: 6px solid ${tenant.accentColor || 'var(--color-brand)'}; background-color: white; width: 100%; max-width: 450px;">
           
@@ -2037,7 +2058,7 @@ const App = {
               </div>
             </div>
             <h2 class="portal-title">${tenant.title}</h2>
-            <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px; font-weight:600;">${loc.name}</div>
+            <div style="font-size: 0.9rem; color: ${tenant.accentColor || 'var(--text-secondary)'}; margin-top: 4px; font-weight:700; text-transform: uppercase; letter-spacing: 1px;">${loc.name}</div>
           </div>
 
           <div id="portal-step-rating">
@@ -2476,6 +2497,82 @@ const App = {
     });
   },
 
+  async renderBillingResponse(container, params) {
+    const transactionId = params.get('id');
+    const status = transactionId ? 'approved' : 'pending';
+    const user = this.State.currentUser;
+    
+    // Si hay un ID de transacción, intentamos actualizar el plan en Supabase (Simulando validación de webhook)
+    if (transactionId && supabaseClient) {
+      const pendingPlan = Storage.getItem('pending_plan_upgrade');
+      
+      if (pendingPlan) {
+        this.addLog('SYSTEM', `Confirmando actualización al plan ${pendingPlan.toUpperCase()} para transacción: ${transactionId}`);
+        
+        try {
+          await supabaseClient.from('profiles').update({ 
+            plan: pendingPlan,
+            subscription_date: new Date().toISOString()
+          }).eq('id', user.id);
+          
+          Storage.removeItem('pending_plan_upgrade');
+          await this.syncFromSupabase();
+        } catch (err) {
+          console.error("Error actualizando plan tras pago:", err);
+        }
+      }
+    }
+    
+    container.innerHTML = `
+      <div style="max-width: 600px; margin: 40px auto; text-align: center; padding: 20px;">
+        <div class="card" style="padding: 40px 20px; border-top: 8px solid ${status === 'approved' ? 'var(--color-success)' : 'var(--color-warning)'};">
+          <div style="font-size: 4rem; margin-bottom: 20px;">
+            ${status === 'approved' ? '✅' : '⏳'}
+          </div>
+          <h2 style="font-size: 1.8rem; margin-bottom: 10px;">
+            ${status === 'approved' ? '¡Pago Procesado Exitosamente!' : 'Estamos procesando tu pago'}
+          </h2>
+          <p style="color: var(--text-secondary); line-height: 1.6; margin-bottom: 30px;">
+            ${status === 'approved' 
+              ? `Gracias por confiar en <strong>IMPULSA</strong>. Tu plan ha sido actualizado y ya puedes disfrutar de todas las funcionalidades premium para potenciar la reputación de tu negocio.` 
+              : `Tu transacción se encuentra en estado pendiente. Una vez que Wompi confirme el pago, tu plan se actualizará automáticamente en los próximos minutos.`}
+          </p>
+          
+          <div style="background: var(--bg-primary); padding: 20px; border-radius: 12px; margin-bottom: 30px; text-align: left; font-size: 0.9rem;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+              <span style="color: var(--text-secondary);">Comercio:</span>
+              <strong>${user.businessName}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+              <span style="color: var(--text-secondary);">Transacción ID:</span>
+              <strong style="font-family: monospace;">${params.get('id') || 'N/A'}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: var(--text-secondary);">Referencia:</span>
+              <strong style="font-family: monospace;">${params.get('env') || 'IMPULSA-' + Date.now()}</strong>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <a href="#dashboard" class="btn btn-primary">
+              <i data-lucide="layout-dashboard"></i> Ir a mi Panel
+            </a>
+            <a href="#billing" class="btn btn-secondary">
+              <i data-lucide="credit-card"></i> Ver mi Suscripción
+            </a>
+          </div>
+        </div>
+        
+        <p style="margin-top: 24px; font-size: 0.8rem; color: var(--text-secondary);">
+          Si tienes algún problema con tu pago, por favor contáctanos a soporte@impulsa.app mencionando tu ID de transacción.
+        </p>
+      </div>
+    `;
+    
+    lucide.createIcons();
+    this.addLog('SYSTEM', `Cliente redirigido desde Wompi. Estado detectado: ${status.toUpperCase()}. ID: ${params.get('id') || 'Ninguno'}`);
+  },
+
   openCheckoutModal(plan) {
     const modal = document.getElementById('checkout-modal');
     if (!modal) return;
@@ -2490,77 +2587,37 @@ const App = {
     processingContainer.style.display = 'none';
 
     const handler = async () => {
-      const cardNumber = document.getElementById('card-number').value;
       const period = parseInt(document.getElementById('subscription-period').value);
-      
-      if (cardNumber.length < 14) {
-        alert(this.State.lang === 'es' ? 'Ingresa una tarjeta de crédito válida' : 'Enter a valid credit card');
-        return;
-      }
-
-      formContainer.style.display = 'none';
-      processingContainer.style.display = 'block';
-      
       const basePrice = this.plansConfig[plan].price;
       const discounts = { 1: 0, 3: 0.05, 6: 0.1, 9: 0.15, 12: 0.2 };
       const totalAmount = (basePrice * period * (1 - discounts[period])).toFixed(2);
+      const amountInCents = Math.round(totalAmount * 100);
       
-      const now = new Date();
-      const expiryDate = new Date();
-      expiryDate.setMonth(now.getMonth() + period);
+      formContainer.style.display = 'none';
+      processingContainer.style.display = 'block';
+      
+      const reference = `IMPULSA-${plan.toUpperCase()}-${Date.now()}`;
+      const publicKey = this.State.wompiConfig.publicKey || 'pub_test_Q5yS9jVvDX70S99IeMoX36O97xYos2K6';
+      const redirectUrl = encodeURIComponent(`${window.location.origin}${window.location.pathname}#billing-response`);
+      
+      const wompiUrl = `https://checkout.wompi.co/p/?public_key=${publicKey}&currency=USD&amount_in_cents=${amountInCents}&reference=${reference}&redirect_url=${redirectUrl}`;
 
-      this.addLog('POST', `[Wompi] Usando Llaves: ${usingKeys}`);
-      this.addLog('POST', `[Wompi] Solicitando Tokenización de Tarjeta: ****${cardNumber.slice(-4)}`);
+      this.addLog('POST', `[Wompi] Redirigiendo a pasarela externa: ${wompiUrl.substring(0, 50)}...`);
       
-      if (this.State.wompiConfig.publicKey) {
-        this.addLog('POST', `[Wompi] Endpoint: https://sandbox.wompi.co/v1/tokens/cards (usando ${this.State.wompiConfig.publicKey.substring(0, 12)}...)`);
-      }
+      // Guardar plan deseado para recuperarlo al volver de Wompi
+      Storage.setItem('pending_plan_upgrade', plan);
       
-      this.addLog('POST', `[Wompi] Token generado: tok_test_${Math.random().toString(36).substring(7)}`);
-      this.addLog('POST', `[Wompi] Iniciando transacción para plan ${plan.toUpperCase()} por ${period} meses. Total: $${totalAmount} USD`);
-
+      // En un entorno real, guardaríamos la transacción pendiente en Supabase aquí antes de redirigir
       if (supabaseClient) {
-        const user = this.State.currentUser;
-        this.addLog('POST', `[Supabase] Actualizando perfil ID: ${user.id}...`);
-        
-        const { error } = await supabaseClient
-          .from('profiles')
-          .update({ 
-            plan: plan,
-            subscription_period: period,
-            last_payment_amount: totalAmount,
-            subscription_date: now.toISOString(),
-            subscription_expiry: expiryDate.toISOString()
-          })
-          .eq('id', user.id); // Corregido de user_id a id
-
-        if (error) {
-          this.addLog('SYSTEM', `Error en Supabase: ${error.message}`);
-          alert("Error al actualizar plan en Supabase: " + error.message);
-          modal.classList.remove('active');
-          this.renderPageContent('billing');
-          return;
-        }
-        await this.syncFromSupabase();
-      } else {
-        // Actualizar plan del Tenant comercial activo en el Estado local
-        const user = this.State.currentUser;
-        user.plan = plan;
-        
-        // Guardar en la base de datos local
-        const idx = this.State.users.findIndex(u => u.id === user.id);
-        if (idx !== -1) {
-          this.State.users[idx] = user;
-          this.saveUsers();
-        }
+        await supabaseClient.from('profiles').update({ 
+          last_payment_amount: totalAmount,
+          subscription_period: period
+        }).eq('id', this.State.currentUser.id);
       }
 
       setTimeout(() => {
-        modal.classList.remove('active');
-        this.addLog('POST', `[Pasarela] Pago Aprobado. Transacción ID: tx_${Date.now().toString().substring(6)}. Nuevo Plan: ${plan.toUpperCase()}`);
-        alert(this.t('bill_success_payment', { plan: plan.toUpperCase() }));
-        this.renderPageContent('billing');
-      }, 1500);
+        window.location.href = wompiUrl;
+      }, 1000);
 
       confirmBtn.removeEventListener('click', handler);
     };
@@ -2825,13 +2882,17 @@ const App = {
               <input type="password" class="form-control" id="wompi-priv-key" value="${this.State.wompiConfig.privateKey}" placeholder="prv_test_...">
             </div>
           </div>
-          <div style="display: flex; gap: 12px; margin-top: 12px;">
+          <div style="display: flex; gap: 12px; margin-top: 12px; flex-wrap: wrap;">
             <button class="btn btn-primary" id="save-wompi-keys" style="width: auto; padding: 10px 20px;">
               <i data-lucide="save"></i> Guardar Llaves de API
             </button>
-            <span style="font-size: 0.75rem; color: var(--text-secondary); align-self: center;">
-              <i data-lucide="info" style="width: 14px; height: 14px; display: inline;"></i> Las llaves se usarán para procesar transacciones reales.
-            </span>
+            <div style="flex: 1; min-width: 250px; padding: 10px; background: rgba(0, 123, 255, 0.05); border-radius: 8px; border: 1px solid rgba(0, 123, 255, 0.1); display: flex; align-items: center; gap: 10px;">
+              <i data-lucide="info" style="width: 20px; height: 20px; color: var(--color-brand); flex-shrink: 0;"></i>
+              <div style="font-size: 0.75rem; color: var(--text-secondary);">
+                <strong>URL de Respuesta Wompi:</strong><br>
+                <code style="word-break: break-all;">${window.location.origin}${window.location.pathname}#billing-response</code>
+              </div>
+            </div>
           </div>
         </div>
 
