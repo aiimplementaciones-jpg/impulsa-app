@@ -2597,22 +2597,28 @@ const App = {
 
     const handler = async () => {
       const period = parseInt(document.getElementById('subscription-period').value);
-      const basePrice = this.plansConfig[plan].price;
+      const basePriceUsd = this.plansConfig[plan].price;
       const discounts = { 1: 0, 3: 0.05, 6: 0.1, 9: 0.15, 12: 0.2 };
-      const totalAmount = (basePrice * period * (1 - discounts[period])).toFixed(2);
-      const amountInCents = Math.round(totalAmount * 100);
+      
+      // Convertimos a COP (Pesos Colombianos) ya que Wompi Hosted Checkout 
+      // suele requerir COP para cuentas estándar. Usamos 4000 como tasa de cambio.
+      const exchangeRate = 4000;
+      const totalAmountCop = (basePriceUsd * period * (1 - discounts[period]) * exchangeRate);
+      const amountInCents = Math.round(totalAmountCop * 100);
       
       formContainer.style.display = 'none';
       processingContainer.style.display = 'block';
       
       const reference = `IMPULSA-${plan.toUpperCase()}-${Date.now()}`;
       const publicKey = this.State.wompiConfig.publicKey || 'pub_test_Q5yS9jVvDX70S99IeMoX36O97xYos2K6';
+      
+      // Usamos una URL de retorno más limpia para evitar problemas con el hash
       const redirectUrl = encodeURIComponent(`${window.location.origin}${window.location.pathname}#billing-response`);
       
-      // Cambio de guiones bajos (_) a guiones medios (-) según requerimiento de Wompi Hosted Checkout
-      const wompiUrl = `https://checkout.wompi.co/p?public-key=${publicKey}&currency=USD&amount-in-cents=${amountInCents}&reference=${reference}&redirect-url=${redirectUrl}`;
+      // La URL oficial requiere /p/ antes de los parámetros
+      const wompiUrl = `https://checkout.wompi.co/p/?public-key=${publicKey}&currency=COP&amount-in-cents=${amountInCents}&reference=${reference}&redirect-url=${redirectUrl}`;
 
-      this.addLog('POST', `[Wompi] Redirigiendo a pasarela externa: ${wompiUrl.substring(0, 50)}...`);
+      this.addLog('POST', `[Wompi] Redirigiendo a pasarela (COP): ${wompiUrl.substring(0, 60)}...`);
       
       // Guardar plan deseado para recuperarlo al volver de Wompi
       Storage.setItem('pending_plan_upgrade', plan);
