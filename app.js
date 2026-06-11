@@ -2600,8 +2600,6 @@ const App = {
       const basePriceUsd = this.plansConfig[plan].price;
       const discounts = { 1: 0, 3: 0.05, 6: 0.1, 9: 0.15, 12: 0.2 };
       
-      // Convertimos a COP (Pesos Colombianos) ya que Wompi Hosted Checkout 
-      // suele requerir COP para cuentas estándar. Usamos 4000 como tasa de cambio.
       const exchangeRate = 4000;
       const totalAmountCop = (basePriceUsd * period * (1 - discounts[period]) * exchangeRate);
       const amountInCents = Math.round(totalAmountCop * 100);
@@ -2610,18 +2608,19 @@ const App = {
       processingContainer.style.display = 'block';
       
       const reference = `IMPULSA-${plan.toUpperCase()}-${Date.now()}`;
-      const publicKey = this.State.wompiConfig.publicKey || 'pub_test_Q5yS9jVvDX70S99IeMoX36O97xYos2K6';
+      // Limpiamos la llave de posibles espacios accidentales
+      const rawKey = this.State.wompiConfig.publicKey || 'pub_test_Q5yS9jVvDX70S99IeMoX36O97xYos2K6';
+      const publicKey = rawKey.trim();
       
-      // DETERMINAR ENTORNO: Si la llave es de prueba, usar el subdominio sandbox
       const isTest = publicKey.startsWith('pub_test');
-      const baseUrl = isTest ? 'https://sandbox.wompi.co/p' : 'https://checkout.wompi.co/p';
+      const baseUrl = isTest ? 'https://sandbox.wompi.co/p/' : 'https://checkout.wompi.co/p/';
       
-      // Usamos una URL de retorno más limpia
       const redirectUrl = encodeURIComponent(`${window.location.origin}${window.location.pathname}#billing-response`);
       
-      const wompiUrl = `${baseUrl}/?public-key=${publicKey}&currency=COP&amount-in-cents=${amountInCents}&reference=${reference}&redirect-url=${redirectUrl}`;
+      // Construcción exacta según documentación oficial
+      const wompiUrl = `${baseUrl}?public-key=${publicKey}&currency=COP&amount-in-cents=${amountInCents}&reference=${reference}&redirect-url=${redirectUrl}`;
 
-      this.addLog('POST', `[Wompi] Redirigiendo a ${isTest ? 'SANDBOX' : 'PRODUCCIÓN'}: ${wompiUrl.substring(0, 60)}...`);
+      this.addLog('POST', `[Wompi] Redirigiendo (${isTest ? 'TEST' : 'PROD'}): ${publicKey.substring(0, 15)}...`);
       
       // Guardar plan deseado para recuperarlo al volver de Wompi
       Storage.setItem('pending_plan_upgrade', plan);
