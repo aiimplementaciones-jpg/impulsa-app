@@ -357,8 +357,17 @@ const App = {
 
     // Manejo de la ruta de Respuesta de Pago Wompi
     if (hash.startsWith('#billing-response')) {
-      const urlParams = new URLSearchParams(hash.substring(hash.indexOf('?')));
-      this.renderBillingResponse(pageContainer || document.getElementById('app-view'), urlParams);
+      // Extraer parámetros: Primero del hash (común en SPAs) y luego del search (por si acaso)
+      const hashParams = new URLSearchParams(hash.includes('?') ? hash.substring(hash.indexOf('?')) : '');
+      const searchParams = new URLSearchParams(window.location.search);
+      
+      // Combinar parámetros (prioridad al hash que es lo que Wompi debería devolver si el redirect_url tenía #)
+      const combinedParams = new URLSearchParams();
+      [searchParams, hashParams].forEach(p => {
+        for (const [key, value] of p.entries()) combinedParams.set(key, value);
+      });
+
+      this.renderBillingResponse(pageContainer || document.getElementById('app-view'), combinedParams);
       return;
     }
 
