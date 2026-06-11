@@ -328,7 +328,15 @@ const App = {
   // ==========================================================================
   handleRouting() {
     const hash = window.location.hash || '#home';
+    const urlSearchParams = new URLSearchParams(window.location.search);
     
+    // Si detectamos el regreso de Wompi por parámetro de búsqueda (evitando el # en la redirección)
+    if (urlSearchParams.has('pay_res')) {
+      // Limpiar el parámetro de la URL para que no se repita el proceso al refrescar
+      const newUrl = window.location.origin + window.location.pathname + '#billing-response' + window.location.search;
+      window.history.replaceState({}, document.title, newUrl);
+    }
+
     // Limpieza de estilos del portal de opiniones del cliente
     document.body.classList.remove('portal-mode');
     const header = document.querySelector('.app-header');
@@ -2608,25 +2616,17 @@ const App = {
       processingContainer.style.display = 'block';
       
       const reference = `IMPULSA-${plan.toUpperCase()}-${Date.now()}`;
-      // Limpieza profunda de la llave
-      const rawKey = this.State.wompiConfig.publicKey || 'pub_test_Q5yS9jVvDX70S99IeMoX36O97xYos2K6';
-      const publicKey = rawKey.trim();
+      const publicKey = (this.State.wompiConfig.publicKey || 'pub_test_Q5yS9jVvDX70S99IeMoX36O97xYos2K6').trim();
       
-      // Detección robusta de entorno
       const isTest = publicKey.toLowerCase().includes('test');
       const baseUrl = isTest ? 'https://sandbox.wompi.co/p/' : 'https://checkout.wompi.co/p/';
       
-      const redirectUrl = encodeURIComponent(`${window.location.origin}${window.location.pathname}#billing-response`);
+      // CAMBIO CRÍTICO: Evitamos el '#' en la URL que enviamos a Wompi para evitar el 403 Forbidden
+      const redirectUrl = encodeURIComponent(`${window.location.origin}${window.location.pathname}?pay_res=success`);
       
-      // Volvemos a los parámetros con guiones bajos (estándar de Wompi)
       const wompiUrl = `${baseUrl}?public_key=${publicKey}&currency=COP&amount_in_cents=${amountInCents}&reference=${reference}&redirect_url=${redirectUrl}`;
 
-      console.log("=== WOMPI REDIRECT DEBUG ===");
-      console.log("Entorno:", isTest ? "SANDBOX" : "PRODUCCIÓN");
-      console.log("URL Final:", wompiUrl);
-      console.log("============================");
-
-      this.addLog('POST', `[Wompi] Redirigiendo a ${isTest ? 'TEST' : 'PROD'}...`);
+      this.addLog('POST', `[Wompi] Redirigiendo a ${isTest ? 'SANDBOX' : 'PROD'}...`);
       
       // Guardar plan deseado para recuperarlo al volver de Wompi
       Storage.setItem('pending_plan_upgrade', plan);
