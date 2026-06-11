@@ -70,7 +70,8 @@ const App = {
     visits: 0,          // Semilla global de visitas
     wompiConfig: {      // Configuración de Pasarela Wompi
       publicKey: Storage.getItem('wompi_public_key') || '',
-      privateKey: Storage.getItem('wompi_private_key') || '', // Nota: En producción esto iría en variables de entorno del servidor
+      privateKey: Storage.getItem('wompi_private_key') || '',
+      integritySecret: Storage.getItem('wompi_integrity_secret') || '',
       mode: 'sandbox' // 'sandbox' o 'production'
     }
   },
@@ -2614,24 +2615,60 @@ const App = {
       
       formContainer.style.display = 'none';
       processingContainer.style.display = 'block';
-      
+
       const reference = `IMPULSA-${plan.toUpperCase()}-${Date.now()}`;
       const publicKey = (this.State.wompiConfig.publicKey || 'pub_test_Q5yS9jVvDX70S99IeMoX36O97xYos2K6').trim();
-      
+      const integritySecret = (this.State.wompiConfig.integritySecret || '').trim();
       const isTest = publicKey.toLowerCase().includes('test');
-      const baseUrl = isTest ? 'https://sandbox.wompi.co/p/' : 'https://checkout.wompi.co/p/';
-      
-      // CAMBIO CRÍTICO: Evitamos el '#' en la URL que enviamos a Wompi para evitar el 403 Forbidden
-      const redirectUrl = encodeURIComponent(`${window.location.origin}${window.location.pathname}?pay_res=success`);
-      
-      const wompiUrl = `${baseUrl}?public_key=${publicKey}&currency=COP&amount_in_cents=${amountInCents}&reference=${reference}&redirect_url=${redirectUrl}`;
+      const actionUrl = isTest ? 'https://sandbox.wompi.co/p/' : 'https://checkout.wompi.co/p/';
+      const redirectUrl = `${window.location.origin}${window.location.pathname}?pay_res=success`;
 
-      this.addLog('POST', `[Wompi] Redirigiendo a ${isTest ? 'SANDBOX' : 'PROD'}...`);
+      this.addLog('POST', `[Wompi] Generando firma de integridad...`);
       
-      // Guardar plan deseado para recuperarlo al volver de Wompi
+      // GENERACIÓN DE FIRMA SHA256 (SEGÚN DOCUMENTACIÓN)
+      // Orden: <Referencia><MontoEnCentavos><Moneda><SecretoIntegridad>
+      const cadenaConcatenada = `${reference}${amountInCents}COP${integritySecret}`;
+      
+      let signature = '';
+      try {
+        const encondedText = new TextEncoder().encode(cadenaConcatenada);
+        const hashBuffer = await crypto.subtle.digest("SHA-256", encondedText);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        signature = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+        this.addLog('SYSTEM', `Firma Generada: ${signature.substring(0, 10)}...`);
+      } catch (err) {
+        console.error("Error al generar hash:", err);
+        this.addLog('SYSTEM', `Error generando firma SHA256.`);
+      }
+
+      this.addLog('POST', `[Wompi] Generando formulario de pago seguro (${isTest ? 'TEST' : 'PROD'})...`);
+      
+      // Creamos un formulario dinámico
+      const form = document.createElement('form');
+      form.method = 'GET';
+      form.action = actionUrl;
+
+      const params = {
+        'public-key': publicKey,
+        'currency': 'COP',
+        'amount-in-cents': amountInCents,
+        'reference': reference,
+        'redirect-url': redirectUrl,
+        'signature:integrity': signature
+      };
+
+      for (const [key, value] of Object.entries(params)) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key;
+        input.value = value;
+        form.appendChild(input);
+      }
+
+      document.body.appendChild(form);
+      
       Storage.setItem('pending_plan_upgrade', plan);
       
-      // En un entorno real, guardaríamos la transacción pendiente en Supabase aquí antes de redirigir
       if (supabaseClient) {
         await supabaseClient.from('profiles').update({ 
           last_payment_amount: totalAmountCop,
@@ -2640,7 +2677,7 @@ const App = {
       }
 
       setTimeout(() => {
-        window.location.href = wompiUrl;
+        form.submit();
       }, 1000);
 
       confirmBtn.removeEventListener('click', handler);
@@ -2905,6 +2942,10 @@ const App = {
               <label class="form-label">Llave Privada (Private Key)</label>
               <input type="password" class="form-control" id="wompi-priv-key" value="${this.State.wompiConfig.privateKey}" placeholder="prv_test_...">
             </div>
+            <div class="form-group">
+              <label class="form-label">Secreto de Integridad</label>
+              <input type="password" class="form-control" id="wompi-integrity-secret" value="${this.State.wompiConfig.integritySecret}" placeholder="test_integrity_...">
+            </div>
           </div>
           <div style="display: flex; gap: 12px; margin-top: 12px; flex-wrap: wrap;">
             <button class="btn btn-primary" id="save-wompi-keys" style="width: auto; padding: 10px 20px;">
@@ -2953,14 +2994,17 @@ const App = {
       document.getElementById('save-wompi-keys').addEventListener('click', () => {
         const pub = document.getElementById('wompi-pub-key').value;
         const priv = document.getElementById('wompi-priv-key').value;
-        
+        const integ = document.getElementById('wompi-integrity-secret').value;
+
         this.State.wompiConfig.publicKey = pub;
         this.State.wompiConfig.privateKey = priv;
-        
+        this.State.wompiConfig.integritySecret = integ;
+
         Storage.setItem('wompi_public_key', pub);
         Storage.setItem('wompi_private_key', priv);
-        
-        this.addLog('SYSTEM', `ADMIN: Llaves de Wompi actualizadas correctamente.`);
+        Storage.setItem('wompi_integrity_secret', integ);
+
+        this.addLog('SYSTEM', `ADMIN: Llaves de Wompi e Integridad actualizadas.`);
         alert('Llaves de API configuradas. La pasarela está lista para pruebas.');
       });
 
