@@ -78,8 +78,8 @@ const App = {
   // Configuración de planes dinámica (Se puebla desde Supabase, con valores por defecto)
   plansConfig: {
     free: { name: 'Plan Starter', price: 0, limit: 1, features: ['Indicador LED animado', 'Códigos QR de Alta Definición', 'Portal móvil personalizable'] },
-    pro: { name: 'Plan Pro Profesional', price: 29, limit: 3, features: ['Indicador LED animado', 'Códigos QR de Alta Definición', 'Portal móvil personalizable', 'Filtro estratégico de reseñas', 'Simulador de servidor de API'] },
-    star: { name: 'Plan Star Ilimitado', price: 79, limit: Infinity, features: ['Indicador LED animado', 'Códigos QR de Alta Definición', 'Portal móvil personalizable', 'Filtro estratégico de reseñas', 'Simulador de servidor de API', 'Soporte prioritario'] }
+    pro: { name: 'Plan Pro Profesional', price: 16, limit: 3, features: ['Indicador LED animado', 'Códigos QR de Alta Definición', 'Portal móvil personalizable', 'Filtro estratégico de reseñas', 'Simulador de servidor de API'] },
+    star: { name: 'Plan Star Ilimitado', price: 29, limit: Infinity, features: ['Indicador LED animado', 'Códigos QR de Alta Definición', 'Portal móvil personalizable', 'Filtro estratégico de reseñas', 'Simulador de servidor de API', 'Soporte prioritario'] }
   },
 
   // Límites de locales por plan (Se actualizan desde Supabase)
