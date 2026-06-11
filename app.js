@@ -2609,7 +2609,8 @@ const App = {
       const publicKey = this.State.wompiConfig.publicKey || 'pub_test_Q5yS9jVvDX70S99IeMoX36O97xYos2K6';
       const redirectUrl = encodeURIComponent(`${window.location.origin}${window.location.pathname}#billing-response`);
       
-      const wompiUrl = `https://checkout.wompi.co/p/?public_key=${publicKey}&currency=USD&amount_in_cents=${amountInCents}&reference=${reference}&redirect_url=${redirectUrl}`;
+      // Cambio de guiones bajos (_) a guiones medios (-) según requerimiento de Wompi Hosted Checkout
+      const wompiUrl = `https://checkout.wompi.co/p?public-key=${publicKey}&currency=USD&amount-in-cents=${amountInCents}&reference=${reference}&redirect-url=${redirectUrl}`;
 
       this.addLog('POST', `[Wompi] Redirigiendo a pasarela externa: ${wompiUrl.substring(0, 50)}...`);
       
