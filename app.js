@@ -2645,7 +2645,7 @@ const App = {
       
       // Creamos un formulario dinámico
       const form = document.createElement('form');
-      form.method = 'GET';
+      form.method = 'POST'; // CAMBIO A POST: Evita bloqueos de firewall (WAF) en la URL
       form.action = actionUrl;
 
       const params = {
@@ -2654,7 +2654,7 @@ const App = {
         'amount-in-cents': amountInCents,
         'reference': reference,
         'redirect-url': redirectUrl,
-        'signature': signature
+        'signature:integrity': signature // Restauramos el nombre oficial con dos puntos
       };
 
       for (const [key, value] of Object.entries(params)) {
