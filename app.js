@@ -2616,56 +2616,32 @@ const App = {
       formContainer.style.display = 'none';
       processingContainer.style.display = 'block';
 
-      const reference = `IMPULSA-${plan.toUpperCase()}-${Date.now()}`;
+      // 1. Referencia puramente numérica (evita bloqueos por palabras clave)
+      const reference = `${Date.now()}`;
       const publicKey = (this.State.wompiConfig.publicKey || 'pub_test_Q5yS9jVvDX70S99IeMoX36O97xYos2K6').trim();
       const integritySecret = (this.State.wompiConfig.integritySecret || '').trim();
+      
       const isTest = publicKey.toLowerCase().includes('test');
-      const actionUrl = isTest ? 'https://sandbox.wompi.co/p/' : 'https://checkout.wompi.co/p/';
-      const redirectUrl = `${window.location.origin}${window.location.pathname}?pay_res=success`;
+      const baseUrl = isTest ? 'https://sandbox.wompi.co/p/' : 'https://checkout.wompi.co/p/';
+      
+      // 2. URL de retorno sin parámetros para máxima compatibilidad
+      const redirectUrl = encodeURIComponent(window.location.origin + window.location.pathname);
 
-      this.addLog('POST', `[Wompi] Generando firma de integridad...`);
-      
-      // GENERACIÓN DE FIRMA SHA256 (SEGÚN DOCUMENTACIÓN)
-      // Orden: <Referencia><MontoEnCentavos><Moneda><SecretoIntegridad>
+      // 3. Generación de firma SHA256
       const cadenaConcatenada = `${reference}${amountInCents}COP${integritySecret}`;
-      
       let signature = '';
       try {
         const encondedText = new TextEncoder().encode(cadenaConcatenada);
         const hashBuffer = await crypto.subtle.digest("SHA-256", encondedText);
         const hashArray = Array.from(new Uint8Array(hashBuffer));
         signature = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-        this.addLog('SYSTEM', `Firma Generada: ${signature.substring(0, 10)}...`);
-      } catch (err) {
-        console.error("Error al generar hash:", err);
-        this.addLog('SYSTEM', `Error generando firma SHA256.`);
-      }
+      } catch (err) { console.error(err); }
 
-      this.addLog('POST', `[Wompi] Generando formulario de pago seguro (${isTest ? 'TEST' : 'PROD'})...`);
-      
-      // Creamos un formulario dinámico
-      const form = document.createElement('form');
-      form.method = 'POST'; // CAMBIO A POST: Evita bloqueos de firewall (WAF) en la URL
-      form.action = actionUrl;
+      // 4. Construcción de URL Minimalista
+      // Usamos 'signature' sin dos puntos y parámetros estándar
+      const wompiUrl = `${baseUrl}?public-key=${publicKey}&currency=COP&amount-in-cents=${amountInCents}&reference=${reference}&signature=${signature}&redirect-url=${redirectUrl}`;
 
-      const params = {
-        'public-key': publicKey,
-        'currency': 'COP',
-        'amount-in-cents': amountInCents,
-        'reference': reference,
-        'redirect-url': redirectUrl,
-        'signature:integrity': signature // Restauramos el nombre oficial con dos puntos
-      };
-
-      for (const [key, value] of Object.entries(params)) {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = key;
-        input.value = value;
-        form.appendChild(input);
-      }
-
-      document.body.appendChild(form);
+      this.addLog('POST', `[Wompi] Redirigiendo a pasarela segura...`);
       
       Storage.setItem('pending_plan_upgrade', plan);
       
@@ -2677,8 +2653,8 @@ const App = {
       }
 
       setTimeout(() => {
-        form.submit();
-      }, 1000);
+        window.location.href = wompiUrl;
+      }, 800);
 
       confirmBtn.removeEventListener('click', handler);
     };
