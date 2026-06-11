@@ -2608,19 +2608,25 @@ const App = {
       processingContainer.style.display = 'block';
       
       const reference = `IMPULSA-${plan.toUpperCase()}-${Date.now()}`;
-      // Limpiamos la llave de posibles espacios accidentales
+      // Limpieza profunda de la llave
       const rawKey = this.State.wompiConfig.publicKey || 'pub_test_Q5yS9jVvDX70S99IeMoX36O97xYos2K6';
       const publicKey = rawKey.trim();
       
-      const isTest = publicKey.startsWith('pub_test');
+      // Detección robusta de entorno
+      const isTest = publicKey.toLowerCase().includes('test');
       const baseUrl = isTest ? 'https://sandbox.wompi.co/p/' : 'https://checkout.wompi.co/p/';
       
       const redirectUrl = encodeURIComponent(`${window.location.origin}${window.location.pathname}#billing-response`);
       
-      // Construcción exacta según documentación oficial
-      const wompiUrl = `${baseUrl}?public-key=${publicKey}&currency=COP&amount-in-cents=${amountInCents}&reference=${reference}&redirect-url=${redirectUrl}`;
+      // Volvemos a los parámetros con guiones bajos (estándar de Wompi)
+      const wompiUrl = `${baseUrl}?public_key=${publicKey}&currency=COP&amount_in_cents=${amountInCents}&reference=${reference}&redirect_url=${redirectUrl}`;
 
-      this.addLog('POST', `[Wompi] Redirigiendo (${isTest ? 'TEST' : 'PROD'}): ${publicKey.substring(0, 15)}...`);
+      console.log("=== WOMPI REDIRECT DEBUG ===");
+      console.log("Entorno:", isTest ? "SANDBOX" : "PRODUCCIÓN");
+      console.log("URL Final:", wompiUrl);
+      console.log("============================");
+
+      this.addLog('POST', `[Wompi] Redirigiendo a ${isTest ? 'TEST' : 'PROD'}...`);
       
       // Guardar plan deseado para recuperarlo al volver de Wompi
       Storage.setItem('pending_plan_upgrade', plan);
