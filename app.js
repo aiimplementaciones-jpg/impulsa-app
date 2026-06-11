@@ -2626,7 +2626,7 @@ const App = {
       // En un entorno real, guardaríamos la transacción pendiente en Supabase aquí antes de redirigir
       if (supabaseClient) {
         await supabaseClient.from('profiles').update({ 
-          last_payment_amount: totalAmount,
+          last_payment_amount: totalAmountCop,
           subscription_period: period
         }).eq('id', this.State.currentUser.id);
       }
