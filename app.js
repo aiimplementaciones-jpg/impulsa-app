@@ -2612,13 +2612,16 @@ const App = {
       const reference = `IMPULSA-${plan.toUpperCase()}-${Date.now()}`;
       const publicKey = this.State.wompiConfig.publicKey || 'pub_test_Q5yS9jVvDX70S99IeMoX36O97xYos2K6';
       
-      // Usamos una URL de retorno más limpia para evitar problemas con el hash
+      // DETERMINAR ENTORNO: Si la llave es de prueba, usar el subdominio sandbox
+      const isTest = publicKey.startsWith('pub_test');
+      const baseUrl = isTest ? 'https://sandbox.wompi.co/p' : 'https://checkout.wompi.co/p';
+      
+      // Usamos una URL de retorno más limpia
       const redirectUrl = encodeURIComponent(`${window.location.origin}${window.location.pathname}#billing-response`);
       
-      // La URL oficial requiere /p/ antes de los parámetros
-      const wompiUrl = `https://checkout.wompi.co/p/?public-key=${publicKey}&currency=COP&amount-in-cents=${amountInCents}&reference=${reference}&redirect-url=${redirectUrl}`;
+      const wompiUrl = `${baseUrl}/?public-key=${publicKey}&currency=COP&amount-in-cents=${amountInCents}&reference=${reference}&redirect-url=${redirectUrl}`;
 
-      this.addLog('POST', `[Wompi] Redirigiendo a pasarela (COP): ${wompiUrl.substring(0, 60)}...`);
+      this.addLog('POST', `[Wompi] Redirigiendo a ${isTest ? 'SANDBOX' : 'PRODUCCIÓN'}: ${wompiUrl.substring(0, 60)}...`);
       
       // Guardar plan deseado para recuperarlo al volver de Wompi
       Storage.setItem('pending_plan_upgrade', plan);
