@@ -2637,32 +2637,15 @@ const App = {
         signature = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
       } catch (err) { console.error(err); }
 
-      // 4. Construcción de URL Híbrida (Formato que Wompi acepta más frecuentemente)
-      // Usamos public-key (guion) pero el resto con guion bajo (_)
-      const wompiUrl = `${baseUrl}?public-key=${publicKey}&currency=COP&amount_in_cents=${amountInCents}&reference=${reference}&signature=${signature}&redirect_url=${redirectUrl}`;
+      // 4. PRUEBA DE DIAGNÓSTICO DEFINITIVA
+      const wompiUrl = `${baseUrl}?public-key=${publicKey}&currency=COP&amount-in-cents=${amountInCents}&reference=${reference}`;
 
       console.group("🚀 DIAGNÓSTICO WOMPI");
-      console.log("1. Si la redirección falla (Forbidden), copia esta URL:");
+      console.log("Copia y pega esta URL en INCÓGNITO:");
       console.log(wompiUrl);
-      console.log("2. Intenta pegarla en una ventana de INCÓGNITO.");
-      console.log("3. Si en incógnito funciona, el problema es tu caché/cookies.");
-      console.log("4. Si en incógnito sigue dando Forbidden, tu Llave Pública está bloqueada o inactiva en Wompi.");
       console.groupEnd();
 
-      this.addLog('POST', `[Wompi] Redirigiendo... Consulta la consola (F12) si falla.`);
-      
-      Storage.setItem('pending_plan_upgrade', plan);
-      
-      if (supabaseClient) {
-        await supabaseClient.from('profiles').update({ 
-          last_payment_amount: totalAmountCop,
-          subscription_period: period
-        }).eq('id', this.State.currentUser.id);
-      }
-
-      setTimeout(() => {
-        window.location.href = wompiUrl;
-      }, 2000); // Aumentamos a 2 seg para que veas el log en consola
+      alert("URL de diagnóstico generada en la consola (F12). Pruébala en incógnito.");
 
       confirmBtn.removeEventListener('click', handler);
     };
