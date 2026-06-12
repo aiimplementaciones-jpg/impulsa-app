@@ -2616,18 +2616,13 @@ const App = {
       formContainer.style.display = 'none';
       processingContainer.style.display = 'block';
 
-      // 1. Referencia puramente numérica (evita bloqueos por palabras clave)
       const reference = `${Date.now()}`;
       const publicKey = (this.State.wompiConfig.publicKey || 'pub_test_Q5yS9jVvDX70S99IeMoX36O97xYos2K6').trim();
       const integritySecret = (this.State.wompiConfig.integritySecret || '').trim();
       
-      const isTest = publicKey.toLowerCase().includes('test');
-      const baseUrl = isTest ? 'https://sandbox.wompi.co/p/' : 'https://checkout.wompi.co/p/';
-      
-      // 2. URL de retorno sin parámetros para máxima compatibilidad
-      const redirectUrl = encodeURIComponent(window.location.origin + window.location.pathname);
+      const redirectUrl = `${window.location.origin}${window.location.pathname}?pay_res=success`;
 
-      // 3. Generación de firma SHA256
+      // GENERACIÓN DE FIRMA SHA256 (Mantenemos la lógica pero para el objeto Widget)
       const cadenaConcatenada = `${reference}${amountInCents}COP${integritySecret}`;
       let signature = '';
       try {
@@ -2637,16 +2632,47 @@ const App = {
         signature = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
       } catch (err) { console.error(err); }
 
-      // 4. PRUEBA DE DIAGNÓSTICO DEFINITIVA
-      const wompiUrl = `${baseUrl}?public-key=${publicKey}&currency=COP&amount-in-cents=${amountInCents}&reference=${reference}`;
+      this.addLog('POST', `[Wompi] Abriendo Widget de Pago...`);
+      
+      // IMPLEMENTACIÓN POR WIDGET (Evita bloqueos 403 Forbidden)
+      if (typeof WidgetCheckout === 'undefined') {
+        alert("Error: El SDK de Wompi no se ha cargado. Revisa tu conexión.");
+        modal.classList.remove('active');
+        return;
+      }
 
-      console.group("🚀 DIAGNÓSTICO WOMPI");
-      console.log("Copia y pega esta URL en INCÓGNITO:");
-      console.log(wompiUrl);
-      console.groupEnd();
+      const checkout = new WidgetCheckout({
+        currency: 'COP',
+        amountInCents: amountInCents,
+        reference: reference,
+        publicKey: publicKey,
+        signature: { integrity: signature },
+        redirectUrl: redirectUrl, // Opcional, Wompi redirigirá al finalizar
+        customerData: {
+          email: this.State.currentUser.email,
+          fullName: this.State.currentUser.fullName || this.State.currentUser.businessName
+        }
+      });
 
-      alert("URL de diagnóstico generada en la consola (F12). Pruébala en incógnito.");
+      // Guardar plan deseado para recuperarlo al volver
+      Storage.setItem('pending_plan_upgrade', plan);
+      
+      if (supabaseClient) {
+        await supabaseClient.from('profiles').update({ 
+          last_payment_amount: totalAmountCop,
+          subscription_period: period
+        }).eq('id', this.State.currentUser.id);
+      }
 
+      // Abrir el widget
+      checkout.open((result) => {
+        const transaction = result.transaction;
+        this.addLog('SYSTEM', `Widget: Transacción finalizada. ID: ${transaction.id}`);
+        // Redirigir manualmente a nuestra página de respuesta si el widget no lo hace
+        window.location.href = `${redirectUrl}&id=${transaction.id}`;
+      });
+
+      modal.classList.remove('active');
       confirmBtn.removeEventListener('click', handler);
     };
 
