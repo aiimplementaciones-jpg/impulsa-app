@@ -1814,13 +1814,13 @@ const App = {
     this.addLog('GET', `Generando QR HD para: "${name}"`);
 
     this.generateQRCodeCanvas(portalUrl, (canvas) => {
-      // Crear un canvas final con un diseño tipo tarjeta (Más alto para mejor margen)
+      // Crear un canvas final con un diseño tipo tarjeta
       const finalCanvas = document.createElement('canvas');
       finalCanvas.width = 1200;
-      finalCanvas.height = 1800; // Aumentado de 1600 a 1800 para margen inferior
+      finalCanvas.height = 1800;
       const ctx = finalCanvas.getContext('2d');
 
-      // Fondo
+      // Fondo blanco total
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, 1200, 1800);
 
@@ -1831,16 +1831,12 @@ const App = {
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, 1200, 320);
 
-      // Texto "IMPULSA" y Logo/Emoji
+      // Texto "IMPULSA" en cabecera
       ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 70px sans-serif';
       ctx.textAlign = 'left';
       ctx.fillText('IMPULSA', 220, 190);
       
-      // Dibujar Emoji o Placeholder de logo en la cabecera
-      ctx.font = '90px sans-serif';
-      ctx.fillText(logo.startsWith('http') ? '🖼️' : logo, 80, 200);
-
       // Nombre del Negocio
       ctx.fillStyle = '#1f2937';
       ctx.font = 'bold 90px sans-serif';
@@ -1851,19 +1847,85 @@ const App = {
       ctx.fillStyle = '#6b7280';
       ctx.fillText(name, 600, 580);
 
-      // Dibujar el QR (Centrado y con buen tamaño)
+      // Dibujar el QR principal
       ctx.drawImage(canvas, 100, 650, 1000, 1000);
 
-      // Pie de página (Con más aire abajo)
-      ctx.font = 'bold 55px sans-serif';
-      ctx.fillStyle = '#111827';
-      ctx.fillText('¡Tu opinión nos ayuda a crecer!', 600, 1720);
+      // Función para finalizar y descargar
+      const finishAndDownload = () => {
+        ctx.font = 'bold 55px sans-serif';
+        ctx.fillStyle = '#111827';
+        ctx.textAlign = 'center';
+        ctx.fillText('¡Tu opinión nos ayuda a crecer!', 600, 1720);
 
-      const image = finalCanvas.toDataURL("image/png");
-      const link = document.createElement('a');
-      link.download = `QR_IMPULSA_${name.replace(/\s+/g, '_')}.png`;
-      link.href = image;
-      link.click();
+        const image = finalCanvas.toDataURL("image/png");
+        const link = document.createElement('a');
+        link.download = `QR_IMPULSA_${name.replace(/\s+/g, '_')}.png`;
+        link.href = image;
+        link.click();
+      };
+
+      // --- DIBUJAR LOGO EN EL CENTRO DEL QR ---
+      const centerX = 600;
+      const centerY = 1150; // Centro del QR (650 + 1000/2)
+      const logoSize = 250;
+
+      if (logo.startsWith('http') || logo.startsWith('data:image')) {
+        const img = new Image();
+        img.crossOrigin = "Anonymous";
+        img.onload = () => {
+          // Círculo blanco de fondo para el logo
+          ctx.beginPath();
+          ctx.arc(centerX, centerY, (logoSize / 2) + 10, 0, Math.PI * 2);
+          ctx.fillStyle = '#ffffff';
+          ctx.fill();
+          
+          // Dibujar imagen circular o con recorte
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(centerX, centerY, logoSize / 2, 0, Math.PI * 2);
+          ctx.clip();
+          ctx.drawImage(img, centerX - (logoSize / 2), centerY - (logoSize / 2), logoSize, logoSize);
+          ctx.restore();
+          
+          // Logo en cabecera también
+          const headerImgSize = 120;
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(140, 170, headerImgSize / 2, 0, Math.PI * 2);
+          ctx.clip();
+          ctx.drawImage(img, 140 - (headerImgSize / 2), 170 - (headerImgSize / 2), headerImgSize, headerImgSize);
+          ctx.restore();
+
+          finishAndDownload();
+        };
+        img.onerror = () => {
+          // Si falla la carga, usar emoji por defecto
+          ctx.font = '180px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('🏪', centerX, centerY + 60);
+          finishAndDownload();
+        };
+        img.src = logo;
+      } else {
+        // Es un Emoji
+        // Círculo blanco de fondo
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, (logoSize / 2) + 5, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+        
+        ctx.font = '180px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(logo, centerX, centerY + 15);
+
+        // Logo en cabecera
+        ctx.font = '90px sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(logo, 80, 200);
+
+        finishAndDownload();
+      }
     });
   },
 
