@@ -2636,18 +2636,22 @@ const App = {
       
       // IMPLEMENTACIÓN POR WIDGET (Evita bloqueos 403 Forbidden)
       if (typeof WidgetCheckout === 'undefined') {
-        alert("Error: El SDK de Wompi no se ha cargado. Revisa tu conexión.");
-        modal.classList.remove('active');
+        this.addLog('SYSTEM', 'Error: WidgetCheckout no definido. Intentando recargar SDK...');
+        const script = document.createElement('script');
+        script.src = 'https://checkout.wompi.co/widget.js';
+        script.onload = () => alert("SDK cargado. Por favor intenta pagar de nuevo.");
+        document.head.appendChild(script);
         return;
       }
 
+      // IMPORTANTE: Wompi en móviles requiere que la moneda y el monto sean tipos de datos estrictos
       const checkout = new WidgetCheckout({
         currency: 'COP',
-        amountInCents: amountInCents,
-        reference: reference,
+        amountInCents: parseInt(amountInCents),
+        reference: reference.toString(),
         publicKey: publicKey,
         signature: { integrity: signature },
-        redirectUrl: redirectUrl, // Opcional, Wompi redirigirá al finalizar
+        redirectUrl: redirectUrl, 
         customerData: {
           email: this.State.currentUser.email,
           fullName: this.State.currentUser.fullName || this.State.currentUser.businessName
