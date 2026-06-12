@@ -2611,54 +2611,58 @@ const App = {
       
       const exchangeRate = 4000;
       const totalAmountCop = (basePriceUsd * period * (1 - discounts[period]) * exchangeRate);
-      const amountInCents = Math.round(totalAmountCop * 100);
+      
+      // MONTO ESTRICTO: Sin decimales para evitar fallos en la firma
+      const amountInCents = Math.floor(totalAmountCop * 100);
       
       formContainer.style.display = 'none';
       processingContainer.style.display = 'block';
 
-      const reference = `${Date.now()}`;
-      const publicKey = (this.State.wompiConfig.publicKey || 'pub_test_Q5yS9jVvDX70S99IeMoX36O97xYos2K6').trim();
+      // REFERENCIA ÚNICA: Añadimos un sufijo aleatorio para evitar errores de duplicidad en Sandbox
+      const randomSuffix = Math.random().toString(36).substring(7).toUpperCase();
+      const reference = `IMP-${Date.now()}-${randomSuffix}`;
+      
+      const publicKey = (this.State.wompiConfig.publicKey || '').trim();
       const integritySecret = (this.State.wompiConfig.integritySecret || '').trim();
       
-      const redirectUrl = `${window.location.origin}${window.location.pathname}?pay_res=success`;
+      if (!publicKey || !integritySecret) {
+        alert("Error: Falta configurar la Llave Pública o el Secreto de Integridad en el Panel Admin.");
+        modal.classList.remove('active');
+        return;
+      }
 
-      // GENERACIÓN DE FIRMA SHA256 (Mantenemos la lógica pero para el objeto Widget)
+      // GENERACIÓN DE FIRMA SHA256 (ORDEN ESTRICTO)
       const cadenaConcatenada = `${reference}${amountInCents}COP${integritySecret}`;
+      
       let signature = '';
       try {
         const encondedText = new TextEncoder().encode(cadenaConcatenada);
         const hashBuffer = await crypto.subtle.digest("SHA-256", encondedText);
         const hashArray = Array.from(new Uint8Array(hashBuffer));
         signature = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-      } catch (err) { console.error(err); }
+      } catch (err) { 
+        console.error("Error SHA:", err); 
+      }
 
-      this.addLog('POST', `[Wompi] Abriendo Widget de Pago...`);
-      
-      // IMPLEMENTACIÓN POR WIDGET (Evita bloqueos 403 Forbidden)
+      console.log("=== WOMPI MOBILE DEBUG ===");
+      console.log("Referencia:", reference);
+      console.log("Monto Cents:", amountInCents);
+      console.log("Firma:", signature);
+
       if (typeof WidgetCheckout === 'undefined') {
-        this.addLog('SYSTEM', 'Error: WidgetCheckout no definido. Intentando recargar SDK...');
-        const script = document.createElement('script');
-        script.src = 'https://checkout.wompi.co/widget.js';
-        script.onload = () => alert("SDK cargado. Por favor intenta pagar de nuevo.");
-        document.head.appendChild(script);
+        alert("El sistema de pago aún se está cargando. Espera un segundo e intenta de nuevo.");
         return;
       }
 
-      // IMPORTANTE: Wompi en móviles requiere que la moneda y el monto sean tipos de datos estrictos
       const checkout = new WidgetCheckout({
         currency: 'COP',
-        amountInCents: parseInt(amountInCents),
-        reference: reference.toString(),
+        amountInCents: amountInCents,
+        reference: reference,
         publicKey: publicKey,
         signature: { integrity: signature },
-        redirectUrl: redirectUrl, 
-        customerData: {
-          email: this.State.currentUser.email,
-          fullName: this.State.currentUser.fullName || this.State.currentUser.businessName
-        }
+        redirectUrl: `${window.location.origin}${window.location.pathname}?pay_res=success`
       });
 
-      // Guardar plan deseado para recuperarlo al volver
       Storage.setItem('pending_plan_upgrade', plan);
       
       if (supabaseClient) {
@@ -2668,12 +2672,10 @@ const App = {
         }).eq('id', this.State.currentUser.id);
       }
 
-      // Abrir el widget
       checkout.open((result) => {
-        const transaction = result.transaction;
-        this.addLog('SYSTEM', `Widget: Transacción finalizada. ID: ${transaction.id}`);
-        // Redirigir manualmente a nuestra página de respuesta si el widget no lo hace
-        window.location.href = `${redirectUrl}&id=${transaction.id}`;
+        if (result.transaction) {
+          window.location.href = `${window.location.origin}${window.location.pathname}?pay_res=success&id=${result.transaction.id}`;
+        }
       });
 
       modal.classList.remove('active');
