@@ -97,6 +97,10 @@ const App = {
 
     // 🔐 RESTAURAR SESIÓN ACTIVA (Persistencia)
     const activeUserId = Storage.getItem('impulsa_active_user');
+    
+    // Cargar configuración de Wompi (Prioridad a Supabase si existe)
+    await this.syncFromSupabase();
+    
     if (activeUserId) {
       // Si es el usuario de desarrollo o cualquier otro ID guardado, 
       // lo pre-cargamos para evitar que el router nos saque al Login mientras sincronizamos.
@@ -144,10 +148,24 @@ const App = {
           };
           this.PlanLimits[p.id] = this.plansConfig[p.id].limit;
         });
-        this.addLog('SYSTEM', 'Configuración de planes cargada desde la nube.');
       }
 
-      // 1b. Obtener la sesión activa de Supabase
+      // 1b. Obtener configuración global de Wompi (NUEVO)
+      const { data: globalConf, error: globalErr } = await supabaseClient
+        .from('global_config')
+        .select('*')
+        .eq('id', 'wompi')
+        .single();
+      
+      if (!globalErr && globalConf) {
+        this.State.wompiConfig = {
+          ...this.State.wompiConfig,
+          ...globalConf.data
+        };
+        this.addLog('SYSTEM', 'Configuración de Wompi sincronizada desde la nube.');
+      }
+
+      // 1c. Obtener la sesión activa de Supabase
       const { data: { session } } = await supabaseClient.auth.getSession();
       let activeUserId = session?.user?.id;
 
@@ -2990,21 +3008,36 @@ const App = {
         </div>
       `;
 
-      document.getElementById('save-wompi-keys').addEventListener('click', () => {
-        const pub = document.getElementById('wompi-pub-key').value;
-        const priv = document.getElementById('wompi-priv-key').value;
-        const integ = document.getElementById('wompi-integrity-secret').value;
+      document.getElementById('save-wompi-keys').addEventListener('click', async () => {
+        const pub = document.getElementById('wompi-pub-key').value.trim();
+        const priv = document.getElementById('wompi-priv-key').value.trim();
+        const integ = document.getElementById('wompi-integrity-secret').value.trim();
 
-        this.State.wompiConfig.publicKey = pub;
-        this.State.wompiConfig.privateKey = priv;
-        this.State.wompiConfig.integritySecret = integ;
+        const configData = { publicKey: pub, privateKey: priv, integritySecret: integ };
 
+        // Guardar localmente
+        this.State.wompiConfig = { ...this.State.wompiConfig, ...configData };
         Storage.setItem('wompi_public_key', pub);
         Storage.setItem('wompi_private_key', priv);
         Storage.setItem('wompi_integrity_secret', integ);
 
-        this.addLog('SYSTEM', `ADMIN: Llaves de Wompi e Integridad actualizadas.`);
-        alert('Llaves de API configuradas. La pasarela está lista para pruebas.');
+        // Guardar en la Nube (Sincronización dispositivos)
+        if (supabaseClient) {
+          const { error } = await supabaseClient
+            .from('global_config')
+            .upsert({ id: 'wompi', data: configData, updated_at: new Date().toISOString() });
+          
+          if (error) {
+            console.error("Error sincronizando Wompi:", error);
+            alert("Llaves guardadas localmente, pero no se pudo sincronizar con la nube.");
+          } else {
+            alert('Configuración sincronizada exitosamente en todos tus dispositivos.');
+          }
+        } else {
+          alert('Configuración guardada localmente.');
+        }
+
+        this.addLog('SYSTEM', `ADMIN: Llaves de Wompi actualizadas.`);
       });
 
       document.querySelectorAll('.save-plan-btn').forEach(btn => {

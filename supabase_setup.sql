@@ -131,6 +131,24 @@ CREATE TABLE public.location_requests (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 5. Tabla de Configuración Global (Wompi, etc)
+CREATE TABLE public.global_config (
+  id TEXT PRIMARY KEY, -- 'wompi'
+  data JSONB NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Insertar fila inicial para Wompi si no existe
+INSERT INTO public.global_config (id, data) 
+VALUES ('wompi', '{"publicKey": "", "privateKey": "", "integritySecret": ""}')
+ON CONFLICT (id) DO NOTHING;
+
+-- Habilitar RLS
+ALTER TABLE public.global_config ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Lectura pública de config" ON public.global_config FOR SELECT USING (true);
+CREATE POLICY "Solo SuperAdmin edita config" ON public.global_config FOR ALL 
+  USING (auth.uid() = '36d917a3-f764-4afe-8c87-e1db8f0f1731'); -- ID de Admin Mauro
+
 -- 5. Automatización de Perfil (Solo para usuarios reales de Supabase Auth)
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger AS $$
