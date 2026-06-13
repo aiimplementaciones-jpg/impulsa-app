@@ -1587,17 +1587,17 @@ const App = {
       <div class="locations-grid" id="locations-list">
         ${userLocations.map(loc => {
           const isActive = loc.status === 'active';
-          return \`
-            <div class="card location-card" id="card-\${loc.id}">
+          return `
+            <div class="card location-card" id="card-${loc.id}">
               <div class="location-header">
                 <div class="location-info">
-                  <h3>\${loc.name}</h3>
-                  <p><i data-lucide="map-pin"></i> \${loc.address}</p>
+                  <h3>${loc.name}</h3>
+                  <p><i data-lucide="map-pin"></i> ${loc.address}</p>
                 </div>
                 <!-- Badge interactivo de LED -->
-                <span class="status-badge \${isActive ? 'active' : 'inactive'}" id="badge-\${loc.id}">
+                <span class="status-badge ${isActive ? 'active' : 'inactive'}" id="badge-${loc.id}">
                   <span class="led-dot"></span>
-                  <span id="badge-text-\${loc.id}">\${this.t(isActive ? 'active' : 'inactive')}</span>
+                  <span id="badge-text-${loc.id}">${this.t(isActive ? 'active' : 'inactive')}</span>
                 </span>
               </div>
 
@@ -1605,46 +1605,46 @@ const App = {
                 <span style="font-size: 0.85rem; color: var(--text-secondary);" data-i18n="loc_status_badge">Estado</span>
                 <!-- Switch de Cambio de Estado al Instante -->
                 <label class="switch-control">
-                  <input type="checkbox" class="loc-toggle" data-id="\${loc.id}" \${isActive ? 'checked' : ''}>
+                  <input type="checkbox" class="loc-toggle" data-id="${loc.id}" ${isActive ? 'checked' : ''}>
                   <span class="switch-slider"></span>
                 </label>
               </div>
 
               <!-- Acciones de QR e Impresión -->
               <div class="location-actions">
-                <button class="btn btn-secondary download-qr-btn" data-id="\${loc.id}" data-name="\${loc.name}" style="padding: 8px 12px; font-size: 0.8rem; border-radius: var(--radius-sm);">
+                <button class="btn btn-secondary download-qr-btn" data-id="${loc.id}" data-name="${loc.name}" style="padding: 8px 12px; font-size: 0.8rem; border-radius: var(--radius-sm);">
                   <i data-lucide="download"></i> QR
                 </button>
-                <button class="btn btn-secondary print-qr-btn" data-id="\${loc.id}" data-name="\${loc.name}" style="padding: 8px 12px; font-size: 0.8rem; border-radius: var(--radius-sm);">
+                <button class="btn btn-secondary print-qr-btn" data-id="${loc.id}" data-name="${loc.name}" style="padding: 8px 12px; font-size: 0.8rem; border-radius: var(--radius-sm);">
                   <i data-lucide="printer"></i> Imprimir
                 </button>
               </div>
 
               <!-- Acciones de Gestión (Editar/Borrar) -->
               <div class="location-actions">
-                <button class="btn btn-secondary edit-loc-btn" data-id="\${loc.id}" style="padding: 8px 12px; font-size: 0.8rem; border-radius: var(--radius-sm);">
+                <button class="btn btn-secondary edit-loc-btn" data-id="${loc.id}" style="padding: 8px 12px; font-size: 0.8rem; border-radius: var(--radius-sm);">
                   <i data-lucide="edit"></i> Editar
                 </button>
-                <button class="btn btn-danger delete-loc-btn" data-id="\${loc.id}" style="padding: 8px 12px; font-size: 0.8rem; border-radius: var(--radius-sm);">
+                <button class="btn btn-danger delete-loc-btn" data-id="${loc.id}" style="padding: 8px 12px; font-size: 0.8rem; border-radius: var(--radius-sm);">
                   <i data-lucide="trash-2"></i> Borrar
                 </button>
               </div>
 
               <div style="margin-top: 8px; display: flex; flex-direction: column; gap: 8px;">
                 <div style="display: flex; gap: 8px; width: 100%;">
-                  <button class="btn btn-secondary" onclick="navigator.clipboard.writeText('\${window.location.origin}/#portal?id=\${loc.id}'); alert('Enlace de sucursal copiado');" style="flex: 1; padding: 8px 12px; font-size: 0.8rem; border-radius: var(--radius-sm);">
+                  <button class="btn btn-secondary" onclick="navigator.clipboard.writeText('${window.location.origin}/#portal?id=${loc.id}'); alert('Enlace de sucursal copiado');" style="flex: 1; padding: 8px 12px; font-size: 0.8rem; border-radius: var(--radius-sm);">
                     <i data-lucide="copy"></i> Copiar Enlace
                   </button>
-                  <button class="btn btn-secondary share-loc-btn" data-id="\${loc.id}" data-name="\${loc.name}" style="flex: 1; padding: 8px 12px; font-size: 0.8rem; border-radius: var(--radius-sm);">
+                  <button class="btn btn-secondary share-loc-btn" data-id="${loc.id}" data-name="${loc.name}" style="flex: 1; padding: 8px 12px; font-size: 0.8rem; border-radius: var(--radius-sm);">
                     <i data-lucide="share-2"></i> Compartir
                   </button>
                 </div>
-                <a href="#portal?id=\${loc.id}" target="_blank" class="btn btn-primary" style="padding: 8px 12px; font-size: 0.8rem; border-radius: var(--radius-sm); background: linear-gradient(135deg, var(--color-brand), var(--color-brand)); width: 100%;">
+                <a href="#portal?id=${loc.id}" target="_blank" class="btn btn-primary" style="padding: 8px 12px; font-size: 0.8rem; border-radius: var(--radius-sm); background: linear-gradient(135deg, var(--color-brand), var(--color-brand)); width: 100%;">
                   <i data-lucide="external-link"></i> Probar Portal
                 </a>
               </div>
             </div>
-          \`;
+          `;
         }).join('')}
       </div>
 
