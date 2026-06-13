@@ -3489,6 +3489,22 @@ const App = {
       });
     } else if (tab === 'tenants') {
       this.addLog('GET', `Súper Admin: Auditando base de datos de Tenants registrados`);
+      
+      if (!this.State.users || this.State.users.length === 0) {
+        tabContent.innerHTML = `
+          <div style="text-align:center; padding: 40px; color: var(--text-secondary);">
+            <i data-lucide="users" style="width: 48px; height: 48px; margin-bottom: 16px; opacity: 0.3;"></i>
+            <p>No se encontraron cuentas de comercio registradas.</p>
+            <p style="font-size: 0.75rem; margin-top: 8px;">Si tienes datos en Supabase, verifica las políticas de RLS.</p>
+            <button class="btn btn-secondary" onclick="App.syncFromSupabase()" style="margin-top: 16px;">
+              <i data-lucide="refresh-cw"></i> Reintentar Sincronización
+            </button>
+          </div>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
       tabContent.innerHTML = `
         <div class="leads-table-container">
           <table class="leads-table">
@@ -3505,35 +3521,38 @@ const App = {
             </thead>
             <tbody>
               ${this.State.users.map(u => {
-                const count = this.State.locations.filter(loc => loc.userId === u.id).length;
+                const count = (this.State.locations || []).filter(loc => loc.userId === u.id).length;
                 const expiryDate = u.subscriptionExpiry ? new Date(u.subscriptionExpiry) : null;
                 const isExpired = expiryDate && expiryDate < new Date();
                 const statusColor = isExpired ? 'var(--color-danger)' : 'var(--color-success)';
+                const planDisplay = (u.plan || 'free').toUpperCase();
                 
                 return `
                   <tr>
-                    <td><strong>${u.id.substring(0, 8)}...</strong></td>
+                    <td><strong>${u.id ? u.id.substring(0, 8) : '???'}...</strong></td>
                     <td style="display: flex; align-items: center; gap: 10px;">
                       <div style="width: 32px; height: 32px; border-radius: 50%; overflow: hidden; border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; background: white;">
                         ${u.logo && u.logo.startsWith('http') ? `<img src="${u.logo}" style="width:100%; height:100%; object-fit:cover;">` : u.logo || '🏪'}
                       </div>
                       <div style="display: flex; flex-direction: column;">
-                        <strong>${u.businessName}</strong>
-                        <span style="font-size: 0.75rem; color: var(--text-secondary);">${u.email}</span>
+                        <strong>${u.businessName || 'Sin Nombre'}</strong>
+                        <span style="font-size: 0.75rem; color: var(--text-secondary);">${u.email || 'Sin Email'}</span>
                       </div>
                     </td>
                     <td>
                       <div style="display: flex; flex-direction: column;">
                         <span>${u.fullName || 'No registrado'}</span>
-                        <a href="https://wa.me/${u.whatsapp}" target="_blank" style="color: var(--color-success); font-size: 0.75rem; text-decoration: none;">
-                          <i data-lucide="message-circle" style="width: 12px; height: 12px; display: inline; vertical-align: middle;"></i> ${u.whatsapp || 'Sin WA'}
-                        </a>
+                        ${u.whatsapp ? `
+                          <a href="https://wa.me/${u.whatsapp}" target="_blank" style="color: var(--color-success); font-size: 0.75rem; text-decoration: none;">
+                            <i data-lucide="message-circle" style="width: 12px; height: 12px; display: inline; vertical-align: middle;"></i> ${u.whatsapp}
+                          </a>
+                        ` : '<span style="font-size: 0.75rem; color: var(--text-secondary);">Sin WA</span>'}
                       </div>
                     </td>
                     <td>
                       <div style="display: flex; flex-direction: column; font-size: 0.8rem;">
                         <span style="font-weight: 700; color: ${statusColor};">
-                          ${u.plan.toUpperCase()} (${u.subscriptionPeriod || 1} Meses)
+                          ${planDisplay} (${u.subscriptionPeriod || 1} Meses)
                         </span>
                         <span style="color: var(--text-secondary); font-size: 0.7rem;">
                           Vence: ${expiryDate ? expiryDate.toLocaleDateString() : 'N/A'}
@@ -3697,23 +3716,65 @@ const App = {
       chatSheet.classList.remove('active');
     });
 
-    const sendMessage = () => {
+    const sendMessage = async () => {
       const text = chatInput.value.trim();
       if (!text) return;
+
+      const user = this.State.currentUser;
+      if (!user) {
+        alert("Por favor, inicia sesión para contactar a soporte.");
+        return;
+      }
 
       this.addUserChatMessage(text);
       chatInput.value = '';
 
-      this.addLog('POST', `[Proxy ChatWidget] Mensaje capturado. Enrutando a n8n mediante proxy seguro.`);
-      this.addLog('POST', `[Proxy ChatWidget] Payload procesado exitosamente. Status: 200 OK (CORS Bypassed).`);
+      // URL del Webhook de n8n proporcionada por el usuario
+      const N8N_WEBHOOK_URL = "https://n8n-n8n.bp2swr.easypanel.host/webhook/9dad719b-b85e-4b00-8398-ecd435f61022";
 
-      setTimeout(() => {
-        this.addAgentChatMessage(
-          this.State.lang === 'es'
-            ? 'Hola, he recibido tu mensaje mediante nuestro proxy de seguridad. Un agente comercial de IMPULSA te responderá a la brevedad.'
-            : 'Hello, I have received your message via our secure security proxy. An IMPULSA agent will reply shortly.'
-        );
-      }, 1000);
+      const payload = {
+        tenant_id: user.id,
+        business_name: user.businessName,
+        full_name: user.fullName,
+        plan: user.plan,
+        message: text,
+        lang: this.State.lang
+      };
+
+      this.addLog('POST', `[Support Bot] Enviando mensaje a n8n: "${text}"`);
+
+      try {
+        // 1. Enviar al Webhook de n8n (Asíncrono)
+        fetch(N8N_WEBHOOK_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        }).catch(err => console.error("Error enviando a n8n:", err));
+
+        // 2. Guardar en Supabase para persistencia del historial
+        if (supabaseClient) {
+          await supabaseClient.from('messages').insert({
+            tenant_id: user.id,
+            content: text,
+            sender: user.businessName || 'Comercio'
+          });
+          
+          // Sincronizar para actualizar el historial (donde el bot responderá)
+          await this.syncFromSupabase();
+        }
+
+        setTimeout(() => {
+          this.addAgentChatMessage(
+            this.State.lang === 'es'
+              ? 'He recibido tu mensaje. Mi cerebro de IA está procesando tu solicitud y te responderé en unos segundos aquí mismo.'
+              : 'I have received your message. My AI brain is processing your request and I will reply to you right here in a few seconds.'
+          );
+        }, 1000);
+
+      } catch (err) {
+        console.error("Error en el flujo de soporte:", err);
+        this.addLog('SYSTEM', `Error en ChatWidget: ${err.message}`);
+      }
     };
 
     chatSendBtn.addEventListener('click', sendMessage);
