@@ -703,12 +703,32 @@ const App = {
       </section>
 
       <!-- Tabla de Precios -->
-      <section style="margin-top: 48px; margin-bottom: 24px; text-align:center;">
-        <h2 style="font-size:1.5rem;" data-i18n="land_pricing_title">Planes diseñados para cada etapa de tu negocio</h2>
-        <p style="color:var(--text-secondary); font-size:0.9rem; margin-top:6px;" data-i18n="land_pricing_desc">Comienza sin costo o expande tus sucursales con nuestros planes flexibles.</p>
-        <a href="#register" class="btn btn-accent" style="margin-top:20px; max-width:320px; height:50px;">
-          🚀 <span data-i18n="land_cta_register">Registrarse Gratis</span>
-        </a>
+      <section style="margin-top: 48px; margin-bottom: 24px;">
+        <h2 style="text-align:center; font-size:1.5rem; margin-bottom:8px;" data-i18n="land_pricing_title">Planes diseñados para cada etapa de tu negocio</h2>
+        <p style="text-align:center; color:var(--text-secondary); font-size:0.9rem; margin-bottom:30px;" data-i18n="land_pricing_desc">Comienza sin costo o expande tus sucursales con nuestros planes flexibles.</p>
+        
+        <div class="pricing-tabs" style="margin-top: 20px;">
+          ${Object.entries(this.plansConfig).map(([key, plan]) => `
+            <div class="pricing-card ${key === 'pro' ? 'featured' : ''}" style="flex: 1; min-width: 280px; max-width: 350px;">
+              ${key === 'pro' ? `<span class="pricing-featured-badge">Más Popular</span>` : ''}
+              <div class="pricing-header">
+                <h3>${plan.name}</h3>
+                <span style="font-size: 0.8rem; color: var(--text-secondary);">
+                  ${plan.limit === Infinity ? 'Sucursales ilimitadas' : `Límite: ${plan.limit} ${plan.limit === 1 ? 'sucursal' : 'sucursales'}`}
+                </span>
+              </div>
+              <div class="pricing-price" style="font-size: 1.8rem; margin: 20px 0;">
+                ${plan.price === 0 ? 'Gratis' : `${new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(plan.price)} <span style="font-size: 0.9rem; font-weight: 400; color: var(--text-secondary);">/ mes</span>`}
+              </div>
+              <ul class="pricing-features-list" style="text-align: left; margin-bottom: 25px;">
+                ${plan.features.map(f => `<li style="margin-bottom: 8px; font-size: 0.85rem;"><i data-lucide="check" style="width: 16px; height: 16px; color: var(--color-success); margin-right: 8px;"></i> <span>${f}</span></li>`).join('')}
+              </ul>
+              <a href="#register" class="btn ${key === 'star' ? 'btn-accent' : key === 'pro' ? 'btn-primary' : 'btn-secondary'}" style="width: 100%;">
+                ${plan.price === 0 ? 'Empezar Gratis' : 'Seleccionar Plan'}
+              </a>
+            </div>
+          `).join('')}
+        </div>
       </section>
     `;
 
