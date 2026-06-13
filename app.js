@@ -3730,7 +3730,7 @@ const App = {
       chatInput.value = '';
 
       // URL del Webhook de n8n proporcionada por el usuario
-      const N8N_WEBHOOK_URL = "https://n8n-n8n.bp2swr.easypanel.host/webhook/9dad719b-b85e-4b00-8398-ecd435f61022";
+      const N8N_WEBHOOK_URL = "https://n8n-n8n.bp2swr.easypanel.host/webhook-test/9dad719b-b85e-4b00-8398-ecd435f61022";
 
       const payload = {
         tenant_id: user.id,
