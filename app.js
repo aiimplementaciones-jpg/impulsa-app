@@ -2903,7 +2903,7 @@ const App = {
 
       // REFERENCIA ÚNICA: Añadimos un sufijo aleatorio para evitar errores de duplicidad en Sandbox
       const randomSuffix = Math.random().toString(36).substring(7).toUpperCase();
-      const reference = `IMP-${Date.now()}-${randomSuffix}`;
+      const reference = `IMP-${Date.now()}-${randomSuffix}`.trim();
       
       const publicKey = (this.State.wompiConfig.publicKey || '').trim();
       const integritySecret = (this.State.wompiConfig.integritySecret || '').trim();
@@ -2914,10 +2914,11 @@ const App = {
         return;
       }
 
-      // GENERACIÓN DE FIRMA SHA256 (ORDEN ESTRICTO)
+      // GENERACIÓN DE FIRMA SHA256 (ORDEN ESTRICTO: referencia + monto_en_centavos + moneda + secreto)
       const cadenaConcatenada = `${reference}${amountInCents}COP${integritySecret}`;
       
-      let signature = '';
+      console.log("=== WOMPI SIGNATURE DEBUG ===");
+      console.log("Cadena a firmar (Secreto oculto):", `${reference}${amountInCents}COP***`);
       try {
         const encondedText = new TextEncoder().encode(cadenaConcatenada);
         const hashBuffer = await crypto.subtle.digest("SHA-256", encondedText);
