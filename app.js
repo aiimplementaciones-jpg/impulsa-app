@@ -76,31 +76,25 @@ const App = {
     }
   },
 
-  // Configuración de planes dinámica (Se puebla desde Supabase, con valores por defecto)
-  plansConfig: {
-    free: { name: 'Plan Starter', price: 0, limit: 1, features: ['Indicador LED animado', 'Códigos QR de Alta Definición', 'Portal móvil personalizable'] },
-    pro: { name: 'Plan Pro Profesional', price: 64000, limit: 3, features: ['Indicador LED animado', 'Códigos QR de Alta Definición', 'Portal móvil personalizable', 'Filtro estratégico de reseñas', 'Simulador de servidor de API'] },
-    star: { name: 'Plan Star Ilimitado', price: 116000, limit: Infinity, features: ['Indicador LED animado', 'Códigos QR de Alta Definición', 'Portal móvil personalizable', 'Filtro estratégico de reseñas', 'Simulador de servidor de API', 'Soporte prioritario'] }
-  },
+  // Configuración de planes dinámica (Se puebla EXCLUSIVAMENTE desde Supabase)
+  plansConfig: {},
 
-  // Límites de locales por plan (Se actualizan desde Supabase)
-  PlanLimits: {
-    free: 1,
-    pro: 3,
-    star: Infinity
-  },
+  // Límites de locales por plan (Se puebla EXCLUSIVAMENTE desde Supabase)
+  PlanLimits: {},
 
   // Inicializar Base de Datos y Preferencias
   async init() {
     this.State.lang = Storage.getItem('impulsa_lang') || 'es';
     this.State.theme = Storage.getItem('impulsa_theme') || 'light';
 
+    // 🔄 SINCRONIZACIÓN INICIAL OBLIGATORIA (Fuente de Verdad: Supabase)
+    if (typeof supabaseClient !== 'undefined') {
+      await this.syncFromSupabase();
+    }
+
     // 🔐 RESTAURAR SESIÓN ACTIVA (Persistencia)
     const activeUserId = Storage.getItem('impulsa_active_user');
-    
-    // Cargar configuración de Wompi (Prioridad a Supabase si existe)
-    await this.syncFromSupabase();
-    
+
     if (activeUserId) {
       // Si es el usuario de desarrollo o cualquier otro ID guardado, 
       // lo pre-cargamos para evitar que el router nos saque al Login mientras sincronizamos.
