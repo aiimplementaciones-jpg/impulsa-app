@@ -203,3 +203,35 @@ CREATE POLICY "Dueños gestionan sus solicitudes" ON public.location_requests
 CREATE POLICY "SuperAdmin ve todas las solicitudes" ON public.location_requests
   FOR SELECT USING (auth.uid() = '36d917a3-f764-4afe-8c87-e1db8f0f1731'); -- ID de Admin Mauro
 
+
+-- 6. Tabla de Prospectos de Mercadeo (Portales Pre-construidos)
+CREATE TABLE public.marketing_prospects (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  business_name TEXT NOT NULL,
+  logo TEXT DEFAULT '🏪',
+  accent_color TEXT DEFAULT '#6366f1',
+  contact_name TEXT,
+  contact_whatsapp TEXT,
+  loc_name TEXT NOT NULL,
+  loc_address TEXT,
+  loc_maps_url TEXT NOT NULL,
+  status TEXT DEFAULT 'prospect' CHECK (status IN ('prospect', 'shared', 'converted')),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  converted_tenant_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL
+);
+
+-- Habilitar RLS para Mercadeo
+ALTER TABLE public.marketing_prospects ENABLE ROW LEVEL SECURITY;
+CREATE POLICY \
+SuperAdmin
+gestiona
+prospectos\ ON public.marketing_prospects 
+  FOR ALL USING (auth.uid() = '36d917a3-f764-4afe-8c87-e1db8f0f1731');
+CREATE POLICY \Lectura
+pública
+de
+prospectos
+para
+previsualización\ ON public.marketing_prospects 
+  FOR SELECT USING (true);
+

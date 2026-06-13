@@ -378,7 +378,8 @@ const App = {
       
       const urlParams = new URLSearchParams(hash.substring(hash.indexOf('?')));
       const locationId = urlParams.get('id');
-      this.renderOpinionPortal(locationId);
+      const prospectId = urlParams.get('prospect');
+      this.renderOpinionPortal(locationId, prospectId);
       return;
     }
 
@@ -1463,9 +1464,14 @@ const App = {
               </div>
 
               <div style="margin-top: 8px; display: flex; flex-direction: column; gap: 8px;">
-                <button class="btn btn-secondary" onclick="navigator.clipboard.writeText('${window.location.origin}/#portal?id=${loc.id}'); alert('Enlace de sucursal copiado');" style="padding: 8px 12px; font-size: 0.8rem; border-radius: var(--radius-sm); width: 100%;">
-                  <i data-lucide="copy"></i> Copiar Enlace Directo
-                </button>
+                <div style="display: flex; gap: 8px; width: 100%;">
+                  <button class="btn btn-secondary" onclick="navigator.clipboard.writeText('${window.location.origin}/#portal?id=${loc.id}'); alert('Enlace de sucursal copiado');" style="flex: 1; padding: 8px 12px; font-size: 0.8rem; border-radius: var(--radius-sm);">
+                    <i data-lucide="copy"></i> Copiar Enlace
+                  </button>
+                  <button class="btn btn-secondary share-loc-btn" data-id="${loc.id}" data-name="${loc.name}" style="flex: 1; padding: 8px 12px; font-size: 0.8rem; border-radius: var(--radius-sm);">
+                    <i data-lucide="share-2"></i> Compartir
+                  </button>
+                </div>
                 <a href="#portal?id=${loc.id}" target="_blank" class="btn btn-primary" style="padding: 8px 12px; font-size: 0.8rem; border-radius: var(--radius-sm); background: linear-gradient(135deg, var(--color-brand), var(--color-brand)); width: 100%;">
                   <i data-lucide="external-link"></i> Probar Portal
                 </a>
@@ -1517,6 +1523,34 @@ const App = {
       });
     });
 
+    // Vincular compartir enlace nativo
+    document.querySelectorAll('.share-loc-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const id = btn.getAttribute('data-id');
+        const name = btn.getAttribute('data-name');
+        this.handleShareLocation(id, name);
+      });
+    });
+    },
+
+    handleShareLocation(id, name) {
+    const portalUrl = `${window.location.origin}/#portal?id=${id}`;
+    const shareData = {
+      title: `Califica tu experiencia en ${name}`,
+      text: `Hola, nos encantaría conocer tu opinión sobre ${name}. Puedes dejarnos tu reseña aquí:`,
+      url: portalUrl
+    };
+
+    if (navigator.share) {
+      navigator.share(shareData)
+        .then(() => this.addLog('SYSTEM', `Enlace compartido con éxito: ${name}`))
+        .catch((err) => console.log('Error compartiendo:', err));
+    } else {
+      // Fallback si no hay soporte nativo (Copiar al portapapeles)
+      navigator.clipboard.writeText(portalUrl);
+      alert('Tu navegador no soporta la función nativa de compartir. El enlace ha sido copiado al portapapeles.');
+    }
+    },
     // Vincular botones de Editar
     document.querySelectorAll('.edit-loc-btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -2085,22 +2119,26 @@ const App = {
   // ==========================================================================
   // 🎨 PORTAL DE OPINIÓN CLIENTE (OpinionPortal) - Móvil-First Standalone View
   // ==========================================================================
-  async renderOpinionPortal(locationId) {
-    let loc = this.State.locations.find(l => l.id === locationId);
-    
-    // Si no está en estado (ej: cliente entra directo por URL), lo buscamos en Supabase
-    if (!loc && supabaseClient) {
-      const { data, error } = await supabaseClient.from('locations').select('*').eq('id', locationId).single();
-      if (data) {
-        loc = {
-          id: data.id,
-          userId: data.tenant_id,
-          name: data.name,
-          address: data.address,
-          mapsUrl: data.maps_url || '',
-          status: data.status
-        };
-        this.State.locations.push(loc);
+  async renderOpinionPortal(locationId, prospectId = null) {
+    let loc = null;
+    let tenant = null;
+
+    if (prospectId && supabaseClient) {
+      // Caso: Previsualización de Prospecto de Mercadeo
+      const { data: p, error } = await supabaseClient.from('marketing_prospects').select('*').eq('id', prospectId).single();
+      if (p) {
+        loc = { id: p.id, name: p.loc_name, address: p.loc_address, mapsUrl: p.loc_maps_url, status: 'active', userId: 'prospect' };
+        tenant = { id: 'prospect', businessName: p.business_name, logo: p.logo, accentColor: p.accent_color, bgColor: '#ffffff', title: `Opiniones de ${p.business_name}` };
+      }
+    } else {
+      // Caso: Portal Real de Cliente
+      loc = this.State.locations.find(l => l.id === locationId);
+      if (!loc && supabaseClient) {
+        const { data, error } = await supabaseClient.from('locations').select('*').eq('id', locationId).single();
+        if (data) {
+          loc = { id: data.id, userId: data.tenant_id, name: data.name, address: data.address, mapsUrl: data.maps_url || '', status: data.status };
+          this.State.locations.push(loc);
+        }
       }
     }
 
@@ -2109,22 +2147,22 @@ const App = {
       return;
     }
 
-    // Buscar configuración de diseño del comercio (Tenant) dueño de este local
-    let tenant = this.State.users.find(u => u.id === loc.userId);
-    
-    // Si no tenemos al tenant en el estado, lo buscamos en Supabase
-    if (!tenant && supabaseClient) {
-      const { data, error } = await supabaseClient.from('profiles').select('*').eq('id', loc.userId).single();
-      if (data) {
-        tenant = {
-          id: data.id,
-          businessName: data.business_name,
-          logo: data.logo || '🏪',
-          accentColor: data.accent_color || '#6366f1',
-          bgColor: data.bg_color || '#ffffff',
-          title: data.portal_title || `Opiniones de ${data.business_name}`
-        };
-        this.State.users.push(tenant);
+    // Buscar configuración de diseño del comercio (Tenant) si no es prospecto
+    if (!tenant) {
+      tenant = this.State.users.find(u => u.id === loc.userId);
+      if (!tenant && supabaseClient) {
+        const { data, error } = await supabaseClient.from('profiles').select('*').eq('id', loc.userId).single();
+        if (data) {
+          tenant = {
+            id: data.id,
+            businessName: data.business_name,
+            logo: data.logo || '🏪',
+            accentColor: data.accent_color || '#6366f1',
+            bgColor: data.bg_color || '#ffffff',
+            title: data.portal_title || `Opiniones de ${data.business_name}`
+          };
+          this.State.users.push(tenant);
+        }
       }
     }
 
@@ -2823,6 +2861,7 @@ const App = {
 
       <div class="admin-tabs">
         <button class="admin-tab-btn active" data-tab="leads"><i data-lucide="message-square"></i> <span data-i18n="admin_leads_tab">Opiniones Globales</span></button>
+        <button class="admin-tab-btn" data-tab="marketing"><i data-lucide="megaphone"></i> <span>Mercadeo</span></button>
         <button class="admin-tab-btn" data-tab="requests"><i data-lucide="sparkles"></i> <span>Solicitudes</span></button>
         <button class="admin-tab-btn" data-tab="tenants"><i data-lucide="users"></i> <span data-i18n="admin_users_tab">Cuentas de Comercios</span></button>
         <button class="admin-tab-btn" data-tab="plans"><i data-lucide="credit-card"></i> <span>Gestionar Planes</span></button>
@@ -2884,6 +2923,46 @@ const App = {
           </table>
         </div>
       `;
+    } else if (tab === 'marketing') {
+      this.addLog('GET', `Súper Admin: Módulo de Mercadeo y Prospectos`);
+      tabContent.innerHTML = `
+        <div class="card" style="margin-bottom: 24px; border-top: 4px solid var(--color-accent);">
+          <h3 class="card-title"><i data-lucide="upload-cloud"></i> Carga Masiva de Prospectos</h3>
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 15px;">
+            Sube un archivo CSV con la información de los comercios para pre-construir sus portales automáticamente.<br>
+            <strong>Formato:</strong> NombreNegocio, LogoUrl/Emoji, ColorHex, NombreContacto, WhatsApp, NombreSucursal, Direccion, MapsUrl
+          </p>
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <input type="file" id="marketing-csv-upload" accept=".csv" class="form-control" style="flex: 1;">
+            <button class="btn btn-primary" id="process-marketing-csv" style="width: auto; padding: 0 20px;">
+              <i data-lucide="play"></i> Procesar CSV
+            </button>
+          </div>
+        </div>
+
+        <div class="leads-table-container">
+          <table class="leads-table" id="prospects-table">
+            <thead>
+              <tr>
+                <th>Comercio (Prospecto)</th>
+                <th>Sucursal Pre-construida</th>
+                <th>Contacto</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="prospects-body">
+              <tr><td colspan="5" style="text-align:center; padding:20px;">Cargando prospectos...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      // Cargar prospectos de Supabase
+      this.loadMarketingProspects();
+
+      // Vincular procesamiento de CSV
+      document.getElementById('process-marketing-csv').addEventListener('click', () => this.handleMarketingCSV());
     } else if (tab === 'requests') {
               this.addLog('GET', `Súper Admin: Revisando solicitudes de creación profesional`);
               tabContent.innerHTML = `
@@ -3461,6 +3540,212 @@ const App = {
       text = text.replace(`{${k}}`, replaces[k]);
     });
     return text;
+  },
+
+  // ==========================================================================
+  // 📈 MÓDULO DE MERCADEO Y PROSPECTOS (SUPER ADMIN)
+  // ==========================================================================
+  async loadMarketingProspects() {
+    if (!supabaseClient) return;
+    const body = document.getElementById('prospects-body');
+    if (!body) return;
+
+    const { data, error } = await supabaseClient
+      .from('marketing_prospects')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      body.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--color-danger);">Error: ${error.message}</td></tr>`;
+      return;
+    }
+
+    if (data.length === 0) {
+      body.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px;">No hay prospectos registrados aún.</td></tr>`;
+      return;
+    }
+
+    body.innerHTML = data.map(p => `
+      <tr>
+        <td>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div style="width:32px; height:32px; border:1px solid #ddd; border-radius:5px; display:flex; align-items:center; justify-content:center; background:white; overflow:hidden;">
+              ${p.logo.startsWith('http') ? `<img src="${p.logo}" style="width:100%; height:100%; object-fit:cover;">` : p.logo}
+            </div>
+            <strong>${p.business_name}</strong>
+          </div>
+        </td>
+        <td>
+          <div style="font-size:0.85rem;">
+            <strong>${p.loc_name}</strong><br>
+            <span style="color:var(--text-secondary);">${p.loc_address || 'Sin dirección'}</span>
+          </div>
+        </td>
+        <td>
+          <div style="font-size:0.8rem;">
+            ${p.contact_name || 'N/A'}<br>
+            <a href="https://wa.me/${p.contact_whatsapp}" target="_blank" style="color:var(--color-success); font-weight:600;">
+              <i data-lucide="message-circle" style="width:12px; height:12px;"></i> ${p.contact_whatsapp || ''}
+            </a>
+          </div>
+        </td>
+        <td>
+          <span class="status-badge ${p.status === 'converted' ? 'active' : 'inactive'}">${p.status.toUpperCase()}</span>
+        </td>
+        <td>
+          <div style="display:flex; gap:5px;">
+            <button class="btn btn-secondary share-prospect-btn" data-id="${p.id}" data-name="${p.business_name}" style="padding:6px; width:auto;">
+              <i data-lucide="share-2"></i>
+            </button>
+            ${p.status !== 'converted' ? `
+              <button class="btn btn-primary transfer-prospect-btn" data-id="${p.id}" style="padding:6px 12px; font-size:0.75rem; width:auto;">
+                <i data-lucide="user-plus"></i> Transferir
+              </button>
+            ` : ''}
+          </div>
+        </td>
+      </tr>
+    `).join('');
+
+    lucide.createIcons();
+
+    // Vincular acciones
+    document.querySelectorAll('.share-prospect-btn').forEach(btn => {
+      btn.addEventListener('click', () => this.shareProspectPortal(btn.getAttribute('data-id'), btn.getAttribute('data-name')));
+    });
+
+    document.querySelectorAll('.transfer-prospect-btn').forEach(btn => {
+      btn.addEventListener('click', () => this.transferProspectToClient(btn.getAttribute('data-id')));
+    });
+  },
+
+  async handleMarketingCSV() {
+    const fileInput = document.getElementById('marketing-csv-upload');
+    if (!fileInput.files.length) {
+      alert("Por favor selecciona un archivo CSV.");
+      return;
+    }
+
+    const file = fileInput.files[0];
+    const reader = new FileReader();
+
+    reader.onload = async (e) => {
+      const text = e.target.result;
+      const lines = text.split('\n');
+      const prospects = [];
+
+      // Omitir cabecera si existe (validación simple)
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        
+        const [business_name, logo, accent_color, contact_name, contact_whatsapp, loc_name, loc_address, loc_maps_url] = line.split(',').map(s => s.trim());
+        
+        if (business_name && loc_name) {
+          prospects.push({
+            business_name,
+            logo: logo || '🏪',
+            accent_color: accent_color || '#6366f1',
+            contact_name,
+            contact_whatsapp,
+            loc_name,
+            loc_address,
+            loc_maps_url: loc_maps_url || 'https://maps.google.com'
+          });
+        }
+      }
+
+      if (prospects.length > 0 && supabaseClient) {
+        this.addLog('POST', `Súper Admin: Subiendo ${prospects.length} prospectos desde CSV.`);
+        const { error } = await supabaseClient.from('marketing_prospects').insert(prospects);
+        
+        if (error) {
+          alert("Error al cargar prospectos: " + error.message);
+        } else {
+          alert(`¡Éxito! Se cargaron ${prospects.length} prospectos.`);
+          this.loadMarketingProspects();
+          fileInput.value = '';
+        }
+      }
+    };
+
+    reader.readAsText(file);
+  },
+
+  async shareProspectPortal(id, name) {
+    const portalUrl = `${window.location.origin}/#portal?prospect=${id}`;
+    const message = `¡Hola! Hemos pre-construido una demo del portal de calificaciones para ${name}. Míralo aquí: ${portalUrl}`;
+    
+    if (navigator.share) {
+      navigator.share({
+        title: `Portal Demo para ${name}`,
+        text: message,
+        url: portalUrl
+      }).catch(err => console.log('Error compartiendo:', err));
+    } else {
+      navigator.clipboard.writeText(portalUrl);
+      alert('Enlace de demo copiado al portapapeles.');
+    }
+  },
+
+  async transferProspectToClient(prospectId) {
+    if (!supabaseClient) return;
+
+    const email = prompt("Introduce el correo electrónico del cliente REAL para transferir este portal:");
+    if (!email) return;
+
+    // 1. Buscar el perfil por email
+    const { data: profile, error: profError } = await supabaseClient
+      .from('profiles')
+      .select('id, business_name')
+      .eq('email', email)
+      .single();
+
+    if (profError || !profile) {
+      alert("No se encontró ningún comercio registrado con ese correo electrónico. El cliente debe registrarse primero.");
+      return;
+    }
+
+    if (confirm(`¿Transferir la sucursal pre-construida a "${profile.business_name}"?`)) {
+      const { data: prospect, error: prError } = await supabaseClient
+        .from('marketing_prospects')
+        .select('*')
+        .eq('id', prospectId)
+        .single();
+
+      if (prError) return;
+
+      // 2. Crear la sucursal real
+      const { error: locError } = await supabaseClient.from('locations').insert([{
+        tenant_id: profile.id,
+        name: prospect.loc_name,
+        address: prospect.loc_address,
+        maps_url: prospect.loc_maps_url,
+        logo: prospect.logo,
+        status: 'active'
+      }]);
+
+      if (locError) {
+        alert("Error al transferir: " + locError.message);
+        return;
+      }
+
+      // 3. Actualizar perfil si es necesario (Opcional: logo y color)
+      await supabaseClient.from('profiles').update({
+        logo: prospect.logo,
+        accent_color: prospect.accent_color
+      }).eq('id', profile.id);
+
+      // 4. Marcar prospecto como convertido
+      await supabaseClient.from('marketing_prospects').update({ 
+        status: 'converted',
+        converted_tenant_id: profile.id
+      }).eq('id', prospectId);
+
+      this.addLog('SYSTEM', `ADMIN: Portal de "${prospect.business_name}" transferido a cuenta real de ${email}`);
+      alert("¡Transferencia completada con éxito!");
+      this.loadMarketingProspects();
+    }
   }
 };
 
