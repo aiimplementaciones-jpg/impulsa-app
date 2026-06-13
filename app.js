@@ -3770,6 +3770,7 @@ const App = {
   },
 
   async handleMarketingCSV() {
+    console.log("Iniciando procesamiento de CSV...");
     const fileInput = document.getElementById('marketing-csv-upload');
     if (!fileInput.files.length) {
       alert("Por favor selecciona un archivo CSV.");
@@ -3777,46 +3778,61 @@ const App = {
     }
 
     const file = fileInput.files[0];
+    console.log("Archivo seleccionado:", file.name, file.size, "bytes");
     const reader = new FileReader();
 
     reader.onload = async (e) => {
+      console.log("Archivo leído con éxito.");
       const text = e.target.result;
       const lines = text.split('\n');
+      console.log("Total líneas detectadas:", lines.length);
       const prospects = [];
 
-      // Omitir cabecera si existe (validación simple)
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i].trim();
         if (!line) continue;
         
-        const [business_name, logo, accent_color, contact_name, contact_whatsapp, loc_name, loc_address, loc_maps_url] = line.split(',').map(s => s.trim());
+        const parts = line.split(',');
+        console.log(`Procesando línea ${i}:`, parts);
+        const [business_name, logo, accent_color, contact_name, contact_whatsapp, loc_name, loc_address, loc_maps_url] = parts.map(s => s ? s.trim() : '');
         
-        if (business_name && loc_name) {
+        if (business_name && loc_name && business_name !== 'NombreNegocio') {
           prospects.push({
             business_name,
             logo: logo || '🏪',
             accent_color: accent_color || '#6366f1',
-            contact_name,
-            contact_whatsapp,
+            contact_name: contact_name || '',
+            contact_whatsapp: contact_whatsapp || '',
             loc_name,
-            loc_address,
+            loc_address: loc_address || '',
             loc_maps_url: loc_maps_url || 'https://maps.google.com'
           });
         }
       }
+
+      console.log("Prospectos válidos encontrados:", prospects.length);
 
       if (prospects.length > 0 && supabaseClient) {
         this.addLog('POST', `Súper Admin: Subiendo ${prospects.length} prospectos desde CSV.`);
         const { error } = await supabaseClient.from('marketing_prospects').insert(prospects);
         
         if (error) {
+          console.error("Error en Supabase:", error);
           alert("Error al cargar prospectos: " + error.message);
         } else {
+          console.log("Subida exitosa a Supabase.");
           alert(`¡Éxito! Se cargaron ${prospects.length} prospectos.`);
           this.loadMarketingProspects();
           fileInput.value = '';
         }
+      } else if (prospects.length === 0) {
+        alert("No se encontraron datos válidos en el CSV. Asegúrate de seguir el formato: NombreNegocio, LogoUrl/Emoji, ColorHex, NombreContacto, WhatsApp, NombreSucursal, Direccion, MapsUrl");
       }
+    };
+
+    reader.onerror = (err) => {
+      console.error("Error al leer el archivo:", err);
+      alert("Error al leer el archivo.");
     };
 
     reader.readAsText(file);
