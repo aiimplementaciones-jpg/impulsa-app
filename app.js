@@ -3860,14 +3860,25 @@ const App = {
       const text = chatInput.value.trim();
       if (!text) return;
 
-      const user = this.State.currentUser;
-      if (!user) {
-        alert("Por favor, inicia sesión para contactar a soporte.");
-        return;
-      }
+      // Permitir acceso a invitados (sin cuenta)
+      const user = this.State.currentUser || {
+        id: '00000000-0000-0000-0000-000000000000',
+        businessName: 'Invitado',
+        fullName: 'Usuario Invitado',
+        plan: 'free'
+      };
 
       this.addUserChatMessage(text);
       chatInput.value = '';
+
+      // Agregar mensaje localmente para que aparezca en el chat de inmediato (importante para invitados)
+      this.State.messages.push({
+        id: Date.now(),
+        tenantId: user.id,
+        content: text,
+        sender: user.businessName || 'Invitado',
+        date: new Date().toISOString()
+      });
 
       // URL del Webhook de n8n
       const N8N_WEBHOOK_URL = "https://n8n-n8n.bp2swr.easypanel.host/webhook/9dad719b-b85e-4b00-8398-ecd435f61022";
@@ -3882,8 +3893,8 @@ const App = {
       };
 
       try {
-        // 1. Guardar mensaje del USUARIO en Supabase
-        if (supabaseClient) {
+        // 1. Guardar mensaje del USUARIO en Supabase (Solo si es un usuario real)
+        if (supabaseClient && this.State.currentUser) {
           await supabaseClient.from('messages').insert({
             tenant_id: user.id,
             content: text,
@@ -3905,8 +3916,17 @@ const App = {
         if (botText) {
           this.addAgentChatMessage(botText);
           
-          // 3. Guardar respuesta del BOT en Supabase para el historial
-          if (supabaseClient) {
+          // Agregar respuesta localmente
+          this.State.messages.push({
+            id: Date.now() + 1,
+            tenantId: user.id,
+            content: botText,
+            sender: 'Soporte IMPULSA',
+            date: new Date().toISOString()
+          });
+
+          // 3. Guardar respuesta del BOT en Supabase para el historial (Solo si es un usuario real)
+          if (supabaseClient && this.State.currentUser) {
             await supabaseClient.from('messages').insert({
               tenant_id: user.id,
               content: botText,
@@ -3957,8 +3977,10 @@ const App = {
     const sortedMsgs = [...this.State.messages].sort((a, b) => new Date(a.date) - new Date(b.date));
 
     sortedMsgs.forEach(m => {
-      // Si el remitente es el nombre del negocio, es un mensaje del usuario
-      const isUser = m.sender === this.State.currentUser.businessName || m.sender === 'Yo' || m.sender === this.State.currentUser.fullName;
+      // Si el remitente es el nombre del negocio o Invitado, es un mensaje del usuario
+      const currentUser = this.State.currentUser;
+      const isUser = (currentUser && (m.sender === currentUser.businessName || m.sender === 'Yo' || m.sender === currentUser.fullName)) 
+                     || m.sender === 'Invitado' || m.sender === 'Usuario Invitado';
       
       if (isUser) {
         this.addUserChatMessage(m.content);
