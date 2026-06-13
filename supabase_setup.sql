@@ -29,6 +29,12 @@ ON CONFLICT (id) DO UPDATE SET
   location_limit = EXCLUDED.location_limit,
   features = EXCLUDED.features;
 
+-- Habilitar RLS para Planes
+ALTER TABLE public.plans ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Lectura pública de planes" ON public.plans FOR SELECT USING (true);
+CREATE POLICY "Solo SuperAdmin gestiona planes" ON public.plans FOR ALL 
+  USING (auth.uid() = '36d917a3-f764-4afe-8c87-e1db8f0f1731');
+
 -- 2. Tabla de Perfiles (Cuentas de Comercio)
 -- Se actualiza para incluir campos financieros
 CREATE TABLE public.profiles (
