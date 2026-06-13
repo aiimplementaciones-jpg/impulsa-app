@@ -3744,11 +3744,14 @@ const App = {
         </td>
         <td>
           <div style="display:flex; gap:5px;">
-            <button class="btn btn-secondary share-prospect-btn" data-id="${p.id}" data-name="${p.business_name}" style="padding:6px; width:auto;">
+            <button class="btn btn-secondary share-prospect-btn" data-id="${p.id}" data-name="${p.business_name}" title="Compartir Demo" style="padding:6px; width:auto;">
               <i data-lucide="share-2"></i>
             </button>
+            <button class="btn btn-secondary edit-prospect-btn" data-id="${p.id}" title="Editar Prospecto" style="padding:6px; width:auto;">
+              <i data-lucide="edit"></i>
+            </button>
             ${p.status !== 'converted' ? `
-              <button class="btn btn-primary transfer-prospect-btn" data-id="${p.id}" style="padding:6px 12px; font-size:0.75rem; width:auto;">
+              <button class="btn btn-primary transfer-prospect-btn" data-id="${p.id}" title="Transferir a Cliente Real" style="padding:6px 12px; font-size:0.75rem; width:auto;">
                 <i data-lucide="user-plus"></i> Transferir
               </button>
             ` : ''}
@@ -3762,6 +3765,10 @@ const App = {
     // Vincular acciones
     document.querySelectorAll('.share-prospect-btn').forEach(btn => {
       btn.addEventListener('click', () => this.shareProspectPortal(btn.getAttribute('data-id'), btn.getAttribute('data-name')));
+    });
+
+    document.querySelectorAll('.edit-prospect-btn').forEach(btn => {
+      btn.addEventListener('click', () => this.handleEditProspect(btn.getAttribute('data-id')));
     });
 
     document.querySelectorAll('.transfer-prospect-btn').forEach(btn => {
@@ -3854,6 +3861,62 @@ const App = {
     } else {
       navigator.clipboard.writeText(portalUrl);
       alert('Enlace de demo copiado al portapapeles.');
+    }
+  },
+
+  async handleEditProspect(id) {
+    if (!supabaseClient) return;
+
+    // 1. Obtener datos actuales del prospecto
+    const { data: p, error } = await supabaseClient.from('marketing_prospects').select('*').eq('id', id).single();
+    if (error || !p) {
+      alert("Error al cargar datos del prospecto");
+      return;
+    }
+
+    // 2. Pedir nuevos datos (Simple prompt para agilidad)
+    const newName = prompt("Nombre del Negocio:", p.business_name);
+    if (newName === null) return;
+
+    const newLogo = prompt("Logo (Emoji o URL):", p.logo);
+    if (newLogo === null) return;
+
+    const newColor = prompt("Color de Marca (Hex):", p.accent_color);
+    if (newColor === null) return;
+
+    const newContactName = prompt("Nombre del Contacto:", p.contact_name);
+    if (newContactName === null) return;
+
+    const newWhatsApp = prompt("WhatsApp (solo números):", p.contact_whatsapp);
+    if (newWhatsApp === null) return;
+
+    const newLocName = prompt("Nombre de la Sucursal:", p.loc_name);
+    if (newLocName === null) return;
+
+    const newLocAddr = prompt("Dirección de la Sucursal:", p.loc_address);
+    if (newLocAddr === null) return;
+
+    const newMaps = prompt("Enlace Google Maps:", p.loc_maps_url);
+    if (newMaps === null) return;
+
+    // 3. Actualizar en Supabase
+    this.addLog('PUT', `Súper Admin: Editando prospecto "${p.business_name}"`);
+    const { error: updError } = await supabaseClient.from('marketing_prospects').update({
+      business_name: newName,
+      logo: newLogo,
+      accent_color: newColor,
+      contact_name: newContactName,
+      contact_whatsapp: newWhatsApp,
+      loc_name: newLocName,
+      loc_address: newLocAddr,
+      loc_maps_url: newMaps
+    }).eq('id', id);
+
+    if (updError) {
+      alert("Error al actualizar: " + updError.message);
+    } else {
+      alert("Prospecto actualizado con éxito");
+      this.loadMarketingProspects();
     }
   },
 
