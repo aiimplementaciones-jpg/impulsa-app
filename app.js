@@ -1550,7 +1550,157 @@ const App = {
       navigator.clipboard.writeText(portalUrl);
       alert('Tu navegador no soporta la función nativa de compartir. El enlace ha sido copiado al portapapeles.');
     }
-    },
+  },
+
+  renderLocations(container) {
+    const user = this.State.currentUser;
+    const userLocations = this.State.locations.filter(l => l.userId === user.id);
+
+    container.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+        <h2 style="font-size: 1.4rem;" data-i18n="nav_locations">Mis Sucursales</h2>
+        <button class="btn btn-primary" id="open-req-modal" style="width: auto; padding: 0 16px;">
+          <i data-lucide="plus"></i> Solicitud Profesional
+        </button>
+      </div>
+
+      <!-- Formulario Rápido (Solo locales directos) -->
+      <div class="card" style="margin-bottom: 24px; border-top: 4px solid var(--color-brand);">
+        <h3 class="card-title"><i data-lucide="map-pin"></i> Nueva Sede (Básica)</h3>
+        <form id="add-location-form" style="display: flex; flex-direction: column; gap: 12px; margin-top: 12px;">
+          <div class="form-group" style="margin-bottom:0;">
+            <input type="text" id="new-loc-name" class="form-control" placeholder="Nombre (ej: Sede Norte)" required>
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <input type="text" id="new-loc-address" class="form-control" placeholder="Dirección Física" required>
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <input type="url" id="new-loc-maps" class="form-control" placeholder="Enlace Google Maps (URL)" required>
+          </div>
+          <button type="submit" class="btn btn-primary">
+            <i data-lucide="save"></i> Registrar Sede
+          </button>
+        </form>
+      </div>
+
+      <!-- Listado de Sucursales -->
+      <div class="locations-grid" id="locations-list">
+        ${userLocations.map(loc => {
+          const isActive = loc.status === 'active';
+          return \`
+            <div class="card location-card" id="card-\${loc.id}">
+              <div class="location-header">
+                <div class="location-info">
+                  <h3>\${loc.name}</h3>
+                  <p><i data-lucide="map-pin"></i> \${loc.address}</p>
+                </div>
+                <!-- Badge interactivo de LED -->
+                <span class="status-badge \${isActive ? 'active' : 'inactive'}" id="badge-\${loc.id}">
+                  <span class="led-dot"></span>
+                  <span id="badge-text-\${loc.id}">\${this.t(isActive ? 'active' : 'inactive')}</span>
+                </span>
+              </div>
+
+              <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 12px; border-top: 1px solid var(--border-color); margin-top: 4px;">
+                <span style="font-size: 0.85rem; color: var(--text-secondary);" data-i18n="loc_status_badge">Estado</span>
+                <!-- Switch de Cambio de Estado al Instante -->
+                <label class="switch-control">
+                  <input type="checkbox" class="loc-toggle" data-id="\${loc.id}" \${isActive ? 'checked' : ''}>
+                  <span class="switch-slider"></span>
+                </label>
+              </div>
+
+              <!-- Acciones de QR e Impresión -->
+              <div class="location-actions">
+                <button class="btn btn-secondary download-qr-btn" data-id="\${loc.id}" data-name="\${loc.name}" style="padding: 8px 12px; font-size: 0.8rem; border-radius: var(--radius-sm);">
+                  <i data-lucide="download"></i> QR
+                </button>
+                <button class="btn btn-secondary print-qr-btn" data-id="\${loc.id}" data-name="\${loc.name}" style="padding: 8px 12px; font-size: 0.8rem; border-radius: var(--radius-sm);">
+                  <i data-lucide="printer"></i> Imprimir
+                </button>
+              </div>
+
+              <!-- Acciones de Gestión (Editar/Borrar) -->
+              <div class="location-actions">
+                <button class="btn btn-secondary edit-loc-btn" data-id="\${loc.id}" style="padding: 8px 12px; font-size: 0.8rem; border-radius: var(--radius-sm);">
+                  <i data-lucide="edit"></i> Editar
+                </button>
+                <button class="btn btn-danger delete-loc-btn" data-id="\${loc.id}" style="padding: 8px 12px; font-size: 0.8rem; border-radius: var(--radius-sm);">
+                  <i data-lucide="trash-2"></i> Borrar
+                </button>
+              </div>
+
+              <div style="margin-top: 8px; display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; gap: 8px; width: 100%;">
+                  <button class="btn btn-secondary" onclick="navigator.clipboard.writeText('\${window.location.origin}/#portal?id=\${loc.id}'); alert('Enlace de sucursal copiado');" style="flex: 1; padding: 8px 12px; font-size: 0.8rem; border-radius: var(--radius-sm);">
+                    <i data-lucide="copy"></i> Copiar Enlace
+                  </button>
+                  <button class="btn btn-secondary share-loc-btn" data-id="\${loc.id}" data-name="\${loc.name}" style="flex: 1; padding: 8px 12px; font-size: 0.8rem; border-radius: var(--radius-sm);">
+                    <i data-lucide="share-2"></i> Compartir
+                  </button>
+                </div>
+                <a href="#portal?id=\${loc.id}" target="_blank" class="btn btn-primary" style="padding: 8px 12px; font-size: 0.8rem; border-radius: var(--radius-sm); background: linear-gradient(135deg, var(--color-brand), var(--color-brand)); width: 100%;">
+                  <i data-lucide="external-link"></i> Probar Portal
+                </a>
+              </div>
+            </div>
+          \`;
+        }).join('')}
+      </div>
+
+      <!-- Contenedor oculto temporal para generar Canvas QR -->
+      <div id="hidden-qr-canvas-holder" style="display: none;"></div>
+    `;
+
+    // Vincular lógica de agregar sucursal
+    const form = document.getElementById('add-location-form');
+    if (form) {
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        this.handleAddLocation();
+      });
+    }
+
+    const openModalBtn = document.getElementById('open-req-modal');
+    if (openModalBtn) {
+      openModalBtn.addEventListener('click', () => this.handleRequestLocationModal());
+    }
+
+    // Vincular switches de activación inteligente
+    document.querySelectorAll('.loc-toggle').forEach(chk => {
+      chk.addEventListener('change', (e) => {
+        const id = e.target.getAttribute('data-id');
+        this.handleToggleLocation(id, e.target.checked);
+      });
+    });
+
+    // Vincular generación y descarga de códigos QR
+    document.querySelectorAll('.download-qr-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const id = btn.getAttribute('data-id');
+        const name = btn.getAttribute('data-name');
+        this.downloadQRCode(id, name);
+      });
+    });
+
+    // Vincular impresión de habladores de mesa
+    document.querySelectorAll('.print-qr-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const id = btn.getAttribute('data-id');
+        const name = btn.getAttribute('data-name');
+        this.printQRCode(id, name);
+      });
+    });
+
+    // Vincular compartir enlace nativo
+    document.querySelectorAll('.share-loc-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const id = btn.getAttribute('data-id');
+        const name = btn.getAttribute('data-name');
+        this.handleShareLocation(id, name);
+      });
+    });
+
     // Vincular botones de Editar
     document.querySelectorAll('.edit-loc-btn').forEach(btn => {
       btn.addEventListener('click', () => {
