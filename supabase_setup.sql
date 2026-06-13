@@ -21,8 +21,8 @@ CREATE TABLE public.plans (
 -- Insertar configuración inicial de planes
 INSERT INTO public.plans (id, name, price, location_limit, features) VALUES
 ('free', 'Plan Starter', 0.00, 1, ARRAY['Indicador LED animado', 'Códigos QR de Alta Definición', 'Portal móvil personalizable']),
-('pro', 'Plan Pro Profesional', 29.00, 3, ARRAY['Indicador LED animado', 'Códigos QR de Alta Definición', 'Portal móvil personalizable', 'Filtro estratégico de reseñas', 'Simulador de servidor de API']),
-('star', 'Plan Star Ilimitado', 79.00, NULL, ARRAY['Indicador LED animado', 'Códigos QR de Alta Definición', 'Portal móvil personalizable', 'Filtro estratégico de reseñas', 'Simulador de servidor de API', 'Soporte prioritario'])
+('pro', 'Plan Pro Profesional', 64000.00, 3, ARRAY['Indicador LED animado', 'Códigos QR de Alta Definición', 'Portal móvil personalizable', 'Filtro estratégico de reseñas', 'Simulador de servidor de API']),
+('star', 'Plan Star Ilimitado', 116000.00, NULL, ARRAY['Indicador LED animado', 'Códigos QR de Alta Definición', 'Portal móvil personalizable', 'Filtro estratégico de reseñas', 'Simulador de servidor de API', 'Soporte prioritario'])
 ON CONFLICT (id) DO UPDATE SET
   name = EXCLUDED.name,
   price = EXCLUDED.price,

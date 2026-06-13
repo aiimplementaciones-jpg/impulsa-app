@@ -79,8 +79,8 @@ const App = {
   // Configuración de planes dinámica (Se puebla desde Supabase, con valores por defecto)
   plansConfig: {
     free: { name: 'Plan Starter', price: 0, limit: 1, features: ['Indicador LED animado', 'Códigos QR de Alta Definición', 'Portal móvil personalizable'] },
-    pro: { name: 'Plan Pro Profesional', price: 16, limit: 3, features: ['Indicador LED animado', 'Códigos QR de Alta Definición', 'Portal móvil personalizable', 'Filtro estratégico de reseñas', 'Simulador de servidor de API'] },
-    star: { name: 'Plan Star Ilimitado', price: 29, limit: Infinity, features: ['Indicador LED animado', 'Códigos QR de Alta Definición', 'Portal móvil personalizable', 'Filtro estratégico de reseñas', 'Simulador de servidor de API', 'Soporte prioritario'] }
+    pro: { name: 'Plan Pro Profesional', price: 64000, limit: 3, features: ['Indicador LED animado', 'Códigos QR de Alta Definición', 'Portal móvil personalizable', 'Filtro estratégico de reseñas', 'Simulador de servidor de API'] },
+    star: { name: 'Plan Star Ilimitado', price: 116000, limit: Infinity, features: ['Indicador LED animado', 'Códigos QR de Alta Definición', 'Portal móvil personalizable', 'Filtro estratégico de reseñas', 'Simulador de servidor de API', 'Soporte prioritario'] }
   },
 
   // Límites de locales por plan (Se actualizan desde Supabase)
@@ -2761,7 +2761,9 @@ const App = {
                 ${plan.limit === Infinity ? 'Sucursales ilimitadas' : `Límite: ${plan.limit} ${plan.limit === 1 ? 'sucursal' : 'sucursales'}`}
               </span>
             </div>
-            <div class="pricing-price">${plan.price === 0 ? 'Gratis' : `$${plan.price} USD / mes`}</div>
+            <div class="pricing-price">
+              ${plan.price === 0 ? 'Gratis' : `${new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(plan.price)} COP / mes`}
+            </div>
             <ul class="pricing-features-list">
               ${plan.features.map(f => `<li><i data-lucide="check"></i> <span>${f}</span></li>`).join('')}
             </ul>
@@ -2874,11 +2876,10 @@ const App = {
 
     const handler = async () => {
       const period = parseInt(document.getElementById('subscription-period').value);
-      const basePriceUsd = this.plansConfig[plan].price;
+      const basePriceCop = this.plansConfig[plan].price;
       const discounts = { 1: 0, 3: 0.05, 6: 0.1, 9: 0.15, 12: 0.2 };
       
-      const exchangeRate = 4000;
-      const totalAmountCop = (basePriceUsd * period * (1 - discounts[period]) * exchangeRate);
+      const totalAmountCop = (basePriceCop * period * (1 - discounts[period]));
       
       // MONTO ESTRICTO: Sin decimales para evitar fallos en la firma
       const amountInCents = Math.floor(totalAmountCop * 100);
@@ -3274,7 +3275,7 @@ const App = {
             <thead>
               <tr>
                 <th>Plan</th>
-                <th>Precio (USD)</th>
+                <th>Precio (COP)</th>
                 <th>Límite de Sedes</th>
                 <th>Características</th>
                 <th>Acción</th>
