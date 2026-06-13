@@ -66,6 +66,7 @@ const App = {
     locations: [],      // Locales registrados
     leads: [],          // Reseñas negativas capturadas
     locationRequests: [], // Solicitudes de creación de sucursales
+    messages: [],         // NUEVO: Mensajes del administrador
     proxyLogs: [],      // Logs del Servidor seguro /api/support
     visits: 0,          // Semilla global de visitas
     wompiConfig: {      // Configuración de Pasarela Wompi
@@ -191,7 +192,9 @@ const App = {
             logo: profile.logo || '🏪',
             accentColor: profile.accent_color || '#6366f1',
             bgColor: profile.bg_color || '#ffffff',
-            title: profile.portal_title || (profile.business_name ? `Opiniones de ${profile.business_name}` : 'Portal de Opiniones')
+            title: profile.portal_title || (profile.business_name ? `Opiniones de ${profile.business_name}` : 'Portal de Opiniones'),
+            subscriptionDate: profile.subscription_date,
+            subscriptionExpiry: profile.subscription_expiry
           };
         } else if (profileErr) {
           this.addLog('SYSTEM', `Error obteniendo perfil: ${profileErr.message}`);
@@ -301,8 +304,23 @@ const App = {
         date: r.created_at
       }));
 
+      // 6. Obtener Mensajes (NUEVO)
+      let queryMsg = supabaseClient.from('messages').select('*').order('created_at', { ascending: false });
+      if (this.State.currentUser && !this.State.isSuperAdmin) {
+        queryMsg = queryMsg.eq('tenant_id', this.State.currentUser.id);
+      }
+      const { data: dbMsgs } = await queryMsg;
+      this.State.messages = (dbMsgs || []).map(m => ({
+        id: m.id,
+        tenantId: m.tenant_id,
+        content: m.content,
+        sender: m.sender,
+        isRead: m.is_read,
+        date: m.created_at
+      }));
+
       // Refrescar la página actual para mostrar los datos recién cargados (especialmente planes)
-      this.addLog('SYSTEM', 'Interfaz de usuario actualizada con datos de la nube.');
+      this.addLog('SYSTEM', `Sincronización con Supabase exitosa: ${this.State.locations.length} sucursales, ${this.State.leads.length} casos y ${this.State.messages.length} mensajes cargados.`);
       if (this.State.activePage) {
         this.renderPageContent(this.State.activePage);
       }
@@ -1007,6 +1025,16 @@ const App = {
       ? (userLeads.reduce((acc, curr) => acc + curr.rating, 0) / totalLeads).toFixed(1)
       : '5.0';
 
+    // Cálculo de Plan y Sucursales (NUEVO)
+    const planKey = user.plan || 'free';
+    const planInfo = this.plansConfig[planKey] || { name: 'Plan Starter', limit: 1 };
+    const planLimit = planInfo.limit === Infinity ? null : planInfo.limit;
+    const usedBranches = userLocations.length;
+    const remainingBranches = planLimit === null ? 'Ilimitado' : Math.max(0, planLimit - usedBranches);
+    
+    const startDate = user.subscriptionDate ? new Date(user.subscriptionDate).toLocaleDateString() : 'N/A';
+    const expiryDate = user.subscriptionExpiry ? new Date(user.subscriptionExpiry).toLocaleDateString() : 'N/A';
+
     container.innerHTML = `
       ${(!user.city || !user.fullName) ? `
         <div class="card" style="border-left: 6px solid var(--color-warning); background-color: rgba(245, 158, 11, 0.05); margin-bottom: 20px;">
@@ -1019,6 +1047,25 @@ const App = {
           </div>
         </div>
       ` : ''}
+
+      <!-- Notificaciones del Administrador (NUEVO) -->
+      ${this.State.messages.length > 0 ? `
+        <div class="card" style="border-left: 6px solid var(--color-brand); margin-bottom: 24px; background: rgba(0, 123, 255, 0.02);">
+          <h3 class="card-title"><i data-lucide="bell"></i> Mensajes de la Plataforma</h3>
+          <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 10px;">
+            ${this.State.messages.map(m => `
+              <div style="padding: 12px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                  <strong style="font-size: 0.85rem; color: var(--color-brand);">${m.sender}</strong>
+                  <span style="font-size: 0.7rem; color: var(--text-secondary);">${new Date(m.date).toLocaleString()}</span>
+                </div>
+                <p style="font-size: 0.88rem; margin: 0; line-height: 1.5;">${m.content}</p>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      ` : ''}
+
       <div class="card" style="background: linear-gradient(135deg, rgba(0, 123, 255, 0.1), rgba(255, 165, 0, 0.05)); border-color: rgba(0, 123, 255, 0.25);">
         <h2 style="font-size: 1.5rem; margin-bottom: 8px;">
           🚀 <span data-i18n="dash_welcome">¡Hola de nuevo!</span>, ${user.businessName}
@@ -1047,6 +1094,36 @@ const App = {
         <div class="metric-card">
           <span class="metric-label" data-i18n="dash_saved_reputation">Crisis Mitigadas</span>
           <div class="metric-value" style="color: var(--color-success);">${totalLeads}</div>
+        </div>
+      </div>
+
+      <!-- Resumen del Plan (NUEVO) -->
+      <div class="card" style="margin-bottom: 24px; border-top: 4px solid var(--color-accent);">
+        <h3 class="card-title"><i data-lucide="credit-card"></i> Estado de mi Suscripción</h3>
+        <div class="responsive-grid" style="margin-top: 16px;">
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <span style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase;" data-i18n="dash_plan_current">Plan Actual</span>
+            <strong style="font-size: 1.1rem; color: var(--color-accent);">${planInfo.name}</strong>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <span style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase;" data-i18n="dash_plan_locations">Sucursales</span>
+            <strong style="font-size: 1.1rem;">${usedBranches} de ${planLimit || '∞'} usadas</strong>
+            <span style="font-size: 0.7rem; color: var(--text-secondary);">${remainingBranches} <span data-i18n="dash_plan_remaining">pendientes</span></span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <span style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase;" data-i18n="dash_plan_validity">Vigencia</span>
+            <div style="display: flex; gap: 12px; align-items: center;">
+              <div>
+                <span style="display: block; font-size: 0.7rem; color: var(--text-secondary);" data-i18n="dash_plan_start">Inicio</span>
+                <strong style="font-size: 0.9rem;">${startDate}</strong>
+              </div>
+              <div style="width: 1px; height: 20px; background: var(--border-color);"></div>
+              <div>
+                <span style="display: block; font-size: 0.7rem; color: var(--text-secondary);" data-i18n="dash_plan_expiry">Vencimiento</span>
+                <strong style="font-size: 0.9rem; color: var(--color-danger);">${expiryDate}</strong>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -3401,11 +3478,12 @@ const App = {
             <thead>
               <tr>
                 <th>ID</th>
-                <th>Nombre del Comercio</th>
-                <th>Responsable / Contacto</th>
-                <th>Ubicación</th>
-                <th>Plan Activo</th>
-                <th>Sucursales</th>
+                <th>Comercio</th>
+                <th>Contacto</th>
+                <th>Estado Suscripción</th>
+                <th>Finanzas</th>
+                <th>Sedes</th>
+                <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -3452,6 +3530,11 @@ const App = {
                       </div>
                     </td>
                     <td style="text-align: center;"><strong>${count}</strong></td>
+                    <td>
+                      <button class="btn btn-secondary btn-sm send-message-btn" data-id="${u.id}" data-name="${u.businessName}" style="padding: 4px 8px; font-size: 0.75rem;">
+                        <i data-lucide="bell" style="width: 12px; height: 12px;"></i> Notificar
+                      </button>
+                    </td>
                   </tr>
                 `;
               }).join('')}
@@ -3459,9 +3542,48 @@ const App = {
           </table>
         </div>
       `;
+
+      // Vincular eventos de envío de mensaje
+      document.querySelectorAll('.send-message-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const tenantId = btn.getAttribute('data-id');
+          const businessName = btn.getAttribute('data-name');
+          this.promptSendMessage(tenantId, businessName);
+        });
+      });
     }
 
     this.translateInterface();
+  },
+
+  async promptSendMessage(tenantId, businessName) {
+    const message = prompt(`Escribe el mensaje que deseas enviar a "${businessName}":\n\n(Ej: Tu plan vence en 3 días, por favor renueva para evitar interrupciones.)`);
+    
+    if (!message || message.trim() === '') return;
+
+    if (supabaseClient) {
+      this.addLog('POST', `ADMIN: Enviando mensaje a ${businessName}...`);
+      const { error } = await supabaseClient
+        .from('messages')
+        .insert({
+          tenant_id: tenantId,
+          content: message,
+          sender: 'Soporte IMPULSA'
+        });
+
+      if (error) {
+        alert("Error al enviar el mensaje: " + error.message);
+        return;
+      }
+
+      alert("Mensaje enviado exitosamente.");
+      this.addLog('SYSTEM', `ADMIN: Mensaje enviado a "${businessName}": ${message}`);
+      
+      // Sincronizar para ver el cambio
+      await this.syncFromSupabase();
+    } else {
+      alert("Error: Supabase no está conectado.");
+    }
   },
 
   // ==========================================================================

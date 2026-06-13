@@ -185,6 +185,24 @@ ALTER TABLE public.locations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.leads ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.location_requests ENABLE ROW LEVEL SECURITY;
 
+-- 7. Tabla de Mensajes del Administrador (NUEVO)
+CREATE TABLE public.messages (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  tenant_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  content TEXT NOT NULL,
+  sender TEXT DEFAULT 'Admin',
+  is_read BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Habilitar RLS para Mensajes
+ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Dueños ven sus propios mensajes" ON public.messages
+  FOR SELECT USING (auth.uid() = tenant_id OR tenant_id = '36d917a3-f764-4afe-8c87-e1db8f0f1731');
+
+CREATE POLICY "SuperAdmin gestiona todos los mensajes" ON public.messages
+  FOR ALL USING (auth.uid() = '36d917a3-f764-4afe-8c87-e1db8f0f1731');
+
 -- 🛡️ POLÍTICAS PARA PROFILES
 -- ... (mismo código)
 CREATE POLICY "Permitir gestión de perfil propio" ON public.profiles

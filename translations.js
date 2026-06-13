@@ -74,6 +74,16 @@ const translations = {
     dash_portal_title_label: "Título del Portal comercial",
     dash_portal_save_success: "¡Configuración de diseño guardada con éxito!",
 
+    // Plan Summary & Notifications (NUEVO)
+    dash_plan_title: "Estado de mi Suscripción",
+    dash_plan_current: "Plan Actual",
+    dash_plan_locations: "Sucursales",
+    dash_plan_validity: "Vigencia",
+    dash_plan_start: "Inicio",
+    dash_plan_expiry: "Vencimiento",
+    dash_plan_remaining: "pendientes",
+    dash_messages_title: "Mensajes de la Plataforma",
+
     // Locations Page
     loc_title: "Gestión Inteligente de Sucursales",
     loc_subtitle: "Registra y monitoriza los puntos físicos de tu negocio.",
@@ -252,6 +262,16 @@ const translations = {
     dash_portal_logo_label: "Emoji / Logo",
     dash_portal_title_label: "Commercial Portal Title",
     dash_portal_save_success: "Design configurations saved successfully!",
+
+    // Plan Summary & Notifications (NUEVO)
+    dash_plan_title: "Subscription Status",
+    dash_plan_current: "Current Plan",
+    dash_plan_locations: "Branches",
+    dash_plan_validity: "Validity",
+    dash_plan_start: "Start Date",
+    dash_plan_expiry: "Expiry Date",
+    dash_plan_remaining: "remaining",
+    dash_messages_title: "Platform Messages",
 
     // Locations Page
     loc_title: "Smart Location Management",
