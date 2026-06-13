@@ -3707,9 +3707,8 @@ const App = {
 
     chatBubble.addEventListener('click', () => {
       chatSheet.classList.add('active');
-      if (messagesContainer.innerHTML.trim() === '') {
-        this.addAgentChatMessage(this.t('sup_chat_agent_welcome'));
-      }
+      // NUEVO: Cargar historial de mensajes al abrir
+      this.renderChatHistory();
     });
 
     closeChatBtn.addEventListener('click', () => {
@@ -3729,7 +3728,7 @@ const App = {
       this.addUserChatMessage(text);
       chatInput.value = '';
 
-      // URL del Webhook de n8n proporcionada por el usuario
+      // URL del Webhook de n8n
       const N8N_WEBHOOK_URL = "https://n8n-n8n.bp2swr.easypanel.host/webhook-test/9dad719b-b85e-4b00-8398-ecd435f61022";
 
       const payload = {
@@ -3741,39 +3740,45 @@ const App = {
         lang: this.State.lang
       };
 
-      this.addLog('POST', `[Support Bot] Enviando mensaje a n8n: "${text}"`);
-
       try {
-        // 1. Enviar al Webhook de n8n (Asíncrono)
-        fetch(N8N_WEBHOOK_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        }).catch(err => console.error("Error enviando a n8n:", err));
-
-        // 2. Guardar en Supabase para persistencia del historial
+        // 1. Guardar mensaje del USUARIO en Supabase
         if (supabaseClient) {
           await supabaseClient.from('messages').insert({
             tenant_id: user.id,
             content: text,
             sender: user.businessName || 'Comercio'
           });
-          
-          // Sincronizar para actualizar el historial (donde el bot responderá)
-          await this.syncFromSupabase();
         }
 
-        setTimeout(() => {
-          this.addAgentChatMessage(
-            this.State.lang === 'es'
-              ? 'He recibido tu mensaje. Mi cerebro de IA está procesando tu solicitud y te responderé en unos segundos aquí mismo.'
-              : 'I have received your message. My AI brain is processing your request and I will reply to you right here in a few seconds.'
-          );
-        }, 1000);
+        // 2. Enviar a n8n y ESPERAR respuesta (Síncrono)
+        const response = await fetch(N8N_WEBHOOK_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const botData = await response.json();
+        // n8n Agent suele devolver la respuesta en 'output' o 'text'
+        const botText = botData.output || botData.text || botData.message || (typeof botData === 'string' ? botData : null);
+
+        if (botText) {
+          this.addAgentChatMessage(botText);
+          
+          // 3. Guardar respuesta del BOT en Supabase para el historial
+          if (supabaseClient) {
+            await supabaseClient.from('messages').insert({
+              tenant_id: user.id,
+              content: botText,
+              sender: 'Soporte IMPULSA'
+            });
+          }
+        } else {
+          throw new Error("Respuesta de IA vacía");
+        }
 
       } catch (err) {
         console.error("Error en el flujo de soporte:", err);
-        this.addLog('SYSTEM', `Error en ChatWidget: ${err.message}`);
+        this.addAgentChatMessage("Lo siento, tuve un problema conectando con mi cerebro de IA. Por favor, intenta de nuevo en un momento.");
       }
     };
 
@@ -3792,6 +3797,34 @@ const App = {
     msg.textContent = text;
     messagesContainer.appendChild(msg);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  },
+
+  renderChatHistory() {
+    const messagesContainer = document.getElementById('chat-messages-container');
+    if (!messagesContainer) return;
+
+    // Limpiar contenedor
+    messagesContainer.innerHTML = '';
+
+    // Si no hay mensajes, mostrar bienvenida
+    if (!this.State.messages || this.State.messages.length === 0) {
+      this.addAgentChatMessage(this.t('sup_chat_agent_welcome'));
+      return;
+    }
+
+    // Ordenar mensajes por fecha (más antiguos primero para el chat)
+    const sortedMsgs = [...this.State.messages].sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    sortedMsgs.forEach(m => {
+      // Si el remitente es el nombre del negocio, es un mensaje del usuario
+      const isUser = m.sender === this.State.currentUser.businessName || m.sender === 'Yo' || m.sender === this.State.currentUser.fullName;
+      
+      if (isUser) {
+        this.addUserChatMessage(m.content);
+      } else {
+        this.addAgentChatMessage(m.content);
+      }
+    });
   },
 
   addAgentChatMessage(text) {
