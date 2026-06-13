@@ -87,11 +87,7 @@ const App = {
   async init() {
     this.State.lang = Storage.getItem('impulsa_lang') || 'es';
     this.State.theme = Storage.getItem('impulsa_theme') || 'light';
-
-    // 🔄 SINCRONIZACIÓN INICIAL OBLIGATORIA (Fuente de Verdad: Supabase)
-    if (typeof supabaseClient !== 'undefined') {
-      await this.syncFromSupabase();
-    }
+    this.State.isSuperAdmin = Storage.getItem('impulsa_is_superadmin') === 'true';
 
     // 🔐 RESTAURAR SESIÓN ACTIVA (Persistencia)
     const activeUserId = Storage.getItem('impulsa_active_user');
@@ -102,7 +98,8 @@ const App = {
       this.State.currentUser = { id: activeUserId, businessName: '...' };
     }
 
-    if (supabaseClient) {
+    // 🔄 SINCRONIZACIÓN INICIAL OBLIGATORIA (Fuente de Verdad: Supabase)
+    if (typeof supabaseClient !== 'undefined') {
       this.addLog('SYSTEM', '🔌 Conectando a la base de datos de Supabase en la nube...');
       await this.syncFromSupabase();
     } else {
@@ -111,8 +108,6 @@ const App = {
       this.State.locations = [];
       this.State.leads = [];
     }
-
-    this.State.isSuperAdmin = Storage.getItem('impulsa_is_superadmin') === 'true';
 
     // 5. Configurar logs de consola del servidor seguros
     this.addLog('SYSTEM', 'Servidor seguro de IMPULSA levantado en el puerto 5000.');
@@ -240,7 +235,11 @@ const App = {
 
       // 4. Obtener todos los tenants si es Súper Administrador o poblar con el actual
       if (this.State.isSuperAdmin) {
-        const { data: dbProfiles } = await supabaseClient.from('profiles').select('*');
+        const { data: dbProfiles, error: profilesErr } = await supabaseClient.from('profiles').select('*');
+        if (profilesErr) {
+          this.addLog('SYSTEM', `Error obteniendo base de datos de comercios: ${profilesErr.message}`);
+          console.error("Error fetching profiles:", profilesErr);
+        }
         this.State.users = (dbProfiles || []).map(p => ({
           id: p.id,
           businessName: p.business_name,
@@ -840,6 +839,12 @@ const App = {
       this.addLog('SYSTEM', `Acceso Super Administrador concedido.`);
       this.State.isSuperAdmin = true;
       Storage.setItem('impulsa_is_superadmin', 'true');
+      
+      // Sincronizar datos globales antes de redirigir
+      if (supabaseClient) {
+        await this.syncFromSupabase();
+      }
+      
       window.location.hash = '#admin';
       return;
     }

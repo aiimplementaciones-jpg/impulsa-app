@@ -7,6 +7,11 @@
 DROP TABLE IF EXISTS public.leads;
 DROP TABLE IF EXISTS public.locations;
 DROP TABLE IF EXISTS public.profiles;
+DROP TABLE IF EXISTS public.messages;
+DROP TABLE IF EXISTS public.location_requests;
+DROP TABLE IF EXISTS public.plans;
+DROP TABLE IF EXISTS public.global_config;
+DROP TABLE IF EXISTS public.marketing_prospects;
 
 -- 1. Tabla de Planes (Configuración dinámica de la plataforma)
 CREATE TABLE public.plans (
@@ -36,7 +41,6 @@ CREATE POLICY "Solo SuperAdmin gestiona planes" ON public.plans FOR ALL
   USING (auth.uid() = '36d917a3-f764-4afe-8c87-e1db8f0f1731');
 
 -- 2. Tabla de Perfiles (Cuentas de Comercio)
--- Se actualiza para incluir campos financieros
 CREATE TABLE public.profiles (
   id UUID PRIMARY KEY,
   business_name TEXT,
@@ -55,45 +59,11 @@ CREATE TABLE public.profiles (
   last_payment_amount NUMERIC(10,2) DEFAULT 0,
   subscription_period INTEGER DEFAULT 1,
   subscription_date TIMESTAMPTZ,
-  subscription_expiry: TIMESTAMPTZ,
-  free_trial_used: BOOLEAN DEFAULT FALSE,
-  created_at: TIMESTAMPTZ DEFAULT NOW(),
+  subscription_expiry TIMESTAMPTZ,
+  free_trial_used BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
-
--- ==========================================================
--- 🪣 CONFIGURACIÓN DE ALMACENAMIENTO (SUPABASE STORAGE)
--- ==========================================================
--- Nota: Ejecutar esto en el SQL Editor de Supabase.
--- Algunos comandos de Storage pueden requerir el dashboard para la creación inicial del bucket.
-
--- Crear el bucket 'logos' si no existe (vía rpc o manual en panel)
--- INSERT INTO storage.buckets (id, name, public) VALUES ('logos', 'logos', true) ON CONFLICT (id) DO NOTHING;
-
--- Políticas para el Bucket 'logos'
--- Eliminamos las anteriores para evitar duplicados
-DROP POLICY IF EXISTS "Logos son públicos" ON storage.objects;
-DROP POLICY IF EXISTS "Usuarios pueden subir logos" ON storage.objects;
-DROP POLICY IF EXISTS "Usuarios pueden gestionar sus logos" ON storage.objects;
-DROP POLICY IF EXISTS "Usuarios pueden subir sus propios logos" ON storage.objects;
-DROP POLICY IF EXISTS "Usuarios pueden actualizar sus propios logos" ON storage.objects;
-DROP POLICY IF EXISTS "Usuarios pueden borrar sus propios logos" ON storage.objects;
-
--- 1. Permitir lectura pública de todos los logos
-CREATE POLICY "Logos son públicos" 
-ON storage.objects FOR SELECT 
-USING (bucket_id = 'logos');
-
--- 2. Permitir inserción (Cualquiera por ahora para facilitar desarrollo, o restringido al ID de Mauro)
-CREATE POLICY "Usuarios pueden subir logos" 
-ON storage.objects FOR INSERT 
-WITH CHECK (bucket_id = 'logos');
-
--- 3. Permitir actualización y borrado (Solo dueños o ID de Mauro)
-CREATE POLICY "Usuarios pueden gestionar sus logos" 
-ON storage.objects FOR ALL 
-USING (bucket_id = 'logos');
-
 
 -- 2. Tabla de Sucursales (Puntos físicos)
 CREATE TABLE public.locations (
@@ -103,7 +73,7 @@ CREATE TABLE public.locations (
   address TEXT NOT NULL,
   maps_url TEXT NOT NULL,
   phone TEXT,
-  logo TEXT, -- Nueva columna para logo por sucursal
+  logo TEXT,
   status TEXT DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -122,7 +92,7 @@ CREATE TABLE public.leads (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 4. Tabla de Solicitudes de Sucursal (Para creación delegada)
+-- 4. Tabla de Solicitudes de Sucursal
 CREATE TABLE public.location_requests (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   tenant_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
@@ -138,52 +108,16 @@ CREATE TABLE public.location_requests (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 5. Tabla de Configuración Global (Wompi, etc)
+-- 5. Tabla de Configuración Global
 CREATE TABLE public.global_config (
   id TEXT PRIMARY KEY, -- 'wompi'
   data JSONB NOT NULL,
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Insertar fila inicial para Wompi si no existe
 INSERT INTO public.global_config (id, data) 
 VALUES ('wompi', '{"publicKey": "", "privateKey": "", "integritySecret": ""}')
 ON CONFLICT (id) DO NOTHING;
-
--- Habilitar RLS
-ALTER TABLE public.global_config ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Lectura pública de config" ON public.global_config FOR SELECT USING (true);
-CREATE POLICY "Solo SuperAdmin edita config" ON public.global_config FOR ALL 
-  USING (auth.uid() = '36d917a3-f764-4afe-8c87-e1db8f0f1731'); -- ID de Admin Mauro
-
--- 5. Automatización de Perfil (Solo para usuarios reales de Supabase Auth)
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS trigger AS $$
-BEGIN
-  INSERT INTO public.profiles (id, full_name, email, business_name, subscription_date, subscription_expiry, free_trial_used)
-  VALUES (
-    new.id, 
-    new.raw_user_meta_data->>'full_name', 
-    new.email,
-    new.raw_user_meta_data->>'business_name',
-    NOW(),
-    NOW() + INTERVAL '21 days',
-    TRUE -- Marca que ya usó su periodo de prueba inicial
-  )
-  ON CONFLICT (id) DO NOTHING;
-  RETURN new;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
-CREATE OR REPLACE TRIGGER on_auth_user_created
-  AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
-
--- 5. Configuración de Seguridad (RLS)
-ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.locations ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.leads ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.location_requests ENABLE ROW LEVEL SECURITY;
 
 -- 7. Tabla de Mensajes del Administrador (NUEVO)
 CREATE TABLE public.messages (
@@ -195,44 +129,7 @@ CREATE TABLE public.messages (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Habilitar RLS para Mensajes
-ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Dueños ven sus propios mensajes" ON public.messages
-  FOR SELECT USING (auth.uid() = tenant_id OR tenant_id = '36d917a3-f764-4afe-8c87-e1db8f0f1731');
-
-CREATE POLICY "SuperAdmin gestiona todos los mensajes" ON public.messages
-  FOR ALL USING (auth.uid() = '36d917a3-f764-4afe-8c87-e1db8f0f1731');
-
--- 🛡️ POLÍTICAS PARA PROFILES
--- ... (mismo código)
-CREATE POLICY "Permitir gestión de perfil propio" ON public.profiles
-  FOR ALL USING (auth.uid() = id OR id = '36d917a3-f764-4afe-8c87-e1db8f0f1731');
-
--- 🛡️ POLÍTICAS PARA LOCATIONS
--- ... (mismo código)
-CREATE POLICY "Dueños gestionan sus locales" ON public.locations
-  FOR ALL USING (auth.uid() = tenant_id OR tenant_id = '36d917a3-f764-4afe-8c87-e1db8f0f1731');
-
-CREATE POLICY "Lectura pública de locales para clientes" ON public.locations
-  FOR SELECT USING (true);
-
--- 🛡️ POLÍTICAS PARA LEADS
--- ... (mismo código)
-CREATE POLICY "Dueños ven sus leads" ON public.leads
-  FOR SELECT USING (auth.uid() = tenant_id OR tenant_id = '36d917a3-f764-4afe-8c87-e1db8f0f1731');
-
-CREATE POLICY "Inserción pública de leads para clientes" ON public.leads
-  FOR INSERT WITH CHECK (true);
-
--- 🛡️ POLÍTICAS PARA LOCATION_REQUESTS
-CREATE POLICY "Dueños gestionan sus solicitudes" ON public.location_requests
-  FOR ALL USING (auth.uid() = tenant_id OR tenant_id = '36d917a3-f764-4afe-8c87-e1db8f0f1731');
-
-CREATE POLICY "SuperAdmin ve todas las solicitudes" ON public.location_requests
-  FOR SELECT USING (auth.uid() = '36d917a3-f764-4afe-8c87-e1db8f0f1731'); -- ID de Admin Mauro
-
-
--- 6. Tabla de Prospectos de Mercadeo (Portales Pre-construidos)
+-- 6. Tabla de Prospectos de Mercadeo
 CREATE TABLE public.marketing_prospects (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   business_name TEXT NOT NULL,
@@ -248,18 +145,81 @@ CREATE TABLE public.marketing_prospects (
   converted_tenant_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL
 );
 
--- Habilitar RLS para Mercadeo
+-- ==========================================================
+-- 🛡️ CONFIGURACIÓN DE SEGURIDAD (RLS)
+-- ==========================================================
+
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.locations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.leads ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.location_requests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.global_config ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.marketing_prospects ENABLE ROW LEVEL SECURITY;
-CREATE POLICY \
-SuperAdmin
-gestiona
-prospectos\ ON public.marketing_prospects 
-  FOR ALL USING (auth.uid() = '36d917a3-f764-4afe-8c87-e1db8f0f1731');
-CREATE POLICY \Lectura
-pública
-de
-prospectos
-para
-previsualización\ ON public.marketing_prospects 
+
+-- POLÍTICAS PARA PROFILES
+CREATE POLICY "Permitir gestión de perfil propio o admin" ON public.profiles
+  FOR ALL USING (auth.uid() = id OR auth.uid() = '36d917a3-f764-4afe-8c87-e1db8f0f1731');
+
+-- POLÍTICAS PARA LOCATIONS
+CREATE POLICY "Dueños gestionan sus locales o admin" ON public.locations
+  FOR ALL USING (auth.uid() = tenant_id OR auth.uid() = '36d917a3-f764-4afe-8c87-e1db8f0f1731');
+
+CREATE POLICY "Lectura pública de locales para clientes" ON public.locations
   FOR SELECT USING (true);
 
+-- POLÍTICAS PARA LEADS
+CREATE POLICY "Dueños ven sus leads o admin" ON public.leads
+  FOR SELECT USING (auth.uid() = tenant_id OR auth.uid() = '36d917a3-f764-4afe-8c87-e1db8f0f1731');
+
+CREATE POLICY "Inserción pública de leads para clientes" ON public.leads
+  FOR INSERT WITH CHECK (true);
+
+-- POLÍTICAS PARA LOCATION_REQUESTS
+CREATE POLICY "Dueños gestionan sus solicitudes o admin" ON public.location_requests
+  FOR ALL USING (auth.uid() = tenant_id OR auth.uid() = '36d917a3-f764-4afe-8c87-e1db8f0f1731');
+
+CREATE POLICY "SuperAdmin ve todas las solicitudes" ON public.location_requests
+  FOR SELECT USING (auth.uid() = '36d917a3-f764-4afe-8c87-e1db8f0f1731');
+
+-- POLÍTICAS PARA MENSAJES
+CREATE POLICY "Dueños ven sus propios mensajes o admin" ON public.messages
+  FOR SELECT USING (auth.uid() = tenant_id OR auth.uid() = '36d917a3-f764-4afe-8c87-e1db8f0f1731');
+
+CREATE POLICY "SuperAdmin gestiona todos los mensajes" ON public.messages
+  FOR ALL USING (auth.uid() = '36d917a3-f764-4afe-8c87-e1db8f0f1731');
+
+-- POLÍTICAS PARA CONFIG GLOBAL
+CREATE POLICY "Lectura pública de config" ON public.global_config FOR SELECT USING (true);
+CREATE POLICY "Solo SuperAdmin edita config" ON public.global_config FOR ALL 
+  USING (auth.uid() = '36d917a3-f764-4afe-8c87-e1db8f0f1731');
+
+-- POLÍTICAS PARA MERCADEO
+CREATE POLICY "SuperAdmin gestiona prospectos" ON public.marketing_prospects 
+  FOR ALL USING (auth.uid() = '36d917a3-f764-4afe-8c87-e1db8f0f1731');
+
+CREATE POLICY "Lectura pública de prospectos para previsualización" ON public.marketing_prospects 
+  FOR SELECT USING (true);
+
+-- 5. Automatización de Perfil
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger AS $$
+BEGIN
+  INSERT INTO public.profiles (id, full_name, email, business_name, subscription_date, subscription_expiry, free_trial_used)
+  VALUES (
+    new.id, 
+    new.raw_user_meta_data->>'full_name', 
+    new.email,
+    new.raw_user_meta_data->>'business_name',
+    NOW(),
+    NOW() + INTERVAL '21 days',
+    TRUE
+  )
+  ON CONFLICT (id) DO NOTHING;
+  RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
