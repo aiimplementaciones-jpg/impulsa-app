@@ -113,13 +113,92 @@ const App = {
     this.addLog('SYSTEM', 'Servidor seguro de IMPULSA levantado en el puerto 5000.');
     this.addLog('SYSTEM', 'Middleware /api/support listo para eludir restricciones de CORS.');
 
-    // 6. Lanzar visualizaciones
     this.applyTheme();
     this.bindGlobalEvents();
     
+    // Iniciar monitoreo de notificaciones (NUEVO)
+    this.initNotificationSystem();
+
     // Iniciar Router dinámico
     this.handleRouting();
     window.addEventListener('hashchange', () => this.handleRouting());
+  },
+
+  // ==========================================================================
+  // 🔔 SISTEMA DE NOTIFICACIONES DE ESCRITORIO (NUEVO)
+  // ==========================================================================
+  initNotificationSystem() {
+    this.lastMessageCount = 0;
+    this.requestNotificationPermission();
+
+    // Chequear nuevos mensajes cada 30 segundos si la app está abierta
+    setInterval(() => {
+      this.checkForNewMessages();
+    }, 30000);
+  },
+
+  async requestNotificationPermission() {
+    if ("Notification" in window) {
+      if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+        await Notification.requestPermission();
+      }
+    }
+  },
+
+  async checkForNewMessages() {
+    if (!supabaseClient) return;
+
+    // Consultar el conteo total de mensajes
+    const { count, error } = await supabaseClient
+      .from('messages')
+      .select('*', { count: 'exact', head: true });
+
+    if (!error && count !== null) {
+      // Si el número de mensajes aumentó, es que alguien escribió
+      if (this.lastMessageCount > 0 && count > this.lastMessageCount) {
+        // Obtener el último mensaje para mostrar en la notificación
+        const { data: latestMsg } = await supabaseClient
+          .from('messages')
+          .select('content, sender')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+
+        if (latestMsg && latestMsg.sender !== 'Soporte IMPULSA' && latestMsg.sender !== 'Admin') {
+          this.notifyNewMessage(latestMsg.sender, latestMsg.content);
+          // Sincronizar para actualizar la UI si es necesario
+          this.syncFromSupabase();
+        }
+      }
+      this.lastMessageCount = count;
+    }
+  },
+
+  notifyNewMessage(sender, text) {
+    // 1. Sonido de alerta
+    try {
+      const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3');
+      audio.play();
+    } catch (e) {
+      console.warn("No se pudo reproducir el sonido de notificación.");
+    }
+
+    // 2. Notificación de Escritorio
+    if (Notification.permission === "granted") {
+      const notification = new Notification(`🚀 IMPULSA: Nuevo mensaje de ${sender}`, {
+        body: text.length > 60 ? text.substring(0, 60) + '...' : text,
+        icon: 'https://qmhgmroeootlwrjfxjne.supabase.co/storage/v1/object/public/logos/Impulsa%20Logo.png'
+      });
+
+      notification.onclick = () => {
+        window.focus();
+        if (this.State.isSuperAdmin) {
+          window.location.hash = '#admin';
+        } else {
+          window.location.hash = '#dashboard';
+        }
+      };
+    }
   },
 
   // Sincronizar toda la data desde Supabase
