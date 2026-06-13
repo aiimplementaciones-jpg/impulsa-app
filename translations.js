@@ -45,6 +45,12 @@ const translations = {
     land_feat4_desc: "Monitorea la conversión, visitas y promedios por sucursal. Exporta reportes en formato CSV.",
     land_pricing_title: "Planes diseñados para cada etapa de tu negocio",
     land_pricing_desc: "Comienza sin costo o expande tus sucursales con nuestros planes flexibles.",
+    land_contact_title: "Contacto Directo",
+    land_contact_subtitle: "¿Tienes dudas adicionales o requieres una implementación personalizada?",
+    land_contact_email_label: "Correo Electrónico",
+    land_contact_phone_label: "WhatsApp de Soporte",
+    land_contact_bot_highlight: "🚀 Soporte Inteligente 24/7",
+    land_contact_bot_desc: "Recuerda que nuestro bot de IA integrado puede responder a tus preguntas y resolver inquietudes de manera automática y precisa en tiempo real.",
 
     // Auth Views
     auth_title_login: "Ingresar a tu Cuenta",

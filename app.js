@@ -753,6 +753,37 @@ const App = {
           `).join('')}
         </div>
       </section>
+
+      <!-- Sección de Contacto y Bot de IA -->
+      <section style="margin-top: 60px; padding: 40px 20px; background: var(--bg-primary); border-radius: var(--radius-lg); border: 1px solid var(--border-color); text-align: center;">
+        <h2 style="font-size: 1.5rem; margin-bottom: 12px;" data-i18n="land_contact_title">Contacto Directo</h2>
+        <p style="color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 30px; max-width: 600px; margin-left: auto; margin-right: auto;" data-i18n="land_contact_subtitle">¿Tienes dudas adicionales o requieres una implementación personalizada?</p>
+        
+        <div style="display: flex; gap: 30px; justify-content: center; flex-wrap: wrap; margin-bottom: 40px;">
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
+            <div style="width: 50px; height: 50px; background: rgba(0, 123, 255, 0.1); color: var(--color-brand); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+              <i data-lucide="mail"></i>
+            </div>
+            <span style="font-size: 0.8rem; color: var(--text-secondary);" data-i18n="land_contact_email_label">Correo Electrónico</span>
+            <strong style="font-size: 1rem;">aiimplementaciones@gmail.com</strong>
+          </div>
+          
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
+            <div style="width: 50px; height: 50px; background: rgba(34, 197, 94, 0.1); color: var(--color-success); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+              <i data-lucide="message-circle"></i>
+            </div>
+            <span style="font-size: 0.8rem; color: var(--text-secondary);" data-i18n="land_contact_phone_label">WhatsApp de Soporte</span>
+            <strong style="font-size: 1rem;">+57 301 685 7098</strong>
+          </div>
+        </div>
+
+        <div style="background: linear-gradient(135deg, rgba(0, 123, 255, 0.05), rgba(255, 165, 0, 0.05)); border: 1px dashed var(--color-brand); padding: 24px; border-radius: var(--radius-md); max-width: 700px; margin: 0 auto;">
+          <h3 style="font-size: 1.1rem; color: var(--color-brand); margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <i data-lucide="bot"></i> <span data-i18n="land_contact_bot_highlight">🚀 Soporte Inteligente 24/7</span>
+          </h3>
+          <p style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6;" data-i18n="land_contact_bot_desc">Recuerda que nuestro bot de IA integrado puede responder a tus preguntas y resolver inquietudes de manera automática y precisa en tiempo real.</p>
+        </div>
+      </section>
     `;
 
     // Lógica del simulador interactivo de la Landing
@@ -3673,6 +3704,37 @@ const App = {
             <i data-lucide="zap"></i>
             <span data-i18n="sup_test_send_btn">Probar Proxy /api/support</span>
           </button>
+        </div>
+      </div>
+
+      <!-- Sección de Contacto Directo y Bot de Soporte (NUEVO) -->
+      <div class="card" style="margin-top: 24px; border-top: 4px solid var(--color-success);">
+        <h3 class="card-title" data-i18n="land_contact_title">Contacto Directo</h3>
+        <p style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 8px;" data-i18n="land_contact_subtitle">¿Tienes dudas adicionales o requieres una implementación personalizada?</p>
+        
+        <div style="display: flex; gap: 20px; margin-top: 20px; flex-wrap: wrap;">
+          <div style="flex: 1; min-width: 200px; display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--bg-primary); border-radius: 8px; border: 1px solid var(--border-color);">
+            <i data-lucide="mail" style="color: var(--color-brand);"></i>
+            <div>
+              <span style="display: block; font-size: 0.75rem; color: var(--text-secondary);" data-i18n="land_contact_email_label">Correo</span>
+              <strong style="font-size: 0.9rem;">aiimplementaciones@gmail.com</strong>
+            </div>
+          </div>
+          <div style="flex: 1; min-width: 200px; display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--bg-primary); border-radius: 8px; border: 1px solid var(--border-color);">
+            <i data-lucide="message-circle" style="color: var(--color-success);"></i>
+            <div>
+              <span style="display: block; font-size: 0.75rem; color: var(--text-secondary);" data-i18n="land_contact_phone_label">WhatsApp</span>
+              <strong style="font-size: 0.9rem;">+57 301 685 7098</strong>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: 24px; padding: 16px; background: rgba(0, 123, 255, 0.03); border-radius: 8px; border: 1px dashed var(--color-brand);">
+          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+            <i data-lucide="bot" style="color: var(--color-brand);"></i>
+            <strong style="font-size: 0.95rem; color: var(--color-brand);" data-i18n="land_contact_bot_highlight">Asistente IA 24/7</strong>
+          </div>
+          <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5;" data-i18n="land_contact_bot_desc">Nuestro bot inteligente puede responder a tus preguntas y resolver inquietudes de manera automática y precisa.</p>
         </div>
       </div>
     `;
