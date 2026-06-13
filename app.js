@@ -2949,7 +2949,13 @@ const App = {
         reference: reference,
         publicKey: publicKey,
         signature: { integrity: signature },
-        redirectUrl: `${window.location.origin}${window.location.pathname}?pay_res=success`
+        redirectUrl: `${window.location.origin}${window.location.pathname}?pay_res=success`,
+        customerData: {
+          email: this.State.currentUser.email,
+          fullName: this.State.currentUser.fullName || this.State.currentUser.businessName,
+          phoneNumber: this.State.currentUser.whatsapp || '',
+          phoneNumberPrefix: '+57'
+        }
       });
 
       Storage.setItem('pending_plan_upgrade', plan);
