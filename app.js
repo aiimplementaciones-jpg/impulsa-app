@@ -304,19 +304,31 @@ const App = {
       }));
 
       // 6. Obtener Mensajes (NUEVO)
-      let queryMsg = supabaseClient.from('messages').select('*').order('created_at', { ascending: false });
-      if (this.State.currentUser && !this.State.isSuperAdmin) {
-        queryMsg = queryMsg.eq('tenant_id', this.State.currentUser.id);
+      try {
+        let queryMsg = supabaseClient.from('messages').select('*').order('created_at', { ascending: false });
+        if (this.State.currentUser && !this.State.isSuperAdmin) {
+          queryMsg = queryMsg.eq('tenant_id', this.State.currentUser.id);
+        }
+        const { data: dbMsgs, error: msgErr } = await queryMsg;
+        
+        if (!msgErr && dbMsgs) {
+          this.State.messages = dbMsgs.map(m => ({
+            id: m.id,
+            tenantId: m.tenant_id,
+            content: m.content,
+            sender: m.sender,
+            isRead: m.is_read,
+            date: m.created_at
+          }));
+        } else {
+          this.State.messages = [];
+          if (msgErr && msgErr.code !== 'PGRST204' && msgErr.code !== '42P01') {
+            console.warn("Aviso: No se pudieron cargar mensajes:", msgErr.message);
+          }
+        }
+      } catch (e) {
+        this.State.messages = [];
       }
-      const { data: dbMsgs } = await queryMsg;
-      this.State.messages = (dbMsgs || []).map(m => ({
-        id: m.id,
-        tenantId: m.tenant_id,
-        content: m.content,
-        sender: m.sender,
-        isRead: m.is_read,
-        date: m.created_at
-      }));
 
       // Refrescar la página actual para mostrar los datos recién cargados (especialmente planes)
       this.addLog('SYSTEM', `Sincronización con Supabase exitosa: ${this.State.locations.length} sucursales, ${this.State.leads.length} casos y ${this.State.messages.length} mensajes cargados.`);
