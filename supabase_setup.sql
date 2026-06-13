@@ -55,8 +55,9 @@ CREATE TABLE public.profiles (
   last_payment_amount NUMERIC(10,2) DEFAULT 0,
   subscription_period INTEGER DEFAULT 1,
   subscription_date TIMESTAMPTZ,
-  subscription_expiry TIMESTAMPTZ,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
+  subscription_expiry: TIMESTAMPTZ,
+  free_trial_used: BOOLEAN DEFAULT FALSE,
+  created_at: TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -159,12 +160,15 @@ CREATE POLICY "Solo SuperAdmin edita config" ON public.global_config FOR ALL
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger AS $$
 BEGIN
-  INSERT INTO public.profiles (id, full_name, email, business_name)
+  INSERT INTO public.profiles (id, full_name, email, business_name, subscription_date, subscription_expiry, free_trial_used)
   VALUES (
     new.id, 
     new.raw_user_meta_data->>'full_name', 
     new.email,
-    new.raw_user_meta_data->>'business_name'
+    new.raw_user_meta_data->>'business_name',
+    NOW(),
+    NOW() + INTERVAL '21 days',
+    TRUE -- Marca que ya usó su periodo de prueba inicial
   )
   ON CONFLICT (id) DO NOTHING;
   RETURN new;

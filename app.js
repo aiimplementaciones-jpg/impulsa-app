@@ -2807,14 +2807,22 @@ const App = {
     // Si hay un ID de transacción, intentamos actualizar el plan en Supabase (Simulando validación de webhook)
     if (transactionId && supabaseClient) {
       const pendingPlan = Storage.getItem('pending_plan_upgrade');
+      const user = this.State.currentUser;
       
-      if (pendingPlan) {
+      if (pendingPlan && user) {
         this.addLog('SYSTEM', `Confirmando actualización al plan ${pendingPlan.toUpperCase()} para transacción: ${transactionId}`);
         
         try {
+          // Calcular fecha de vencimiento (Meses seleccionados en el checkout)
+          const months = user.subscription_period || 1;
+          const expiryDate = new Date();
+          expiryDate.setMonth(expiryDate.getMonth() + months);
+
           await supabaseClient.from('profiles').update({ 
             plan: pendingPlan,
-            subscription_date: new Date().toISOString()
+            subscription_date: new Date().toISOString(),
+            subscription_expiry: expiryDate.toISOString(),
+            free_trial_used: true // Si paga, ya no tiene derecho a prueba gratuita futura
           }).eq('id', user.id);
           
           Storage.removeItem('pending_plan_upgrade');
