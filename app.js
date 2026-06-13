@@ -3792,8 +3792,11 @@ const App = {
         const line = lines[i].trim();
         if (!line) continue;
         
-        const parts = line.split(',');
-        console.log(`Procesando línea ${i}:`, parts);
+        // Detectar delimitador (Soportar coma o punto y coma)
+        const delimiter = line.includes(';') ? ';' : ',';
+        const parts = line.split(delimiter);
+        
+        console.log(`Procesando línea ${i} (Delimitador: ${delimiter}):`, parts);
         const [business_name, logo, accent_color, contact_name, contact_whatsapp, loc_name, loc_address, loc_maps_url] = parts.map(s => s ? s.trim() : '');
         
         if (business_name && loc_name && business_name !== 'NombreNegocio') {
