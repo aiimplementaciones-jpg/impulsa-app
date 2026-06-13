@@ -703,13 +703,13 @@ const App = {
       </section>
 
       <!-- Tabla de Precios -->
-      <section style="margin-top: 48px; margin-bottom: 24px;">
+      <section style="margin-top: 48px; margin-bottom: 24px; width: 100%; display: flex; flex-direction: column; align-items: center;">
         <h2 style="text-align:center; font-size:1.5rem; margin-bottom:8px;" data-i18n="land_pricing_title">Planes diseñados para cada etapa de tu negocio</h2>
-        <p style="text-align:center; color:var(--text-secondary); font-size:0.9rem; margin-bottom:30px;" data-i18n="land_pricing_desc">Comienza sin costo o expande tus sucursales con nuestros planes flexibles.</p>
+        <p style="text-align:center; color:var(--text-secondary); font-size:0.9rem; margin-bottom:30px; max-width: 600px;" data-i18n="land_pricing_desc">Comienza sin costo o expande tus sucursales con nuestros planes flexibles.</p>
         
-        <div class="pricing-tabs" style="margin-top: 20px;">
+        <div class="pricing-tabs" style="margin-top: 20px; width: 100%; display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; padding: 0 20px;">
           ${Object.entries(this.plansConfig).map(([key, plan]) => `
-            <div class="pricing-card ${key === 'pro' ? 'featured' : ''}" style="flex: 1; min-width: 280px; max-width: 350px;">
+            <div class="pricing-card ${key === 'pro' ? 'featured' : ''}" style="flex: 1; min-width: 280px; max-width: 350px; margin: 0;">
               ${key === 'pro' ? `<span class="pricing-featured-badge">Más Popular</span>` : ''}
               <div class="pricing-header">
                 <h3>${plan.name}</h3>
