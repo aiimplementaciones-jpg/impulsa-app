@@ -267,6 +267,10 @@ const App = {
             accentColor: profile.accent_color || '#6366f1',
             bgColor: profile.bg_color || '#ffffff',
             title: profile.portal_title || (profile.business_name ? `Opiniones de ${profile.business_name}` : 'Portal de Opiniones'),
+            qrAccentColor: profile.qr_accent_color || '#6366f1',
+            qrBgColor: profile.qr_bg_color || '#ffffff',
+            qrCustomImage: profile.qr_custom_image || null,
+            qrFooterText: profile.qr_footer_text || '¡Tu opinión nos ayuda a crecer!',
             subscriptionDate: profile.subscription_date,
             subscriptionExpiry: profile.subscription_expiry
           };
@@ -1344,10 +1348,45 @@ const App = {
             <button type="submit" class="btn btn-accent" style="margin-top:6px;">
               <i data-lucide="save"></i> Guardar Cambios de Diseño
             </button>
-          </form>
-        </div>
+            </form>
+            </div>
 
-        <!-- Simulador de Celular en Tiempo Real -->
+            <!-- NUEVO: PERSONALIZACIÓN DE HABLADOR IMPRIMIBLE -->
+            <div class="card">
+            <h3 class="card-title"><i data-lucide="printer"></i> Hablador Imprimible (QR)</h3>
+            <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 12px; margin-top: 8px;">
+            Personaliza el diseño físico de tus mesas.
+            </p>
+
+            <form id="qr-config-form" style="display: flex; flex-direction: column; gap: 12px;">
+            <div class="form-group">
+              <label class="form-label">Color de Cabecera (QR)</label>
+              <input type="color" class="form-control" id="qr-accent-color" value="${user.qrAccentColor || '#6366f1'}" style="height: 38px; padding: 2px;">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Texto del Pie de Página</label>
+              <input type="text" class="form-control" id="qr-footer-text" value="${user.qrFooterText || '¡Tu opinión nos ayuda a crecer!'}" placeholder="Ej. ¡Gracias por elegirnos!">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Imagen de Marca (Opcional)</label>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <div id="qr-img-preview" style="width: 45px; height: 45px; border: 1px solid var(--border-color); border-radius: 6px; display: flex; align-items: center; justify-content: center; background: white; overflow: hidden;">
+                  ${user.qrCustomImage ? `<img src="${user.qrCustomImage}" style="width:100%; height:100%; object-fit:cover;">` : '<i data-lucide="image" style="width:16px; opacity:0.3;"></i>'}
+                </div>
+                <input type="file" id="qr-img-upload" accept="image/*" style="display:none;">
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('qr-img-upload').click()" style="font-size: 0.75rem; padding: 6px 10px;">
+                  <i data-lucide="upload"></i> Cambiar
+                </button>
+                <input type="hidden" id="qr-img-val" value="${user.qrCustomImage || ''}">
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-top:4px;">
+              <i data-lucide="save"></i> Guardar Diseño QR
+            </button>
+            </form>
+            </div>
+
+            <!-- Simulador de Celular en Tiempo Real -->
         <div class="card" style="padding: 20px; display: flex; flex-direction: column; align-items: center; overflow: hidden;">
           <h4 style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 12px; text-transform: uppercase;">Vista Previa</h4>
           <div class="phone-simulator-dashboard" style="width: 100%; max-width: 200px; height: 400px; background: #1a1a1a; border-radius: 30px; border: 6px solid #333; position: relative; overflow: hidden; box-shadow: var(--shadow-lg);">
@@ -1436,6 +1475,35 @@ const App = {
       e.preventDefault();
       this.handleSavePortalConfig();
     });
+
+    // NUEVO: Vincular envío de configuración QR
+    const qrConfigForm = document.getElementById('qr-config-form');
+    if (qrConfigForm) {
+      qrConfigForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        this.handleSaveQRConfig();
+      });
+    }
+
+    // NUEVO: Lógica de carga de imagen para QR
+    const qrImgUpload = document.getElementById('qr-img-upload');
+    const qrImgPreview = document.getElementById('qr-img-preview');
+    const qrImgVal = document.getElementById('qr-img-val');
+
+    if (qrImgUpload) {
+      qrImgUpload.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const base64 = event.target.result;
+            qrImgPreview.innerHTML = `<img src="${base64}" style="width:100%; height:100%; object-fit:cover;">`;
+            qrImgVal.value = base64;
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    }
 
     const contactForm = document.getElementById('contact-data-form');
     if (contactForm) {
@@ -1572,6 +1640,64 @@ const App = {
     }
     
     alert("Datos de contacto actualizados correctamente.");
+    this.renderPageContent('dashboard');
+  },
+
+  async handleSaveQRConfig() {
+    const qrImgBase64 = document.getElementById('qr-img-val').value;
+    const accentColor = document.getElementById('qr-accent-color').value;
+    const footerText = document.getElementById('qr-footer-text').value;
+
+    const user = this.State.currentUser;
+    let finalImgUrl = qrImgBase64;
+
+    if (supabaseClient) {
+      this.addLog('POST', `Guardando diseño de hablador QR en Supabase para: ${user.businessName}`);
+
+      if (qrImgBase64.startsWith('data:image')) {
+        try {
+          const fileExt = qrImgBase64.split(';')[0].split('/')[1];
+          const fileName = `${user.id}/qr_custom_${Date.now()}.${fileExt}`;
+          const blob = await (await fetch(qrImgBase64)).blob();
+
+          const { data: uploadData, error: uploadError } = await supabaseClient
+            .storage
+            .from('logos')
+            .upload(fileName, blob, { contentType: `image/${fileExt}`, upsert: true });
+
+          if (uploadError) throw uploadError;
+
+          const { data: signedData, error: signedError } = await supabaseClient
+            .storage
+            .from('logos')
+            .createSignedUrl(fileName, 315360000); 
+          
+          if (signedError) throw signedError;
+          finalImgUrl = signedData.signedUrl;
+        } catch (err) {
+          console.error("Error gestionando imagen QR:", err);
+          alert("Error al gestionar la imagen: " + err.message);
+          return;
+        }
+      }
+
+      const { error } = await supabaseClient
+        .from('profiles')
+        .update({
+          qr_accent_color: accentColor,
+          qr_custom_image: finalImgUrl,
+          qr_footer_text: footerText
+        })
+        .eq('id', user.id);
+
+      if (error) {
+        alert("Error al guardar en Supabase: " + error.message);
+        return;
+      }
+      await this.syncFromSupabase();
+    }
+    
+    alert("Diseño de hablador QR actualizado correctamente.");
     this.renderPageContent('dashboard');
   },
 
@@ -2212,7 +2338,8 @@ const App = {
   downloadQRCode(id, name) {
     const portalUrl = `${window.location.origin}${window.location.pathname}#portal?id=${id}`;
     const user = this.State.currentUser;
-    const logo = user.logo || '🏪';
+    // Prioridad: Imagen personalizada de QR -> Logo del portal -> Emoji por defecto
+    const logo = user.qrCustomImage || user.logo || '🏪';
     this.addLog('GET', `Generando QR HD para: "${name}"`);
 
     this.generateQRCodeCanvas(portalUrl, (canvas) => {
@@ -2226,10 +2353,11 @@ const App = {
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, 1200, 1800);
 
-      // Cabecera con Degradado
+      // Cabecera con Degradado (Usando el color de QR personalizado)
       const grad = ctx.createLinearGradient(0, 0, 1200, 0);
-      grad.addColorStop(0, user.accentColor || '#6366f1');
-      grad.addColorStop(1, '#4f46e5');
+      const accent = user.qrAccentColor || '#6366f1';
+      grad.addColorStop(0, accent);
+      grad.addColorStop(1, accent); // Sin degradado agresivo para mantener sobriedad
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, 1200, 320);
 
@@ -2257,7 +2385,8 @@ const App = {
         ctx.font = 'bold 55px sans-serif';
         ctx.fillStyle = '#111827';
         ctx.textAlign = 'center';
-        ctx.fillText('¡Tu opinión nos ayuda a crecer!', 600, 1720);
+        // Usar texto de footer personalizado
+        ctx.fillText(user.qrFooterText || '¡Tu opinión nos ayuda a crecer!', 600, 1720);
 
         const image = finalCanvas.toDataURL("image/png");
         const link = document.createElement('a');
@@ -2334,14 +2463,16 @@ const App = {
   printQRCode(id, name) {
     const portalUrl = `${window.location.origin}${window.location.pathname}#portal?id=${id}`;
     const user = this.State.currentUser;
-    const logo = user.logo || '🏪';
+    // Prioridad: Imagen personalizada de QR -> Logo del portal -> Emoji por defecto
+    const logo = user.qrCustomImage || user.logo || '🏪';
     
     this.generateQRCodeCanvas(portalUrl, (canvas) => {
       const qrDataUrl = canvas.toDataURL("image/png");
       const printWindow = window.open('', '_blank');
       
-      const accentColor = user.accentColor || '#6366f1';
-      const bgColor = user.bgColor || '#ffffff';
+      const accentColor = user.qrAccentColor || '#6366f1';
+      const bgColor = user.qrBgColor || '#ffffff';
+      const footerText = user.qrFooterText || '¡Tu opinión nos ayuda a crecer!';
       
       printWindow.document.write(`
         <html>
@@ -2430,16 +2561,15 @@ const App = {
                 height: 260px;
                 display: block;
               }
-              .cta-text {
-                font-weight: 800;
-                font-size: 1.6rem;
-                color: #111827;
-                margin-bottom: 10px;
+              .footer {
+                padding: 25px;
+                background: #f9fafb;
+                border-top: 1px solid #f3f4f6;
               }
-              .sub-text {
-                font-size: 1.1rem;
-                color: #4b5563;
-                line-height: 1.4;
+              .footer-text {
+                font-weight: 800;
+                font-size: 1.3rem;
+                color: #111827;
               }
               .footer-decor {
                 height: 20px;
@@ -2457,18 +2587,19 @@ const App = {
             <div class="stand">
               <div class="header">
                 <div class="business-logo">
-                  ${logo.startsWith('http') ? `<img src="${logo}">` : logo}
+                  ${logo.startsWith('http') || logo.startsWith('data:image') ? `<img src="${logo}">` : logo}
                 </div>
-                <div class="brand-name">${user.businessName}</div>
+                <div class="brand-name">IMPULSA</div>
               </div>
               <div class="content">
-                <div class="business-name-main">¡CALIFÍCANOS!</div>
+                <div class="business-name-main">${user.businessName}</div>
                 <div class="location-name">${name}</div>
                 <div class="qr-container">
                   <img src="${qrDataUrl}" class="qr-img" />
                 </div>
-                <div class="cta-text">Tu opinión importa</div>
-                <div class="sub-text">Escanea el código para dejarnos tu reseña y ayudarnos a mejorar.</div>
+              </div>
+              <div class="footer">
+                <div class="footer-text">${footerText}</div>
               </div>
               <div class="footer-decor"></div>
             </div>

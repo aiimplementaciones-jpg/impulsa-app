@@ -55,6 +55,11 @@ CREATE TABLE public.profiles (
   accent_color TEXT DEFAULT '#6366f1',
   bg_color TEXT DEFAULT '#ffffff',
   portal_title TEXT,
+  -- Columnas para personalización de Habladores Imprimibles
+  qr_accent_color TEXT DEFAULT '#6366f1',
+  qr_bg_color TEXT DEFAULT '#ffffff',
+  qr_custom_image TEXT, -- URL de la imagen personalizada (opcional)
+  qr_footer_text TEXT DEFAULT '¡Tu opinión nos ayuda a crecer!',
   -- Columnas Financieras
   last_payment_amount NUMERIC(10,2) DEFAULT 0,
   subscription_period INTEGER DEFAULT 1,
