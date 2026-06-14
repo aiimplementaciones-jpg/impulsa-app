@@ -2398,33 +2398,44 @@ const App = {
       // --- DIBUJAR LOGO EN EL CENTRO DEL QR ---
       const centerX = 600;
       const centerY = 1150; // Centro del QR (650 + 1000/2)
-      const logoSize = 250;
+      const logoMaxHeight = 250;
 
       if (logo.startsWith('http') || logo.startsWith('data:image')) {
         const img = new Image();
         img.crossOrigin = "Anonymous";
         img.onload = () => {
-          // Círculo blanco de fondo para el logo
-          ctx.beginPath();
-          ctx.arc(centerX, centerY, (logoSize / 2) + 10, 0, Math.PI * 2);
+          const aspect = img.width / img.height;
+          const logoWidth = logoMaxHeight * aspect;
+          const logoHeight = logoMaxHeight;
+
+          // Fondo blanco para el logo (Rectángulo redondeado)
+          const padding = 15;
+          const bgWidth = logoWidth + (padding * 2);
+          const bgHeight = logoHeight + (padding * 2);
+          
+          ctx.save();
+          // Dibujar fondo blanco redondeado
+          this.drawRoundedRect(ctx, centerX - (bgWidth / 2), centerY - (bgHeight / 2), bgWidth, bgHeight, 30);
           ctx.fillStyle = '#ffffff';
           ctx.fill();
-          
-          // Dibujar imagen circular o con recorte
-          ctx.save();
-          ctx.beginPath();
-          ctx.arc(centerX, centerY, logoSize / 2, 0, Math.PI * 2);
-          ctx.clip();
-          ctx.drawImage(img, centerX - (logoSize / 2), centerY - (logoSize / 2), logoSize, logoSize);
           ctx.restore();
           
-          // Logo en cabecera también
-          const headerImgSize = 120;
+          // Dibujar imagen con esquinas redondeadas
           ctx.save();
-          ctx.beginPath();
-          ctx.arc(140, 170, headerImgSize / 2, 0, Math.PI * 2);
+          this.drawRoundedRect(ctx, centerX - (logoWidth / 2), centerY - (logoHeight / 2), logoWidth, logoHeight, 20);
           ctx.clip();
-          ctx.drawImage(img, 140 - (headerImgSize / 2), 170 - (headerImgSize / 2), headerImgSize, headerImgSize);
+          ctx.drawImage(img, centerX - (logoWidth / 2), centerY - (logoHeight / 2), logoWidth, logoHeight);
+          ctx.restore();
+          
+          // Logo en cabecera también (Proporcional)
+          const headerMaxHeight = 120;
+          const headerWidth = headerMaxHeight * aspect;
+          const headerHeight = headerMaxHeight;
+
+          ctx.save();
+          this.drawRoundedRect(ctx, 140 - (headerWidth / 2), 170 - (headerHeight / 2), headerWidth, headerHeight, 15);
+          ctx.clip();
+          ctx.drawImage(img, 140 - (headerWidth / 2), 170 - (headerHeight / 2), headerWidth, headerHeight);
           ctx.restore();
 
           finishAndDownload();
@@ -2441,7 +2452,7 @@ const App = {
         // Es un Emoji
         // Círculo blanco de fondo
         ctx.beginPath();
-        ctx.arc(centerX, centerY, (logoSize / 2) + 5, 0, Math.PI * 2);
+        ctx.arc(centerX, centerY, (logoMaxHeight / 2) + 5, 0, Math.PI * 2);
         ctx.fillStyle = '#ffffff';
         ctx.fill();
         
@@ -2458,6 +2469,21 @@ const App = {
         finishAndDownload();
       }
     });
+  },
+
+  // Helper para dibujar rectángulos redondeados en Canvas
+  drawRoundedRect(ctx, x, y, width, height, radius) {
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + width - radius, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+    ctx.lineTo(x + width, y + height - radius);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    ctx.lineTo(x + radius, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
   },
 
   printQRCode(id, name) {
@@ -2508,21 +2534,25 @@ const App = {
                 gap: 15px;
               }
               .business-logo {
-                width: 100px;
                 height: 100px;
+                min-width: 100px;
                 background: white;
-                border-radius: 25px;
+                border-radius: 15px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                font-size: 3.5rem;
+                padding: 10px;
                 overflow: hidden;
                 box-shadow: 0 8px 16px rgba(0,0,0,0.15);
               }
               .business-logo img {
-                width: 100%;
                 height: 100%;
-                object-fit: cover;
+                width: auto;
+                object-fit: contain;
+                border-radius: 8px;
+              }
+              .business-logo span {
+                font-size: 3.5rem;
               }
               .brand-name {
                 font-weight: 800;
@@ -2555,11 +2585,33 @@ const App = {
                 margin-bottom: 30px;
                 display: inline-block;
                 box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+                position: relative;
               }
               .qr-img {
                 width: 260px;
                 height: 260px;
                 display: block;
+              }
+              .qr-center-logo {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                height: 60px;
+                min-width: 60px;
+                background: white;
+                border-radius: 10px;
+                padding: 5px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+              }
+              .qr-center-logo img {
+                height: 100%;
+                width: auto;
+                object-fit: contain;
+                border-radius: 5px;
               }
               .footer {
                 padding: 25px;
@@ -2596,6 +2648,9 @@ const App = {
                 <div class="location-name">${name}</div>
                 <div class="qr-container">
                   <img src="${qrDataUrl}" class="qr-img" />
+                  <div class="qr-center-logo">
+                    ${logo.startsWith('http') || logo.startsWith('data:image') ? `<img src="${logo}">` : `<span>${logo}</span>`}
+                  </div>
                 </div>
               </div>
               <div class="footer">
