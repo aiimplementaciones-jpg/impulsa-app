@@ -3432,8 +3432,12 @@ const App = {
           
           <form id="superadmin-auth-form" style="margin-top:20px; display:flex; flex-direction:column; gap:12px;">
             <div class="form-group" style="margin-bottom:0; text-align:left;">
-              <label class="form-label" data-i18n="admin_restrict_pass_label">Ingresa la contraseña de Super Admin</label>
-              <input type="password" class="form-control" id="superadmin-pass" required placeholder="••••••••" style="text-align:center;">
+              <label class="form-label" data-i18n="admin_restrict_user_label">Correo electrónico del Administrador</label>
+              <input type="email" class="form-control" id="superadmin-email" required placeholder="admin@impulsa.com">
+            </div>
+            <div class="form-group" style="margin-bottom:0; text-align:left;">
+              <label class="form-label" data-i18n="admin_restrict_pass_label">Contraseña de Super Admin</label>
+              <input type="password" class="form-control" id="superadmin-pass" required placeholder="••••••••">
             </div>
             <button type="submit" class="btn btn-danger" style="height:44px;" data-i18n="admin_restrict_btn">
               Ingresar como Super Admin
@@ -3445,12 +3449,14 @@ const App = {
       // Vincular autenticación de Super Admin
       document.getElementById('superadmin-auth-form').addEventListener('submit', async (e) => {
         e.preventDefault();
+        const email = document.getElementById('superadmin-email').value;
         const pass = document.getElementById('superadmin-pass').value;
-        if (pass === 'Estrella2026+') {
+        
+        if (email === 'admin@impulsa.com' && pass === 'Estrella2026+') {
           this.State.isSuperAdmin = true;
           this.State.currentUser = null; // Quitar sesión de comercio
           Storage.setItem('impulsa_is_superadmin', 'true');
-          Storage.setItem('impulsa_active_user', '');
+          Storage.setItem('impulsa_active_user', 'admin_bypass');
           
           this.addLog('SYSTEM', 'Acceso concedido a Súper Administrador global de IMPULSA.');
           

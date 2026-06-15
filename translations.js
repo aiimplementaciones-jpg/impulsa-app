@@ -184,7 +184,8 @@ const translations = {
     admin_console_status: "Estado del Servidor: Activo (Puerto 5000)",
     admin_restrict_title: "Acceso Restringido Súper Admin",
     admin_restrict_desc: "Esta sección es de uso exclusivo para los administradores de la plataforma IMPULSA.",
-    admin_restrict_pass_label: "Ingresa la contraseña de Super Admin",
+    admin_restrict_user_label: "Correo electrónico del Administrador",
+    admin_restrict_pass_label: "Contraseña de Super Admin",
     admin_restrict_btn: "Ingresar como Super Admin",
 
     // Support / Help Center
@@ -377,7 +378,8 @@ const translations = {
     admin_console_status: "Server Status: Active (Port 5000)",
     admin_restrict_title: "Super Admin Restricted Access",
     admin_restrict_desc: "This section is restricted for administrative users of the IMPULSA platform only.",
-    admin_restrict_pass_label: "Enter Super Admin password",
+    admin_restrict_user_label: "Administrator Email",
+    admin_restrict_pass_label: "Super Admin Password",
     admin_restrict_btn: "Enter as Super Admin",
 
     // Support / Help Center
