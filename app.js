@@ -3649,9 +3649,9 @@ const App = {
       // Vincular procesamiento de CSV
       document.getElementById('process-marketing-csv').addEventListener('click', () => this.handleMarketingCSV());
     }
-    },
+  },
 
-    renderAdminLeadsRows(leads) {
+  renderAdminLeadsRows(leads) {
     if (leads.length === 0) {
       return '<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--text-secondary);">No se encontraron opiniones con los filtros seleccionados.</td></tr>';
     }
@@ -3688,95 +3688,199 @@ const App = {
     tbody.innerHTML = this.renderAdminLeadsRows(filtered);
     lucide.createIcons();
     },
- else if (tab === 'requests') {
-              this.addLog('GET', `Súper Admin: Revisando solicitudes de creación profesional`);
-              tabContent.innerHTML = `
-                <div class="leads-table-container">
-                  <table class="leads-table">
-                    <thead>
-                      <tr>
-                        <th>Comercio</th>
-                        <th>Datos Nueva Sucursal</th>
-                        <th>Responsable Sede</th>
-                        <th>Estado</th>
-                        <th>Acción</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      ${this.State.locationRequests.length === 0 ? '<tr><td colspan="5" style="text-align:center; padding:20px;">No hay solicitudes pendientes.</td></tr>' : ''}
-                      ${this.State.locationRequests.map(r => `
-                        <tr>
-                          <td>
-                            <strong>${r.businessName}</strong><br>
-                            <span style="font-size:0.75rem; color:var(--text-secondary);">${new Date(r.date).toLocaleDateString()}</span>
-                          </td>
-                          <td>
-                            <div style="display:flex; flex-direction:column; gap:2px;">
-                              <strong>${r.locName}</strong>
-                              <span style="font-size:0.8rem; color:var(--text-secondary);"><i data-lucide="map-pin" style="width:12px; height:12px;"></i> ${r.locAddress}</span>
-                              <div style="display:flex; align-items:center; gap:5px; font-size:0.75rem;">
-                                <span style="width:12px; height:12px; background:${r.locAccentColor}; border-radius:3px;"></span> Color: ${r.locAccentColor}
-                              </div>
-                            </div>
-                          </td>
-                          <td>
-                            <strong>${r.contactName}</strong><br>
-                            <span style="font-size:0.8rem;">${r.contactEmail}</span><br>
-                            <a href="https://wa.me/${r.contactPhone}" target="_blank" style="color:var(--color-success); font-size:0.8rem; text-decoration:none;">
-                              <i data-lucide="message-circle" style="width:12px; height:12px;"></i> ${r.contactPhone}
-                            </a>
-                          </td>
-                          <td>
-                            <span class="status-badge ${r.status === 'pending' ? 'inactive' : 'active'}" style="font-size:0.7rem;">${r.status.toUpperCase()}</span>
-                          </td>
-                          <td>
-                            ${r.status === 'pending' ? `
-                              <button class="btn btn-primary create-from-req-btn" data-id="${r.id}" style="padding:6px 12px; font-size:0.75rem; width:auto;">
-                                <i data-lucide="plus"></i> Crear Sucursal
-                              </button>
-                            ` : '<span style="color:var(--color-success); font-weight:700;">PROCESADA</span>'}
-                          </td>
-                        </tr>
-                      `).join('')}
-                    </tbody>
-                  </table>
-                </div>
-              `;
 
-              // Vincular botones de creación directa
-              document.querySelectorAll('.create-from-req-btn').forEach(btn => {
-                btn.addEventListener('click', async () => {
-                  const reqId = btn.getAttribute('data-id');
-                  const req = this.State.locationRequests.find(r => r.id === reqId);
-                  if (!req) return;
+    renderSuperAdminTabContent(tab) {
+    const tabContent = document.getElementById('admin-tab-content');
+    if (!tabContent) return;
 
-                  if (confirm(`¿Deseas crear oficialmente la sucursal "${req.locName}" para ${req.businessName}?`)) {
-                    if (supabaseClient) {
-                      // 1. Crear la sucursal real
-                      const { error: locErr } = await supabaseClient.from('locations').insert([{
-                        tenant_id: req.tenantId,
-                        name: req.locName,
-                        address: req.locAddress,
-                        maps_url: 'https://maps.google.com', // Placeholder para ser editado
-                        status: 'active'
-                      }]);
+    if (tab === 'leads') {
+      this.addLog('GET', `Súper Admin: Cargando listado global de leads (/api/admin/leads)`);
 
-                      if (locErr) {
-                        alert("Error al crear sucursal: " + locErr.message);
-                        return;
-                      }
+      const uniqueBusinesses = [...new Set(this.State.leads.map(l => l.businessName))].sort();
 
-                      // 2. Marcar solicitud como completada
-                      await supabaseClient.from('location_requests').update({ status: 'completed' }).eq('id', reqId);
+      tabContent.innerHTML = `
+        <div class="card" style="margin-bottom: 20px; padding: 15px; background: rgba(0,123,255,0.02);">
+          <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end;">
+            <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 200px;">
+              <label class="form-label" style="font-size: 0.75rem; margin-bottom: 4px;">Filtrar por Comercio</label>
+              <select class="form-control" id="admin-filter-business" style="height: 38px; font-size: 0.85rem;">
+                <option value="all">Todos los Comercios</option>
+                ${uniqueBusinesses.map(b => `<option value="${b}">${b}</option>`).join('')}
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 200px;">
+              <label class="form-label" style="font-size: 0.75rem; margin-bottom: 4px;">Filtrar por Sucursal</label>
+              <select class="form-control" id="admin-filter-location" style="height: 38px; font-size: 0.85rem;">
+                <option value="all">Todas las Sucursales</option>
+              </select>
+            </div>
+          </div>
+        </div>
 
-                      this.addLog('SYSTEM', `ADMIN: Sucursal "${req.locName}" creada exitosamente desde solicitud.`);
-                      alert("¡Sucursal creada y solicitud marcada como completada!");
-                      await this.syncFromSupabase();
-                      this.renderSuperAdminTabContent('requests');
-                    }
-                  }
-                });
-              });
+        <div class="leads-table-container">
+          <table class="leads-table" id="admin-leads-table">
+            <thead>
+              <tr>
+                <th data-i18n="admin_table_date">Fecha</th>
+                <th data-i18n="admin_table_business">Comercio</th>
+                <th data-i18n="admin_table_loc">Sucursal</th>
+                <th data-i18n="admin_table_client">Cliente</th>
+                <th data-i18n="admin_table_rating">Valoración</th>
+                <th data-i18n="admin_table_comment">Comentarios</th>
+                <th data-i18n="admin_table_action">Contacto</th>
+              </tr>
+            </thead>
+            <tbody id="admin-leads-tbody">
+              ${this.renderAdminLeadsRows(this.State.leads)}
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      const businessSelect = document.getElementById('admin-filter-business');
+      const locationSelect = document.getElementById('admin-filter-location');
+
+      businessSelect.addEventListener('change', () => {
+        const business = businessSelect.value;
+        const locations = business === 'all' 
+          ? [] 
+          : [...new Set(this.State.leads.filter(l => l.businessName === business).map(l => l.locationName))].sort();
+
+        locationSelect.innerHTML = '<option value="all">Todas las Sucursales</option>' + 
+          locations.map(l => `<option value="${l}">${l}</option>`).join('');
+
+        this.filterAdminLeads();
+      });
+
+      locationSelect.addEventListener('change', () => this.filterAdminLeads());
+      lucide.createIcons();
+
+    } else if (tab === 'marketing') {
+      this.addLog('GET', `Súper Admin: Módulo de Mercadeo y Prospectos`);
+      tabContent.innerHTML = `
+        <div class="card" style="margin-bottom: 24px; border-top: 4px solid var(--color-accent);">
+          <h3 class="card-title"><i data-lucide="upload-cloud"></i> Carga Masiva de Prospectos</h3>
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 15px;">
+            Sube un archivo CSV con la información de los comercios para pre-construir sus portales automáticamente.<br>
+            <strong>Formato:</strong> NombreNegocio, LogoUrl/Emoji, ColorHex, NombreContacto, WhatsApp, NombreSucursal, Direccion, MapsUrl
+          </p>
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <input type="file" id="marketing-csv-upload" accept=".csv" class="form-control" style="flex: 1;">
+            <button class="btn btn-primary" id="process-marketing-csv" style="width: auto; padding: 0 20px;">
+              <i data-lucide="play"></i> Procesar CSV
+            </button>
+          </div>
+        </div>
+
+        <div class="leads-table-container">
+          <table class="leads-table" id="prospects-table">
+            <thead>
+              <tr>
+                <th>Comercio (Prospecto)</th>
+                <th>Sucursal Pre-construida</th>
+                <th>Contacto</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="prospects-body">
+              <tr><td colspan="5" style="text-align:center; padding:20px;">Cargando prospectos...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      `;
+      this.loadMarketingProspects();
+      document.getElementById('process-marketing-csv').addEventListener('click', () => this.handleMarketingCSV());
+
+    } else if (tab === 'requests') {
+      this.addLog('GET', `Súper Admin: Revisando solicitudes de creación profesional`);
+      tabContent.innerHTML = `
+        <div class="leads-table-container">
+          <table class="leads-table">
+            <thead>
+              <tr>
+                <th>Comercio</th>
+                <th>Datos Nueva Sucursal</th>
+                <th>Responsable Sede</th>
+                <th>Estado</th>
+                <th>Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${this.State.locationRequests.length === 0 ? '<tr><td colspan="5" style="text-align:center; padding:20px;">No hay solicitudes pendientes.</td></tr>' : ''}
+              ${this.State.locationRequests.map(r => `
+                <tr>
+                  <td>
+                    <strong>${r.businessName}</strong><br>
+                    <span style="font-size:0.75rem; color:var(--text-secondary);">${new Date(r.date).toLocaleDateString()}</span>
+                  </td>
+                  <td>
+                    <div style="display:flex; flex-direction:column; gap:2px;">
+                      <strong>${r.locName}</strong>
+                      <span style="font-size:0.8rem; color:var(--text-secondary);"><i data-lucide="map-pin" style="width:12px; height:12px;"></i> ${r.locAddress}</span>
+                      <div style="display:flex; align-items:center; gap:5px; font-size:0.75rem;">
+                        <span style="width:12px; height:12px; background:${r.locAccentColor}; border-radius:3px;"></span> Color: ${r.locAccentColor}
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <strong>${r.contactName}</strong><br>
+                    <span style="font-size:0.8rem;">${r.contactEmail}</span><br>
+                    <a href="https://wa.me/${r.contactPhone}" target="_blank" style="color:var(--color-success); font-size:0.8rem; text-decoration:none;">
+                      <i data-lucide="message-circle" style="width:12px; height:12px;"></i> ${r.contactPhone}
+                    </a>
+                  </td>
+                  <td>
+                    <span class="status-badge ${r.status === 'pending' ? 'inactive' : 'active'}" style="font-size:0.7rem;">${r.status.toUpperCase()}</span>
+                  </td>
+                  <td>
+                    ${r.status === 'pending' ? `
+                      <button class="btn btn-primary create-from-req-btn" data-id="${r.id}" style="padding:6px 12px; font-size:0.75rem; width:auto;">
+                        <i data-lucide="plus"></i> Crear Sucursal
+                      </button>
+                    ` : '<span style="color:var(--color-success); font-weight:700;">PROCESADA</span>'}
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      // Vincular botones de creación directa
+      document.querySelectorAll('.create-from-req-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const reqId = btn.getAttribute('data-id');
+          const req = this.State.locationRequests.find(r => r.id === reqId);
+          if (!req) return;
+
+          if (confirm(`¿Deseas crear oficialmente la sucursal "${req.locName}" para ${req.businessName}?`)) {
+            if (supabaseClient) {
+              // 1. Crear la sucursal real
+              const { error: locErr } = await supabaseClient.from('locations').insert([{
+                tenant_id: req.tenantId,
+                name: req.locName,
+                address: req.locAddress,
+                maps_url: 'https://maps.google.com', // Placeholder para ser editado
+                status: 'active'
+              }]);
+
+              if (locErr) {
+                alert("Error al crear sucursal: " + locErr.message);
+                return;
+              }
+
+              // 2. Marcar solicitud como completada
+              await supabaseClient.from('location_requests').update({ status: 'completed' }).eq('id', reqId);
+
+              this.addLog('SYSTEM', `ADMIN: Sucursal "${req.locName}" creada exitosamente desde solicitud.`);
+              alert("¡Sucursal creada y solicitud marcada como completada!");
+              await this.syncFromSupabase();
+              this.renderSuperAdminTabContent('requests');
+            }
+          }
+        });
+      });
     } else if (tab === 'terminal') {
       this.addLog('GET', `Súper Admin: Cargando consola segura de API Proxy`);
       tabContent.innerHTML = `
