@@ -283,7 +283,7 @@ const App = {
 
       // 2. Obtener los locales (siempre de la tabla 'locations')
       let queryLoc = supabaseClient.from('locations').select('*');
-      if (this.State.currentUser && !this.State.isSuperAdmin) {
+      if (!this.State.isSuperAdmin && this.State.currentUser) {
         queryLoc = queryLoc.eq('tenant_id', this.State.currentUser.id);
       }
       const { data: dbLocs } = await queryLoc;
@@ -349,9 +349,13 @@ const App = {
 
       // 3. Obtener los feedbacks (leads)
       let queryLeads = supabaseClient.from('leads').select('*');
-      if (this.State.currentUser && !this.State.isSuperAdmin) {
+      
+      // Si NO es Super Admin, filtramos por el tenant actual. 
+      // Si ES Super Admin, traemos TODO.
+      if (!this.State.isSuperAdmin && this.State.currentUser) {
         queryLeads = queryLeads.eq('tenant_id', this.State.currentUser.id);
       }
+      
       const { data: dbLeads } = await queryLeads;
       this.State.leads = (dbLeads || [])
         .map(f => ({
@@ -371,7 +375,7 @@ const App = {
 
       // 5. Obtener solicitudes de sucursales (Location Requests)
       let queryReq = supabaseClient.from('location_requests').select('*');
-      if (this.State.currentUser && !this.State.isSuperAdmin) {
+      if (!this.State.isSuperAdmin && this.State.currentUser) {
         queryReq = queryReq.eq('tenant_id', this.State.currentUser.id);
       }
       const { data: dbReqs } = await queryReq;
