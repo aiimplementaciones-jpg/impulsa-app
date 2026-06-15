@@ -296,26 +296,6 @@ const App = {
         status: l.status
       }));
 
-      // 3. Obtener los feedbacks (leads)
-      let queryLeads = supabaseClient.from('leads').select('*');
-      if (this.State.currentUser && !this.State.isSuperAdmin) {
-        queryLeads = queryLeads.eq('tenant_id', this.State.currentUser.id);
-      }
-      const { data: dbLeads } = await queryLeads;
-      this.State.leads = (dbLeads || [])
-        .map(f => ({
-          id: f.id,
-          userId: f.tenant_id,
-          date: f.created_at,
-          locationId: f.location_id,
-          locationName: this.State.locations.find(l => l.id === f.location_id)?.name || 'Sucursal Desconocida',
-          clientName: f.client_name,
-          clientPhone: f.client_phone,
-          rating: f.rating,
-          comment: f.comment || ''
-        }));
-
-
       // 4. Obtener todos los tenants si es Súper Administrador o poblar con el actual
       if (this.State.isSuperAdmin) {
         const { data: dbProfiles, error: profilesErr } = await supabaseClient.from('profiles').select('*');
@@ -342,26 +322,50 @@ const App = {
           subscriptionExpiry: p.subscription_expiry
         }));
       } else if (this.State.currentUser) {
-        const p = profile; // Usar el perfil cargado anteriormente
-        this.State.users = [{
-          id: p.id,
-          businessName: p.business_name,
-          fullName: p.full_name,
-          email: p.email,
-          whatsapp: p.whatsapp,
-          address: p.address,
-          city: p.city,
-          plan: p.plan,
-          logo: p.logo,
-          accentColor: p.accent_color,
-          bgColor: p.bg_color,
-          title: p.portal_title || `Opiniones de ${p.business_name}`,
-          lastPaymentAmount: p.last_payment_amount,
-          subscriptionPeriod: p.subscription_period,
-          subscriptionDate: p.subscription_date,
-          subscriptionExpiry: p.subscription_expiry
-        }];
+        // En este punto, 'profile' ya contiene los datos del usuario actual (paso 1)
+        // Pero necesitamos asegurarnos de que profile esté definido
+        const { data: p } = await supabaseClient.from('profiles').select('*').eq('id', this.State.currentUser.id).single();
+        if (p) {
+          this.State.users = [{
+            id: p.id,
+            businessName: p.business_name,
+            fullName: p.full_name,
+            email: p.email,
+            whatsapp: p.whatsapp,
+            address: p.address,
+            city: p.city,
+            plan: p.plan,
+            logo: p.logo,
+            accentColor: p.accent_color,
+            bgColor: p.bg_color,
+            title: p.portal_title || `Opiniones de ${p.business_name}`,
+            lastPaymentAmount: p.last_payment_amount,
+            subscriptionPeriod: p.subscription_period,
+            subscriptionDate: p.subscription_date,
+            subscriptionExpiry: p.subscription_expiry
+          }];
+        }
       }
+
+      // 3. Obtener los feedbacks (leads)
+      let queryLeads = supabaseClient.from('leads').select('*');
+      if (this.State.currentUser && !this.State.isSuperAdmin) {
+        queryLeads = queryLeads.eq('tenant_id', this.State.currentUser.id);
+      }
+      const { data: dbLeads } = await queryLeads;
+      this.State.leads = (dbLeads || [])
+        .map(f => ({
+          id: f.id,
+          userId: f.tenant_id,
+          date: f.created_at,
+          locationId: f.location_id,
+          locationName: this.State.locations.find(l => l.id === f.location_id)?.name || 'Sucursal Desconocida',
+          businessName: this.State.users.find(u => u.id === f.tenant_id)?.businessName || 'Comercio',
+          clientName: f.client_name,
+          clientPhone: f.client_phone,
+          rating: f.rating,
+          comment: f.comment || ''
+        }));
 
       this.addLog('SYSTEM', `Sincronización con Supabase exitosa: ${this.State.locations.length} sucursales y ${this.State.leads.length} casos cargados.`);
 
@@ -3467,6 +3471,7 @@ const App = {
             <thead>
               <tr>
                 <th data-i18n="admin_table_date">Fecha</th>
+                <th data-i18n="admin_table_business">Comercio</th>
                 <th data-i18n="admin_table_loc">Sucursal</th>
                 <th data-i18n="admin_table_client">Cliente</th>
                 <th data-i18n="admin_table_rating">Valoración</th>
@@ -3478,6 +3483,7 @@ const App = {
               ${this.State.leads.map(lead => `
                 <tr>
                   <td style="white-space: nowrap; font-size: 0.8rem;">${new Date(lead.date).toLocaleDateString()}</td>
+                  <td style="font-weight: 700; color: var(--color-brand);">${lead.businessName}</td>
                   <td style="font-weight: 500;">${lead.locationName}</td>
                   <td><strong>${lead.clientName}</strong></td>
                   <td style="color: #FFD700; font-weight: 700;">${lead.rating} ★</td>
