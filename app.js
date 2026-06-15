@@ -1006,6 +1006,13 @@ const App = {
     // 🚀 BYPASS SUPER ADMIN Y DESARROLLO
     if (email === 'admin@impulsa.com' && password === 'Estrella2026+') {
       this.addLog('SYSTEM', `Acceso Super Administrador concedido.`);
+      
+      // Intentar login REAL en Supabase
+      if (supabaseClient) {
+        this.addLog('SYSTEM', 'Admin Bypass: Autenticando en Supabase Auth...');
+        await supabaseClient.auth.signInWithPassword({ email, password });
+      }
+
       this.State.isSuperAdmin = true;
       this.State.currentUser = null; // No es un comercio específico
       Storage.setItem('impulsa_is_superadmin', 'true');
@@ -3453,6 +3460,16 @@ const App = {
         const pass = document.getElementById('superadmin-pass').value;
         
         if (email === 'admin@impulsa.com' && pass === 'Estrella2026+') {
+          // Intentar login REAL en Supabase para obtener sesión y saltar RLS
+          if (supabaseClient) {
+            this.addLog('SYSTEM', 'Super Admin: Iniciando sesión en Supabase Auth...');
+            const { error } = await supabaseClient.auth.signInWithPassword({ email, password: pass });
+            if (error) {
+              this.addLog('SYSTEM', `Error de Auth Supabase para Admin: ${error.message}`);
+              // Continuamos de todos modos con bypass local, pero RLS podría fallar si no hay sesión
+            }
+          }
+
           this.State.isSuperAdmin = true;
           this.State.currentUser = null; // Quitar sesión de comercio
           Storage.setItem('impulsa_is_superadmin', 'true');
@@ -3869,8 +3886,11 @@ const App = {
               </tr>
             </thead>
             <tbody>
-              ${this.State.users.map(u => {
-                const count = (this.State.locations || []).filter(loc => loc.userId === u.id).length;
+              ${this.State.users
+                .filter(u => u.email !== 'admin@impulsa.com')
+                .map(u => {
+                  const count = (this.State.locations || []).filter(loc => loc.userId === u.id).length;
+
                 const expiryDate = u.subscriptionExpiry ? new Date(u.subscriptionExpiry) : null;
                 const isExpired = expiryDate && expiryDate < new Date();
                 const statusColor = isExpired ? 'var(--color-danger)' : 'var(--color-success)';
