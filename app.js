@@ -780,6 +780,29 @@ const App = {
         </div>
       </div>
 
+      <!-- Guía Visual y Cómo Funciona -->
+      <section style="margin-top: 60px;">
+        <div class="section-title-graphic">
+          <h2 data-i18n="land_how_it_works_title">¿Cómo funciona IMPULSA?</h2>
+          <p data-i18n="land_how_it_works_desc">Nuestro sistema filtra automáticamente la experiencia del cliente para maximizar tu visibilidad pública y proteger tu marca en privado.</p>
+        </div>
+
+        <div class="infographic-container">
+          <img src="Recursos/Gestión_de_Reputación_Inteligente.png" alt="Infografía IMPULSA" class="infographic-img">
+        </div>
+
+        <div class="section-title-graphic">
+          <h2 data-i18n="land_video_title">Mira IMPULSA en acción</h2>
+        </div>
+
+        <div class="video-container">
+          <video controls class="video-player" poster="Recursos/Gestión_de_Reputación_Inteligente.png">
+            <source src="Recursos/IMPULSA__Reputación.mp4" type="video/mp4">
+            Tu navegador no soporta el elemento de video.
+          </video>
+        </div>
+      </section>
+
       <!-- Ventajas y Funcionalidades -->
       <section style="margin-top: 40px;">
         <h2 style="text-align:center; font-size:1.5rem; margin-bottom:8px;" data-i18n="land_features_title">¿Por qué los comercios prefieren IMPULSA?</h2>

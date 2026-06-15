@@ -45,6 +45,9 @@ const translations = {
     land_feat4_desc: "Monitorea la conversión, visitas y promedios por sucursal. Exporta reportes en formato CSV.",
     land_pricing_title: "Planes diseñados para cada etapa de tu negocio",
     land_pricing_desc: "Comienza sin costo o expande tus sucursales con nuestros planes flexibles.",
+    land_how_it_works_title: "¿Cómo funciona IMPULSA?",
+    land_how_it_works_desc: "Nuestro sistema filtra automáticamente la experiencia del cliente para maximizar tu visibilidad pública y proteger tu marca en privado.",
+    land_video_title: "Mira IMPULSA en acción",
     land_contact_title: "Contacto Directo",
     land_contact_subtitle: "¿Tienes dudas adicionales o requieres una implementación personalizada?",
     land_contact_email_label: "Correo Electrónico",
@@ -241,6 +244,9 @@ const translations = {
     land_feat4_desc: "Monitor conversion, visits, and average rating per location. Export reports in CSV spreadsheet format.",
     land_pricing_title: "Plans designed for every business stage",
     land_pricing_desc: "Start for free or expand your business branches with our flexible premium plans.",
+    land_how_it_works_title: "How does IMPULSA work?",
+    land_how_it_works_desc: "Our system automatically filters customer experience to maximize your public visibility and protect your brand privately.",
+    land_video_title: "See IMPULSA in action",
 
     // Auth Views
     auth_title_login: "Log in to Your Account",
