@@ -95,7 +95,12 @@ const App = {
     if (activeUserId) {
       // Si es el usuario de desarrollo o cualquier otro ID guardado, 
       // lo pre-cargamos para evitar que el router nos saque al Login mientras sincronizamos.
-      this.State.currentUser = { id: activeUserId, businessName: '...' };
+      if (activeUserId === 'admin_bypass') {
+        this.State.isSuperAdmin = true;
+        this.State.currentUser = null;
+      } else {
+        this.State.currentUser = { id: activeUserId, businessName: '...' };
+      }
     }
 
     // 🔄 SINCRONIZACIÓN INICIAL OBLIGATORIA (Fuente de Verdad: Supabase)
@@ -204,6 +209,11 @@ const App = {
   // Sincronizar toda la data desde Supabase
   async syncFromSupabase() {
     try {
+      // 0. Asegurar estado de Super Admin desde Storage
+      if (Storage.getItem('impulsa_is_superadmin') === 'true') {
+        this.State.isSuperAdmin = true;
+      }
+
       // 1. Obtener configuración de planes dinámicos (NUEVO)
       const { data: dbPlans, error: plansErr } = await supabaseClient.from('plans').select('*');
       if (!plansErr && dbPlans && dbPlans.length > 0) {
@@ -238,12 +248,14 @@ const App = {
       const { data: { session } } = await supabaseClient.auth.getSession();
       let activeUserId = session?.user?.id;
 
-      // Si no hay sesión real pero hay bypass, usamos el ID de Mauro
+      // Si no hay sesión real pero hay bypass, usamos el ID de Mauro o el admin_bypass
       if (!activeUserId && this.State.currentUser) {
         activeUserId = this.State.currentUser.id;
+      } else if (!activeUserId && this.State.isSuperAdmin) {
+        activeUserId = Storage.getItem('impulsa_active_user');
       }
 
-      if (activeUserId) {
+      if (activeUserId && activeUserId !== 'admin_bypass') {
         this.addLog('SYSTEM', `Sincronizando datos para el usuario: ${activeUserId}`);
 
         // Obtener el perfil del usuario actual (tenant)
@@ -995,7 +1007,9 @@ const App = {
     if (email === 'admin@impulsa.com' && password === 'Estrella2026+') {
       this.addLog('SYSTEM', `Acceso Super Administrador concedido.`);
       this.State.isSuperAdmin = true;
+      this.State.currentUser = null; // No es un comercio específico
       Storage.setItem('impulsa_is_superadmin', 'true');
+      Storage.setItem('impulsa_active_user', 'admin_bypass'); 
       
       // Sincronizar datos globales antes de redirigir
       if (supabaseClient) {
