@@ -118,6 +118,22 @@ const App = {
     this.addLog('SYSTEM', 'Servidor seguro de IMPULSA levantado en el puerto 5000.');
     this.addLog('SYSTEM', 'Middleware /api/support listo para eludir restricciones de CORS.');
 
+    // 6. Registrar Service Worker para PWA
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js')
+          .then(reg => {
+            this.addLog('SYSTEM', `[PWA] Service Worker registrado exitosamente (Scope: ${reg.scope})`);
+            this.State.proxyLogs.push({
+              timestamp: new Date().toLocaleTimeString(),
+              type: 'SUCCESS',
+              message: 'PWA: Service Worker activo. App lista para instalación nativa.'
+            });
+          })
+          .catch(err => console.error('[PWA] Error al registrar Service Worker:', err));
+      });
+    }
+
     this.applyTheme();
     this.bindGlobalEvents();
     
@@ -3529,9 +3545,30 @@ const App = {
 
     if (tab === 'leads') {
       this.addLog('GET', `Súper Admin: Cargando listado global de leads (/api/admin/leads)`);
+      
+      const uniqueBusinesses = [...new Set(this.State.leads.map(l => l.businessName))].sort();
+      
       tabContent.innerHTML = `
+        <div class="card" style="margin-bottom: 20px; padding: 15px; background: rgba(0,123,255,0.02);">
+          <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end;">
+            <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 200px;">
+              <label class="form-label" style="font-size: 0.75rem; margin-bottom: 4px;">Filtrar por Comercio</label>
+              <select class="form-control" id="admin-filter-business" style="height: 38px; font-size: 0.85rem;">
+                <option value="all">Todos los Comercios</option>
+                ${uniqueBusinesses.map(b => `<option value="${b}">${b}</option>`).join('')}
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 200px;">
+              <label class="form-label" style="font-size: 0.75rem; margin-bottom: 4px;">Filtrar por Sucursal</label>
+              <select class="form-control" id="admin-filter-location" style="height: 38px; font-size: 0.85rem;">
+                <option value="all">Todas las Sucursales</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
         <div class="leads-table-container">
-          <table class="leads-table">
+          <table class="leads-table" id="admin-leads-table">
             <thead>
               <tr>
                 <th data-i18n="admin_table_date">Fecha</th>
@@ -3543,26 +3580,34 @@ const App = {
                 <th data-i18n="admin_table_action">Contacto</th>
               </tr>
             </thead>
-            <tbody>
-              ${this.State.leads.map(lead => `
-                <tr>
-                  <td style="white-space: nowrap; font-size: 0.8rem;">${new Date(lead.date).toLocaleDateString()}</td>
-                  <td style="font-weight: 700; color: var(--color-brand);">${lead.businessName}</td>
-                  <td style="font-weight: 500;">${lead.locationName}</td>
-                  <td><strong>${lead.clientName}</strong></td>
-                  <td style="color: #FFD700; font-weight: 700;">${lead.rating} ★</td>
-                  <td style="font-size: 0.85rem; color: var(--text-secondary); max-width: 250px;">${lead.comment}</td>
-                  <td>
-                    <a href="https://wa.me/${lead.clientPhone}?text=Hola+${encodeURIComponent(lead.clientName)},+hemos+recibido+tus+comentarios+en+${encodeURIComponent(lead.locationName)}..." target="_blank" class="btn btn-primary" style="padding: 6px 12px; font-size: 0.75rem; width: auto; background: linear-gradient(135deg, #25D366, #128C7E); box-shadow:none;">
-                      <i data-lucide="phone"></i> <span data-i18n="admin_wa_link">Contactar</span>
-                    </a>
-                  </td>
-                </tr>
-              `).join('')}
+            <tbody id="admin-leads-tbody">
+              ${this.renderAdminLeadsRows(this.State.leads)}
             </tbody>
           </table>
         </div>
       `;
+
+      const businessSelect = document.getElementById('admin-filter-business');
+      const locationSelect = document.getElementById('admin-filter-location');
+      const tbody = document.getElementById('admin-leads-tbody');
+
+      businessSelect.addEventListener('change', () => {
+        const business = businessSelect.value;
+        
+        // Actualizar opciones de sucursal
+        const locations = business === 'all' 
+          ? [] 
+          : [...new Set(this.State.leads.filter(l => l.businessName === business).map(l => l.locationName))].sort();
+        
+        locationSelect.innerHTML = '<option value="all">Todas las Sucursales</option>' + 
+          locations.map(l => `<option value="${l}">${l}</option>`).join('');
+        
+        this.filterAdminLeads();
+      });
+
+      locationSelect.addEventListener('change', () => this.filterAdminLeads());
+
+      lucide.createIcons();
     } else if (tab === 'marketing') {
       this.addLog('GET', `Súper Admin: Módulo de Mercadeo y Prospectos`);
       tabContent.innerHTML = `
@@ -3603,7 +3648,47 @@ const App = {
 
       // Vincular procesamiento de CSV
       document.getElementById('process-marketing-csv').addEventListener('click', () => this.handleMarketingCSV());
-    } else if (tab === 'requests') {
+    }
+    },
+
+    renderAdminLeadsRows(leads) {
+    if (leads.length === 0) {
+      return '<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--text-secondary);">No se encontraron opiniones con los filtros seleccionados.</td></tr>';
+    }
+    return leads.map(lead => `
+      <tr>
+        <td style="white-space: nowrap; font-size: 0.8rem;">${new Date(lead.date).toLocaleDateString()}</td>
+        <td style="font-weight: 700; color: var(--color-brand);">${lead.businessName}</td>
+        <td style="font-weight: 500;">${lead.locationName}</td>
+        <td><strong>${lead.clientName}</strong></td>
+        <td style="color: #FFD700; font-weight: 700;">${lead.rating} ★</td>
+        <td style="font-size: 0.85rem; color: var(--text-secondary); max-width: 250px;">${lead.comment}</td>
+        <td>
+          <a href="https://wa.me/${lead.clientPhone}?text=Hola+${encodeURIComponent(lead.clientName)},+hemos+recibido+tus+comentarios+en+${encodeURIComponent(lead.locationName)}..." target="_blank" class="btn btn-primary" style="padding: 6px 12px; font-size: 0.75rem; width: auto; background: linear-gradient(135deg, #25D366, #128C7E); box-shadow:none;">
+            <i data-lucide="phone"></i> <span data-i18n="admin_wa_link">Contactar</span>
+          </a>
+        </td>
+      </tr>
+    `).join('');
+    },
+
+    filterAdminLeads() {
+    const business = document.getElementById('admin-filter-business').value;
+    const location = document.getElementById('admin-filter-location').value;
+    const tbody = document.getElementById('admin-leads-tbody');
+
+    let filtered = this.State.leads;
+    if (business !== 'all') {
+      filtered = filtered.filter(l => l.businessName === business);
+    }
+    if (location !== 'all') {
+      filtered = filtered.filter(l => l.locationName === location);
+    }
+
+    tbody.innerHTML = this.renderAdminLeadsRows(filtered);
+    lucide.createIcons();
+    },
+ else if (tab === 'requests') {
               this.addLog('GET', `Súper Admin: Revisando solicitudes de creación profesional`);
               tabContent.innerHTML = `
                 <div class="leads-table-container">
