@@ -153,8 +153,8 @@ const App = {
   // ==========================================================================
   initNotificationSystem() {
     this.lastMessageCount = 0;
-    this.requestNotificationPermission();
-
+    // La solicitud de permiso se ha movido a una acción de usuario para cumplir con las políticas del navegador
+    
     // Chequear nuevos mensajes cada 30 segundos si la app está abierta
     setInterval(() => {
       this.checkForNewMessages();
