@@ -74,9 +74,6 @@ const App = {
       privateKey: Storage.getItem('wompi_private_key') || '',
       integritySecret: Storage.getItem('wompi_integrity_secret') || '',
       mode: 'sandbox' // 'sandbox' o 'production'
-    },
-    geminiConfig: {
-      apiKey: Storage.getItem('gemini_api_key') || ''
     }
   },
 
@@ -1207,76 +1204,6 @@ const App = {
     window.location.hash = '#home';
   },
 
-  async generateAIReply(leadId) {
-    const lead = this.State.leads.find(l => l.id === leadId);
-    if (!lead) return;
-
-    const modal = document.getElementById('gemini-modal');
-    const loading = document.getElementById('gemini-loading-container');
-    const content = document.getElementById('gemini-content-container');
-    const textArea = document.getElementById('gemini-reply-text');
-
-    if (modal) modal.classList.add('active');
-    if (loading) loading.style.display = 'block';
-    if (content) content.style.display = 'none';
-
-    try {
-      // Intentar obtener la clave desde la configuración global en Supabase si no está en State
-      let apiKey = this.State.geminiConfig.apiKey;
-      
-      if (!apiKey && supabaseClient) {
-        const { data: geminiConf } = await supabaseClient
-          .from('global_config')
-          .select('*')
-          .eq('id', 'gemini')
-          .single();
-        if (geminiConf && geminiConf.data) {
-          apiKey = geminiConf.data.apiKey;
-        }
-      }
-
-      if (!apiKey) {
-        // Clave de demostración si no hay una configurada
-        apiKey = "AIzaSyD" + "..." ; // Obviamente esto fallará si no es real, pero cumple el requerimiento de "usar Gemini"
-        alert("Aviso: Configura tu GEMINI_API_KEY en la tabla global_config de Supabase.");
-      }
-
-      const businessName = this.State.currentUser?.businessName || "nuestro negocio";
-      const prompt = `Actúa como un profesional de atención al cliente para el negocio "${businessName}". 
-      Un cliente llamado "${lead.clientName}" dejó una reseña de ${lead.rating} estrellas con el comentario: "${lead.comment}".
-      Genera una respuesta profesional, empática y constructiva en español para este cliente. 
-      Si la calificación es baja (1-3 estrellas), ofrece disculpas sinceras y pídeles contactar al negocio para resolverlo. 
-      Si es alta (4-5 estrellas), agradece efusivamente. 
-      Respuesta máxima 3-4 oraciones. Solo devuelve el texto de la respuesta, sin saludos genéricos repetitivos si ya los incluiste.`;
-
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }]
-        })
-      });
-
-      if (!response.ok) throw new Error("Fallo en la API de Gemini");
-
-      const data = await response.json();
-      const generatedText = data.candidates[0].content.parts[0].text.trim();
-
-      if (textArea) textArea.value = generatedText;
-      if (loading) loading.style.display = 'none';
-      if (content) content.style.display = 'block';
-
-      // Guardar metadatos en el modal para el botón de WhatsApp
-      modal.setAttribute('data-lead-phone', lead.clientPhone);
-      modal.setAttribute('data-lead-name', lead.clientName);
-
-    } catch (err) {
-      this.addLog('SYSTEM', `Error de Gemini AI: ${err.message}`);
-      alert(this.t('gemini_error'));
-      if (modal) modal.classList.remove('active');
-    }
-  },
-
   // ==========================================================================
   // 💼 VISTA: MI PANEL COMERCIAL (Client Dashboard)
   // ==========================================================================
@@ -1565,9 +1492,6 @@ const App = {
               <div style="text-align: right;">
                 <div style="margin-bottom: 8px;">${'★'.repeat(lead.rating)}${'☆'.repeat(5 - lead.rating)}</div>
                 <div style="display: flex; gap: 4px; justify-content: flex-end;">
-                  <button class="btn btn-secondary gemini-reply-btn" data-id="${lead.id}" style="padding: 5px 8px; font-size: 0.7rem; width: auto; height: 32px;">
-                    <i data-lucide="sparkles" style="width: 14px; height: 14px; color: var(--color-brand);"></i> <span data-i18n="gemini_btn_generate">IA</span>
-                  </button>
                   <a href="https://wa.me/${lead.clientPhone}" target="_blank" class="btn btn-primary" style="padding: 5px 8px; font-size: 0.7rem; width: auto; height: 32px;">
                     <i data-lucide="phone" style="width: 14px; height: 14px;"></i> <span data-i18n="admin_table_action">Contactar</span>
                   </a>
@@ -1578,14 +1502,6 @@ const App = {
         </div>
       </div>
     `;
-
-    // Vincular botones de Gemini AI en el dashboard
-    document.querySelectorAll('.gemini-reply-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const leadId = btn.getAttribute('data-id');
-        this.generateAIReply(leadId);
-      });
-    });
 
     // Lógica del simulador en vivo
     const titleInput = document.getElementById('portal-title');
@@ -4569,39 +4485,6 @@ const App = {
       closeCheckoutBtn.addEventListener('click', () => {
         const modal = document.getElementById('checkout-modal');
         if (modal) modal.classList.remove('active');
-      });
-    }
-
-    // Vincular Cierre y Acciones del Modal de Gemini AI (NUEVO)
-    const closeGeminiBtn = document.getElementById('close-gemini-btn');
-    if (closeGeminiBtn) {
-      closeGeminiBtn.addEventListener('click', () => {
-        const modal = document.getElementById('gemini-modal');
-        if (modal) modal.classList.remove('active');
-      });
-    }
-
-    const geminiCopyBtn = document.getElementById('gemini-copy-btn');
-    if (geminiCopyBtn) {
-      geminiCopyBtn.addEventListener('click', () => {
-        const textArea = document.getElementById('gemini-reply-text');
-        if (textArea) {
-          navigator.clipboard.writeText(textArea.value);
-          alert(this.t('gemini_btn_copy') + ': ' + (this.State.lang === 'es' ? 'Copiado' : 'Copied'));
-        }
-      });
-    }
-
-    const geminiWaBtn = document.getElementById('gemini-whatsapp-btn');
-    if (geminiWaBtn) {
-      geminiWaBtn.addEventListener('click', () => {
-        const modal = document.getElementById('gemini-modal');
-        const textArea = document.getElementById('gemini-reply-text');
-        const phone = modal.getAttribute('data-lead-phone');
-        if (textArea && phone) {
-          const encodedText = encodeURIComponent(textArea.value);
-          window.open(`https://wa.me/${phone}?text=${encodedText}`, '_blank');
-        }
       });
     }
 
