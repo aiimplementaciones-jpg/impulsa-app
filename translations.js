@@ -93,6 +93,17 @@ const translations = {
     dash_plan_remaining: "pendientes",
     dash_messages_title: "Mensajes de la Plataforma",
 
+    // Gemini AI Response (NUEVO)
+    gemini_btn_generate: "IA Respuesta",
+    gemini_modal_title: "Respuesta Sugerida por IA",
+    gemini_modal_desc: "Gemini ha generado esta respuesta basada en el comentario del cliente. Puedes editarla antes de enviarla.",
+    gemini_label_reply: "Respuesta Sugerida",
+    gemini_btn_copy: "Copiar Respuesta",
+    gemini_btn_whatsapp: "Enviar por WhatsApp",
+    gemini_loading: "Generando respuesta inteligente...",
+    gemini_error: "Error al generar respuesta con IA.",
+    gemini_placeholder: "Escribe o edita la respuesta aquí...",
+
     // Locations Page
     loc_title: "Gestión Inteligente de Sucursales",
     loc_subtitle: "Registra y monitoriza los puntos físicos de tu negocio.",
@@ -286,6 +297,17 @@ const translations = {
     dash_plan_expiry: "Expiry Date",
     dash_plan_remaining: "remaining",
     dash_messages_title: "Platform Messages",
+
+    // Gemini AI Response (NUEVO)
+    gemini_btn_generate: "AI Reply",
+    gemini_modal_title: "AI Suggested Response",
+    gemini_modal_desc: "Gemini has generated this response based on the customer's comment. You can edit it before sending.",
+    gemini_label_reply: "Suggested Response",
+    gemini_btn_copy: "Copy Response",
+    gemini_btn_whatsapp: "Send via WhatsApp",
+    gemini_loading: "Generating smart response...",
+    gemini_error: "Error generating AI response.",
+    gemini_placeholder: "Type or edit the response here...",
 
     // Locations Page
     loc_title: "Smart Location Management",

@@ -169,6 +169,47 @@
     </div>
   </div>
 
+  <!-- MODAL DE RESPUESTA GEMINI AI (NUEVO) -->
+  <div class="checkout-modal" id="gemini-modal">
+    <div class="checkout-sheet">
+      <div class="checkout-header">
+        <div class="checkout-brand">
+          <span style="color: var(--color-brand); font-weight: 800; display: flex; align-items: center; gap: 6px;">
+            <i data-lucide="sparkles"></i> Gemini AI
+          </span>
+        </div>
+        <button class="header-btn" id="close-gemini-btn" style="width: 32px; height: 32px;">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <h3 style="margin-bottom: 4px;" data-i18n="gemini_modal_title">Respuesta Sugerida por IA</h3>
+      <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 20px;" data-i18n="gemini_modal_desc">Gemini ha generado esta respuesta basada en el comentario del cliente.</p>
+      
+      <div id="gemini-content-container">
+        <div class="form-group">
+          <label class="form-label" data-i18n="gemini_label_reply">Respuesta Sugerida</label>
+          <textarea class="form-control" id="gemini-reply-text" rows="6" style="resize: none; font-size: 0.9rem; line-height: 1.5;" data-i18n-placeholder="gemini_placeholder"></textarea>
+        </div>
+        
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+          <button class="btn btn-secondary" id="gemini-copy-btn">
+            <i data-lucide="copy"></i>
+            <span data-i18n="gemini_btn_copy">Copiar</span>
+          </button>
+          <button class="btn btn-primary" id="gemini-whatsapp-btn">
+            <i data-lucide="message-circle"></i>
+            <span data-i18n="gemini_btn_whatsapp">WhatsApp</span>
+          </button>
+        </div>
+      </div>
+      
+      <div id="gemini-loading-container" style="display: none; text-align: center; padding: 32px 0;">
+        <i data-lucide="sparkles" style="animation: pulse 1.5s infinite linear; width: 48px; height: 48px; color: var(--color-brand); margin: 0 auto 16px auto;"></i>
+        <p style="font-weight: 500;" data-i18n="gemini_loading">Generando respuesta inteligente...</p>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL DE CHECKOUT PASARELA DE PAGOS (Wompi & Bancolombia) -->
   <div class="checkout-modal" id="checkout-modal">
     <div class="checkout-sheet">

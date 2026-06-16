@@ -124,6 +124,10 @@ INSERT INTO public.global_config (id, data)
 VALUES ('wompi', '{"publicKey": "", "privateKey": "", "integritySecret": ""}')
 ON CONFLICT (id) DO NOTHING;
 
+INSERT INTO public.global_config (id, data) 
+VALUES ('gemini', '{"apiKey": ""}')
+ON CONFLICT (id) DO NOTHING;
+
 -- 7. Tabla de Mensajes del Administrador (NUEVO)
 CREATE TABLE public.messages (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
