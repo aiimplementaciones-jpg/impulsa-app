@@ -663,7 +663,8 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .chart-point:hover {
-  r: 7;
+  transform: scale(1.4);
+  transform-origin: center;
   fill: var(--color-accent);
   stroke: var(--color-accent);
 }
