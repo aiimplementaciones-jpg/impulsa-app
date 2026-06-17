@@ -1860,7 +1860,7 @@ const App = {
               <!-- Acciones de QR e Impresión -->
               <div class="location-actions">
                 <button class="btn btn-secondary download-qr-btn" data-id="${loc.id}" data-name="${loc.name}" style="padding: 8px 12px; font-size: 0.8rem; border-radius: var(--radius-sm);">
-                  <i data-lucide="download"></i> QR
+                  <i data-lucide="download"></i> <span data-i18n="loc_download_qr">Hablador</span>
                 </button>
                 <button class="btn btn-secondary print-qr-btn" data-id="${loc.id}" data-name="${loc.name}" style="padding: 8px 12px; font-size: 0.8rem; border-radius: var(--radius-sm);">
                   <i data-lucide="printer"></i> Imprimir
@@ -2027,7 +2027,7 @@ const App = {
               <!-- Acciones de QR e Impresión -->
               <div class="location-actions">
                 <button class="btn btn-secondary download-qr-btn" data-id="${loc.id}" data-name="${loc.name}" style="padding: 8px 12px; font-size: 0.8rem; border-radius: var(--radius-sm);">
-                  <i data-lucide="download"></i> QR
+                  <i data-lucide="download"></i> <span data-i18n="loc_download_qr">Hablador</span>
                 </button>
                 <button class="btn btn-secondary print-qr-btn" data-id="${loc.id}" data-name="${loc.name}" style="padding: 8px 12px; font-size: 0.8rem; border-radius: var(--radius-sm);">
                   <i data-lucide="printer"></i> Imprimir
@@ -2408,135 +2408,178 @@ const App = {
   downloadQRCode(id, name) {
     const portalUrl = `${window.location.origin}${window.location.pathname}#portal?id=${id}`;
     const user = this.State.currentUser;
-    // Prioridad: Imagen personalizada de QR -> Logo del portal -> Emoji por defecto
-    const logo = user.qrCustomImage || user.logo || '🏪';
-    this.addLog('GET', `Generando QR HD para: "${name}"`);
+    const logo = user.qrCustomImage || user.logo || '🚀';
+    this.addLog('GET', `Generando Hablador para: "${name}"`);
 
-    this.generateQRCodeCanvas(portalUrl, (canvas) => {
-      // Crear un canvas final con un diseño tipo tarjeta
+    this.generateQRCodeCanvas(portalUrl, (qrCanvas) => {
       const finalCanvas = document.createElement('canvas');
       finalCanvas.width = 1200;
       finalCanvas.height = 1800;
       const ctx = finalCanvas.getContext('2d');
 
-      // Fondo blanco total
-      ctx.fillStyle = '#ffffff';
+      // 1. Fondo y Sombra de Tarjeta
+      ctx.fillStyle = '#f3f4f6'; // Color de fondo gris muy claro
       ctx.fillRect(0, 0, 1200, 1800);
 
-      // Cabecera con Degradado (Usando el color de QR personalizado)
-      const grad = ctx.createLinearGradient(0, 0, 1200, 0);
-      const accent = user.qrAccentColor || '#6366f1';
-      grad.addColorStop(0, accent);
-      grad.addColorStop(1, accent); // Sin degradado agresivo para mantener sobriedad
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, 1200, 320);
-
-      // Texto "IMPULSA" en cabecera
+      // Dibujar "Stand" blanco con bordes redondeados
+      ctx.save();
+      ctx.shadowColor = 'rgba(0,0,0,0.1)';
+      ctx.shadowBlur = 40;
+      ctx.shadowOffsetY = 20;
+      this.drawRoundedRect(ctx, 100, 100, 1000, 1600, 60);
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 70px sans-serif';
-      ctx.textAlign = 'left';
-      ctx.fillText('IMPULSA', 220, 190);
+      ctx.fill();
+      ctx.restore();
+
+      const accent = user.qrAccentColor || '#6366f1';
+
+      // 2. Cabecera (Header)
+      ctx.save();
+      // Clip para que el header siga la redondez superior
+      this.drawRoundedRect(ctx, 100, 100, 1000, 400, 60);
+      ctx.clip();
+      const grad = ctx.createLinearGradient(0, 100, 0, 500);
+      grad.addColorStop(0, accent);
+      grad.addColorStop(1, accent + 'dd');
+      ctx.fillStyle = grad;
+      ctx.fillRect(100, 100, 1000, 400);
       
-      // Nombre del Negocio
-      ctx.fillStyle = '#1f2937';
-      ctx.font = 'bold 90px sans-serif';
+      // Texto "IMPULSA"
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 60px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText(user.businessName.toUpperCase(), 600, 480);
+      ctx.fillText('IMPULSA', 600, 450);
+      ctx.restore();
+
+      // 3. Nombres
+      ctx.fillStyle = '#111827';
+      ctx.font = 'bold 85px sans-serif';
+      ctx.textAlign = 'center';
+      // Ajuste de texto largo para el negocio
+      let bName = user.businessName.toUpperCase();
+      if (bName.length > 20) ctx.font = 'bold 65px sans-serif';
+      ctx.fillText(bName, 600, 620);
       
-      ctx.font = '60px sans-serif';
-      ctx.fillStyle = '#6b7280';
-      ctx.fillText(name, 600, 580);
+      ctx.font = '600 55px sans-serif';
+      ctx.fillStyle = accent;
+      ctx.fillText(name, 600, 710);
 
-      // Dibujar el QR principal
-      ctx.drawImage(canvas, 100, 650, 1000, 1000);
+      // 4. QR con Marco
+      const qrSize = 750;
+      const qrX = 600 - (qrSize / 2);
+      const qrY = 820;
 
-      // Función para finalizar y descargar
-      const finishAndDownload = () => {
-        ctx.font = 'bold 55px sans-serif';
-        ctx.fillStyle = '#111827';
+      // Marco del QR
+      ctx.save();
+      ctx.strokeStyle = accent + '11';
+      ctx.lineWidth = 4;
+      this.drawRoundedRect(ctx, qrX - 20, qrY - 20, qrSize + 40, qrSize + 40, 30);
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
+
+      // 5. Footer Decorativo
+      ctx.fillStyle = accent;
+      ctx.fillRect(100, 1680, 1000, 20);
+
+      const finishAndDownload = async () => {
+        // Texto del footer
+        ctx.font = 'bold 50px sans-serif';
+        ctx.fillStyle = '#374151';
         ctx.textAlign = 'center';
-        // Usar texto de footer personalizado
-        ctx.fillText(user.qrFooterText || '¡Tu opinión nos ayuda a crecer!', 600, 1720);
+        ctx.fillText(user.qrFooterText || '¡Tu opinión nos ayuda a crecer!', 600, 1630);
 
-        const image = finalCanvas.toDataURL("image/png");
+        const dataUrl = finalCanvas.toDataURL("image/png");
+        
+        // Intentar compartir nativamente en móviles
+        if (navigator.share && navigator.canShare) {
+          try {
+            const blob = await (await fetch(dataUrl)).blob();
+            const file = new File([blob], `Hablador_${name.replace(/\s+/g, '_')}.png`, { type: 'image/png' });
+            if (navigator.canShare({ files: [file] })) {
+              await navigator.share({
+                files: [file],
+                title: 'Hablador QR IMPULSA',
+                text: `QR para ${user.businessName} - ${name}`
+              });
+              return; // Si se compartió, no descargamos automáticamente
+            }
+          } catch (e) {
+            console.warn("Fallo al compartir, procediendo a descarga normal.");
+          }
+        }
+
+        // Descarga normal si no hay Share o falló
         const link = document.createElement('a');
-        link.download = `QR_IMPULSA_${name.replace(/\s+/g, '_')}.png`;
-        link.href = image;
+        link.download = `Hablador_IMPULSA_${name.replace(/\s+/g, '_')}.png`;
+        link.href = dataUrl;
         link.click();
       };
 
-      // --- DIBUJAR LOGO EN EL CENTRO DEL QR ---
+      // --- DIBUJAR LOGO EN CENTRO DEL QR Y CABECERA ---
       const centerX = 600;
-      const centerY = 1150; // Centro del QR (650 + 1000/2)
-      const logoMaxHeight = 250;
+      const centerY = qrY + (qrSize / 2);
+      const logoSize = 180;
+
+      const drawLogo = (img = null, isEmoji = false) => {
+        // Logo en QR
+        ctx.save();
+        const bgSize = logoSize + 30;
+        this.drawRoundedRect(ctx, centerX - (bgSize/2), centerY - (bgSize/2), bgSize, bgSize, 20);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+        ctx.shadowColor = 'rgba(0,0,0,0.1)';
+        ctx.shadowBlur = 10;
+        ctx.stroke();
+
+        if (isEmoji) {
+          ctx.font = '120px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(logo, centerX, centerY + 10);
+        } else {
+          this.drawRoundedRect(ctx, centerX - (logoSize/2), centerY - (logoSize/2), logoSize, logoSize, 15);
+          ctx.clip();
+          ctx.drawImage(img, centerX - (logoSize/2), centerY - (logoSize/2), logoSize, logoSize);
+        }
+        ctx.restore();
+
+        // Logo en Cabecera
+        ctx.save();
+        const hLogoSize = 140;
+        const hLogoX = 600 - (hLogoSize / 2);
+        const hLogoY = 180;
+        
+        this.drawRoundedRect(ctx, hLogoX, hLogoY, hLogoSize, hLogoSize, 25);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+        
+        if (isEmoji) {
+          ctx.font = '90px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(logo, 600, hLogoY + (hLogoSize/2) + 5);
+        } else {
+          ctx.save();
+          this.drawRoundedRect(ctx, hLogoX + 10, hLogoY + 10, hLogoSize - 20, hLogoSize - 20, 15);
+          ctx.clip();
+          ctx.drawImage(img, hLogoX + 10, hLogoY + 10, hLogoSize - 20, hLogoSize - 20);
+          ctx.restore();
+        }
+        ctx.restore();
+
+        finishAndDownload();
+      };
 
       if (logo.startsWith('http') || logo.startsWith('data:image')) {
         const img = new Image();
         img.crossOrigin = "Anonymous";
-        img.onload = () => {
-          const aspect = img.width / img.height;
-          const logoWidth = logoMaxHeight * aspect;
-          const logoHeight = logoMaxHeight;
-
-          // Fondo blanco para el logo (Rectángulo redondeado)
-          const padding = 15;
-          const bgWidth = logoWidth + (padding * 2);
-          const bgHeight = logoHeight + (padding * 2);
-          
-          ctx.save();
-          // Dibujar fondo blanco redondeado
-          this.drawRoundedRect(ctx, centerX - (bgWidth / 2), centerY - (bgHeight / 2), bgWidth, bgHeight, 30);
-          ctx.fillStyle = '#ffffff';
-          ctx.fill();
-          ctx.restore();
-          
-          // Dibujar imagen con esquinas redondeadas
-          ctx.save();
-          this.drawRoundedRect(ctx, centerX - (logoWidth / 2), centerY - (logoHeight / 2), logoWidth, logoHeight, 20);
-          ctx.clip();
-          ctx.drawImage(img, centerX - (logoWidth / 2), centerY - (logoHeight / 2), logoWidth, logoHeight);
-          ctx.restore();
-          
-          // Logo en cabecera también (Proporcional)
-          const headerMaxHeight = 120;
-          const headerWidth = headerMaxHeight * aspect;
-          const headerHeight = headerMaxHeight;
-
-          ctx.save();
-          this.drawRoundedRect(ctx, 140 - (headerWidth / 2), 170 - (headerHeight / 2), headerWidth, headerHeight, 15);
-          ctx.clip();
-          ctx.drawImage(img, 140 - (headerWidth / 2), 170 - (headerHeight / 2), headerWidth, headerHeight);
-          ctx.restore();
-
-          finishAndDownload();
-        };
-        img.onerror = () => {
-          // Si falla la carga, usar emoji por defecto
-          ctx.font = '180px sans-serif';
-          ctx.textAlign = 'center';
-          ctx.fillText('🏪', centerX, centerY + 60);
-          finishAndDownload();
-        };
+        img.onload = () => drawLogo(img, false);
+        img.onerror = () => drawLogo(null, true);
         img.src = logo;
       } else {
-        // Es un Emoji
-        // Círculo blanco de fondo
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, (logoMaxHeight / 2) + 5, 0, Math.PI * 2);
-        ctx.fillStyle = '#ffffff';
-        ctx.fill();
-        
-        ctx.font = '180px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(logo, centerX, centerY + 15);
-
-        // Logo en cabecera
-        ctx.font = '90px sans-serif';
-        ctx.textAlign = 'left';
-        ctx.fillText(logo, 80, 200);
-
-        finishAndDownload();
+        drawLogo(null, true);
       }
     });
   },
