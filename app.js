@@ -648,6 +648,10 @@ const App = {
           <i data-lucide="home"></i>
           <span data-i18n="nav_home">Inicio</span>
         </button>
+        <button class="nav-item ${this.State.activePage === 'install' ? 'active' : ''}" data-page="install">
+          <i data-lucide="smartphone"></i>
+          <span data-i18n="nav_install">Anclar a Pantalla</span>
+        </button>
         <button class="nav-item ${this.State.activePage === 'login' ? 'active' : ''}" data-page="login">
           <i data-lucide="log-in"></i>
           <span data-i18n="login">Iniciar Sesión</span>
@@ -666,6 +670,10 @@ const App = {
           <i data-lucide="home"></i>
           <span data-i18n="nav_home">Inicio</span>
         </button>
+        <button class="nav-item ${this.State.activePage === 'install' ? 'active' : ''}" data-page="install">
+          <i data-lucide="smartphone"></i>
+          <span data-i18n="nav_install">Anclar</span>
+        </button>
         <button class="nav-item ${this.State.activePage === 'login' ? 'active' : ''}" data-page="login">
           <i data-lucide="log-in"></i>
           <span data-i18n="login">Entrar</span>
@@ -673,10 +681,6 @@ const App = {
         <button class="nav-item ${this.State.activePage === 'register' ? 'active' : ''}" data-page="register">
           <i data-lucide="user-plus"></i>
           <span data-i18n="register">Registrar</span>
-        </button>
-        <button class="nav-item ${this.State.activePage === 'admin' ? 'active' : ''}" data-page="admin">
-          <i data-lucide="shield-check"></i>
-          <span data-i18n="nav_admin">Admin</span>
         </button>
       `;
     }
@@ -708,7 +712,7 @@ const App = {
     this.addLog('GET', `Navegando a: /${pageName}`);
 
     // Proteger páginas privadas de clientes
-    const clientPrivatePages = ['dashboard', 'locations', 'statistics', 'billing', 'install'];
+    const clientPrivatePages = ['dashboard', 'locations', 'statistics', 'billing'];
     if (clientPrivatePages.includes(pageName) && !this.State.currentUser) {
       this.addLog('SYSTEM', 'Acceso denegado. Redirigiendo a /login.');
       window.location.hash = '#login';
@@ -900,6 +904,37 @@ const App = {
               </a>
             </div>
           `).join('')}
+        </div>
+      </section>
+
+      <!-- Sección de Instalación PWA para Visitantes -->
+      <section style="margin-top: 60px; padding: 40px 24px; background: linear-gradient(135deg, rgba(79, 70, 229, 0.08), rgba(14, 165, 233, 0.08)); border-radius: var(--radius-lg); border: 1px solid rgba(79, 70, 229, 0.15); text-align: center;">
+        <div style="max-width: 700px; margin: 0 auto;">
+          <div style="background: rgba(79, 70, 229, 0.1); color: var(--color-brand); padding: 6px 14px; border-radius: 100px; font-size: 0.72rem; font-weight: 700; display: inline-block; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.05em;">
+            ⚡ SIN DESCARGAS DESDE TIENDAS
+          </div>
+          <h2 style="font-size: 1.6rem; font-weight: 700; margin-bottom: 12px; color: var(--text-primary);">
+            Lleva IMPULSA a tu Pantalla de Inicio o Barra de Tareas
+          </h2>
+          <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.6; margin-bottom: 24px;">
+            Gracias a la tecnología PWA, puedes anclar IMPULSA en tu celular (iPhone y Android) o instalarla directamente en tu computadora (Windows / Mac) para anclarla a tu barra de tareas o Dock. Accede más rápido, ahorra datos y disfruta de una experiencia 100% de pantalla completa.
+          </p>
+          
+          <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-bottom: 20px;">
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--text-secondary); background: var(--bg-card); padding: 8px 16px; border-radius: 100px; border: 1px solid var(--border-color);">
+              <span>🤖</span> Android (Chrome)
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--text-secondary); background: var(--bg-card); padding: 8px 16px; border-radius: 100px; border: 1px solid var(--border-color);">
+              <span>🍎</span> iPhone (Safari)
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--text-secondary); background: var(--bg-card); padding: 8px 16px; border-radius: 100px; border: 1px solid var(--border-color);">
+              <span>💻</span> PC (Chrome/Edge)
+            </div>
+          </div>
+
+          <a href="#install" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none; padding: 12px 28px; font-size: 0.95rem; font-weight: 600; border-radius: var(--radius-sm);">
+            <i data-lucide="smartphone"></i> Ver Guía de Instalación Paso a Paso
+          </a>
         </div>
       </section>
 
@@ -4458,22 +4493,25 @@ const App = {
       </style>
 
       <div style="background: linear-gradient(135deg, rgba(79, 70, 229, 0.1), rgba(14, 165, 233, 0.1)); border: 1px solid rgba(79, 70, 229, 0.2); border-radius: var(--radius-md); padding: 32px 24px; text-align: center; margin-bottom: 24px; position: relative; overflow: hidden;">
-        <div style="position: absolute; right: -20px; top: -20px; font-size: 6rem; opacity: 0.05; transform: rotate(15deg);">📱</div>
+        <div style="position: absolute; right: -20px; top: -20px; font-size: 6rem; opacity: 0.05; transform: rotate(15deg);">💻📱</div>
         <div style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; background: var(--color-brand); color: white; border-radius: 50%; margin-bottom: 16px; box-shadow: 0 8px 16px rgba(79, 70, 229, 0.3);">
           <i data-lucide="smartphone" style="width: 32px; height: 32px;"></i>
         </div>
-        <h2 style="font-size: 1.6rem; font-weight: 700; margin: 0 0 8px 0; color: var(--text-primary);">Anclar IMPULSA en tu Celular</h2>
-        <p style="color: var(--text-secondary); max-width: 550px; margin: 0 auto; font-size: 0.92rem; line-height: 1.5;">
-          Accede a tu panel de reputación inteligente al instante y con un solo toque desde tu pantalla de inicio, tal como una aplicación móvil instalada.
+        <h2 style="font-size: 1.6rem; font-weight: 700; margin: 0 0 8px 0; color: var(--text-primary);">Anclar IMPULSA en tu Celular o PC</h2>
+        <p style="color: var(--text-secondary); max-width: 580px; margin: 0 auto; font-size: 0.92rem; line-height: 1.5;">
+          Disfruta de una experiencia similar a una app nativa. Puedes anclar IMPULSA a la pantalla inicial de tu celular, o instalarla en tu computadora y anclarla a la barra de tareas.
         </p>
       </div>
 
-      <div class="tabs-container" style="display: flex; gap: 12px; margin-bottom: 24px; background: var(--bg-secondary); padding: 6px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
-        <button class="tab-btn active" id="tab-btn-android" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; border: none; border-radius: calc(var(--radius-sm) - 4px); font-family: var(--font-sans); font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: all var(--transition-fast);">
-          <span style="font-size: 1.2rem;">🤖</span> Android (Chrome)
+      <div class="tabs-container" style="display: flex; gap: 8px; margin-bottom: 24px; background: var(--bg-secondary); padding: 6px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); flex-wrap: wrap;">
+        <button class="tab-btn active" id="tab-btn-android" style="flex: 1; min-width: 110px; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; border: none; border-radius: calc(var(--radius-sm) - 4px); font-family: var(--font-sans); font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all var(--transition-fast);">
+          <span style="font-size: 1.1rem;">🤖</span> Android
         </button>
-        <button class="tab-btn" id="tab-btn-ios" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; border: none; border-radius: calc(var(--radius-sm) - 4px); font-family: var(--font-sans); font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: all var(--transition-fast);">
-          <span style="font-size: 1.2rem;">🍎</span> iPhone / iOS (Safari)
+        <button class="tab-btn" id="tab-btn-ios" style="flex: 1; min-width: 110px; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; border: none; border-radius: calc(var(--radius-sm) - 4px); font-family: var(--font-sans); font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all var(--transition-fast);">
+          <span style="font-size: 1.1rem;">🍎</span> iPhone
+        </button>
+        <button class="tab-btn" id="tab-btn-pc" style="flex: 1; min-width: 110px; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; border: none; border-radius: calc(var(--radius-sm) - 4px); font-family: var(--font-sans); font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all var(--transition-fast);">
+          <span style="font-size: 1.1rem;">💻</span> Computadora / PC
         </button>
       </div>
 
@@ -4481,7 +4519,7 @@ const App = {
       <div id="tab-content-android" class="tab-pane active" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; animation: slideInUp 0.3s ease;">
         <div style="display: flex; flex-direction: column; gap: 16px;">
           <h3 style="font-size: 1.15rem; font-weight: 700; margin: 0 0 4px 0; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
-            <i data-lucide="info" style="color: var(--color-brand); width: 20px;"></i> Pasos para Android
+            <i data-lucide="info" style="color: var(--color-brand); width: 20px;"></i> Pasos para Android (Chrome)
           </h3>
           
           <div class="step-card">
@@ -4555,7 +4593,7 @@ const App = {
       <div id="tab-content-ios" class="tab-pane" style="display: none; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; animation: slideInUp 0.3s ease;">
         <div style="display: flex; flex-direction: column; gap: 16px;">
           <h3 style="font-size: 1.15rem; font-weight: 700; margin: 0 0 4px 0; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
-            <i data-lucide="info" style="color: var(--color-brand); width: 20px;"></i> Pasos para iPhone (iOS)
+            <i data-lucide="info" style="color: var(--color-brand); width: 20px;"></i> Pasos para iPhone (Safari)
           </h3>
           
           <div class="step-card">
@@ -4630,15 +4668,96 @@ const App = {
         </div>
       </div>
 
+      <!-- PANEL PC -->
+      <div id="tab-content-pc" class="tab-pane" style="display: none; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; animation: slideInUp 0.3s ease;">
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+          <h3 style="font-size: 1.15rem; font-weight: 700; margin: 0 0 4px 0; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+            <i data-lucide="info" style="color: var(--color-brand); width: 20px;"></i> Pasos para Computadora (PC / Mac)
+          </h3>
+          
+          <div class="step-card">
+            <div class="step-badge">1</div>
+            <div class="step-text">
+              <strong>Navegador en PC</strong>
+              <span>Abre IMPULSA en tu PC o Laptop utilizando <strong>Google Chrome</strong> o <strong>Microsoft Edge</strong>.</span>
+            </div>
+          </div>
+
+          <div class="step-card">
+            <div class="step-badge">2</div>
+            <div class="step-text">
+              <strong>Instala como Aplicación</strong>
+              <span>En el extremo derecho de la barra de direcciones superior de Chrome/Edge, haz clic en el icono de <strong>Instalar</strong> (🖥️⬇️ o ⊞ con signo de más).</span>
+            </div>
+          </div>
+
+          <div class="step-card">
+            <div class="step-badge">3</div>
+            <div class="step-text">
+              <strong>Anclar a la barra de tareas</strong>
+              <span>Una vez que la aplicación se abra en su propia ventana, haz clic derecho sobre su icono en la barra de tareas y selecciona <strong>"Anclar a la barra de tareas"</strong>.</span>
+            </div>
+          </div>
+
+          <div class="step-card">
+            <div class="step-badge">4</div>
+            <div class="step-text">
+              <strong>Acceso Directo en Escritorio</strong>
+              <span>¡Listo! Ahora tendrás un acceso directo en tu escritorio y barra de tareas, abriendo la app a pantalla completa.</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: center; align-items: center; padding: 12px 0;">
+          <div class="mock-phone" style="width: 260px; height: 360px; border-radius: 12px;">
+            <div class="mock-phone-header" style="background: #334155; height: 28px;">
+              <div style="display: flex; gap: 6px; padding-left: 8px;">
+                <span style="width: 8px; height: 8px; background: #ef4444; border-radius: 50%;"></span>
+                <span style="width: 8px; height: 8px; background: #eab308; border-radius: 50%;"></span>
+                <span style="width: 8px; height: 8px; background: #22c55e; border-radius: 50%;"></span>
+              </div>
+              <div style="font-size: 0.65rem; color: #cbd5e1;">Navegador - IMPULSA</div>
+            </div>
+            <div class="mock-browser-bar">
+              <div class="mock-browser-address" style="font-size: 0.65rem;">
+                <i data-lucide="lock" style="width: 9px; height: 9px; color: var(--color-success);"></i> app.impulsa.co
+              </div>
+              <div class="active-pulse" style="padding: 2px 4px; border-radius: 4px; display: inline-flex; align-items: center; cursor: pointer; color: var(--color-brand);">
+                <i data-lucide="download-cloud" style="width: 13px; height: 13px; stroke-width: 2.5;"></i>
+                <span class="finger-indicator" style="top: -2px; right: -16px; font-size: 0.9rem;">👆</span>
+              </div>
+              <div style="font-size: 1.1rem; cursor: pointer; padding: 0 4px; color: var(--text-secondary);">⋮</div>
+            </div>
+            <div class="mock-phone-body">
+              <div style="padding: 32px 16px; text-align: center; opacity: 0.25;">
+                <span style="font-size: 2rem;">🚀</span>
+                <h5 style="margin: 8px 0 0 0; font-size: 0.85rem;">IMPULSA</h5>
+                <p style="font-size: 0.6rem; margin: 4px 0 0 0;">Gestión Inteligente</p>
+              </div>
+              
+              <!-- Pop-up de instalación simulado en PC -->
+              <div style="position: absolute; top: 10px; right: 10px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; box-shadow: var(--shadow-md); padding: 12px; width: 180px; z-index: 20; animation: slideInDown 0.3s ease;">
+                <strong style="font-size: 0.72rem; display: block; margin-bottom: 4px; color: var(--text-primary);">¿Instalar aplicación?</strong>
+                <p style="font-size: 0.62rem; color: var(--text-secondary); margin: 0 0 8px 0;">Instalar IMPULSA para acceder en una ventana dedicada.</p>
+                <div style="display: flex; justify-content: flex-end; gap: 6px;">
+                  <button style="font-size: 0.6rem; padding: 4px 8px; border: 1px solid var(--border-color); background: transparent; border-radius: 4px; cursor: pointer; color: var(--text-secondary);">Cancelar</button>
+                  <button style="font-size: 0.6rem; padding: 4px 8px; background: var(--color-brand); border: none; color: white; border-radius: 4px; cursor: pointer; font-weight: 600;">Instalar</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- FOOTER DE LA GUÍA -->
       <div class="card" style="margin-top: 24px; border-top: 4px solid var(--color-brand); background-color: rgba(79, 70, 229, 0.02);">
         <h4 style="font-size: 1rem; font-weight: 700; margin: 0 0 8px 0; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
           <i data-lucide="sparkles" style="color: var(--color-brand); width: 18px;"></i> Ventajas del anclaje PWA
         </h4>
         <ul style="margin: 0; padding-left: 20px; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6; display: flex; flex-direction: column; gap: 6px;">
-          <li><strong>Experiencia de Pantalla Completa:</strong> Se abrirá sin barra de navegación del navegador, brindándote una interfaz limpia y nativa.</li>
-          <li><strong>Consumo Mínimo de Recursos:</strong> A diferencia de las apps tradicionales de las tiendas, ocupa menos de 1 MB en tu teléfono móvil.</li>
-          <li><strong>Acceso Instantáneo:</strong> Visualiza estadísticas, gestiona tus sucursales y maneja las valoraciones de tus locales directamente desde el icono.</li>
+          <li><strong>Experiencia de Pantalla Completa:</strong> Se abrirá sin barra de navegación del navegador, brindándote una interfaz limpia y nativa tanto en celulares como en PC.</li>
+          <li><strong>Consumo Mínimo de Recursos:</strong> A diferencia de las apps tradicionales de las tiendas, ocupa menos de 1 MB y se actualiza sola.</li>
+          <li><strong>Acceso Instantáneo:</strong> Visualiza estadísticas, gestiona tus sucursales y maneja las valoraciones de tus locales directamente desde el icono de tu escritorio, barra de tareas o celular.</li>
         </ul>
       </div>
     `;
@@ -4646,22 +4765,37 @@ const App = {
     // Lógica para cambiar de pestañas
     const btnAndroid = document.getElementById('tab-btn-android');
     const btnIos = document.getElementById('tab-btn-ios');
+    const btnPc = document.getElementById('tab-btn-pc');
     const contentAndroid = document.getElementById('tab-content-android');
     const contentIos = document.getElementById('tab-content-ios');
+    const contentPc = document.getElementById('tab-content-pc');
 
-    if (btnAndroid && btnIos && contentAndroid && contentIos) {
+    if (btnAndroid && btnIos && btnPc && contentAndroid && contentIos && contentPc) {
       btnAndroid.addEventListener('click', () => {
         btnAndroid.classList.add('active');
         btnIos.classList.remove('active');
+        btnPc.classList.remove('active');
         contentAndroid.style.display = 'grid';
         contentIos.style.display = 'none';
+        contentPc.style.display = 'none';
       });
 
       btnIos.addEventListener('click', () => {
         btnIos.classList.add('active');
         btnAndroid.classList.remove('active');
+        btnPc.classList.remove('active');
         contentAndroid.style.display = 'none';
         contentIos.style.display = 'grid';
+        contentPc.style.display = 'none';
+      });
+
+      btnPc.addEventListener('click', () => {
+        btnPc.classList.add('active');
+        btnAndroid.classList.remove('active');
+        btnIos.classList.remove('active');
+        contentAndroid.style.display = 'none';
+        contentIos.style.display = 'none';
+        contentPc.style.display = 'grid';
       });
     }
 
