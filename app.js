@@ -606,6 +606,10 @@ const App = {
           <i data-lucide="credit-card"></i>
           <span data-i18n="nav_billing">Mi Suscripción</span>
         </button>
+        <button class="nav-item ${this.State.activePage === 'install' ? 'active' : ''}" data-page="install">
+          <i data-lucide="smartphone"></i>
+          <span data-i18n="nav_install">Anclar a Pantalla</span>
+        </button>
         <button class="nav-item ${this.State.activePage === 'support' ? 'active' : ''}" data-page="support">
           <i data-lucide="help-circle"></i>
           <span data-i18n="nav_support">Soporte</span>
@@ -704,7 +708,7 @@ const App = {
     this.addLog('GET', `Navegando a: /${pageName}`);
 
     // Proteger páginas privadas de clientes
-    const clientPrivatePages = ['dashboard', 'locations', 'statistics', 'billing'];
+    const clientPrivatePages = ['dashboard', 'locations', 'statistics', 'billing', 'install'];
     if (clientPrivatePages.includes(pageName) && !this.State.currentUser) {
       this.addLog('SYSTEM', 'Acceso denegado. Redirigiendo a /login.');
       window.location.hash = '#login';
@@ -733,6 +737,9 @@ const App = {
         break;
       case 'admin':
         this.renderAdminDashboard(viewContainer);
+        break;
+      case 'install':
+        this.renderInstallPage(viewContainer);
         break;
       case 'support':
         this.renderSupportPage(viewContainer);
@@ -1272,6 +1279,22 @@ const App = {
         <p style="color: var(--text-secondary); font-size: 0.9rem;">
           <span data-i18n="dash_overview">Resumen de Reputación de</span> <strong>${user.businessName}</strong>.
         </p>
+      </div>
+
+      <!-- Banner para Anclar App (Guía PWA) -->
+      <div class="card" style="background: linear-gradient(135deg, var(--bg-card), rgba(79, 70, 229, 0.05)); border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 16px; flex: 1; min-width: 250px;">
+          <div style="width: 48px; height: 48px; background: rgba(79, 70, 229, 0.1); color: var(--color-brand); border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <i data-lucide="smartphone" style="width: 24px; height: 24px;"></i>
+          </div>
+          <div>
+            <h4 style="margin: 0; font-size: 0.95rem; color: var(--text-primary);">Lleva IMPULSA en tu pantalla de inicio</h4>
+            <p style="margin: 4px 0 0 0; font-size: 0.82rem; color: var(--text-secondary); line-height: 1.4;">Ancla esta aplicación web a tu celular para acceder rápidamente a tus sucursales y ver tus reportes al instante.</p>
+          </div>
+        </div>
+        <a href="#install" class="btn btn-primary" style="font-size: 0.82rem; padding: 8px 16px; text-decoration: none; border-radius: var(--radius-sm); white-space: nowrap; display: inline-flex; align-items: center; gap: 6px;">
+          <i data-lucide="external-link" style="width: 14px; height: 14px;"></i> Ver Guía
+        </a>
       </div>
 
       <!-- Métricas del Negocio -->
@@ -4223,6 +4246,426 @@ const App = {
     } else {
       alert("Error: Supabase no está conectado.");
     }
+  },
+
+  // ==========================================================================
+  // 📱 VISTA: INSTRUCTIVO DE INSTALACIÓN / ANCLAJE (PWA Guide)
+  // ==========================================================================
+  renderInstallPage(container) {
+    container.innerHTML = `
+      <style>
+        .tabs-container .tab-btn {
+          background: transparent;
+          color: var(--text-secondary);
+          border: none;
+          outline: none;
+        }
+        .tabs-container .tab-btn.active {
+          background: var(--bg-card);
+          color: var(--color-brand);
+          box-shadow: var(--shadow-sm);
+        }
+        .step-card {
+          display: flex;
+          align-items: flex-start;
+          gap: 16px;
+          background: var(--bg-card);
+          padding: 16px;
+          border-radius: var(--radius-sm);
+          border: 1px solid var(--border-color);
+          transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+        }
+        .step-card:hover {
+          transform: translateY(-2px);
+          box-shadow: var(--shadow-md);
+          border-color: var(--color-brand);
+        }
+        .step-badge {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-width: 32px;
+          height: 32px;
+          background: var(--color-brand);
+          color: white;
+          border-radius: 50%;
+          font-weight: 700;
+          font-size: 0.9rem;
+        }
+        .step-text {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+        .step-text strong {
+          font-size: 0.95rem;
+          color: var(--text-primary);
+        }
+        .step-text span {
+          font-size: 0.85rem;
+          color: var(--text-secondary);
+          line-height: 1.4;
+        }
+
+        /* Teléfono Simulador */
+        .mock-phone {
+          width: 250px;
+          height: 440px;
+          background: var(--bg-primary);
+          border: 10px solid #1e293b;
+          border-radius: 36px;
+          box-shadow: var(--shadow-md);
+          overflow: hidden;
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+          user-select: none;
+        }
+        .mock-phone-header {
+          height: 24px;
+          background: #1e293b;
+          color: white;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 0 16px;
+          font-size: 0.65rem;
+          font-weight: 500;
+        }
+        .mock-phone-icons {
+          display: flex;
+          gap: 4px;
+        }
+        .mock-browser-bar {
+          background: var(--bg-card);
+          border-bottom: 1px solid var(--border-color);
+          padding: 8px 12px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        .mock-browser-address {
+          flex: 1;
+          background: var(--bg-primary);
+          border-radius: 100px;
+          font-size: 0.7rem;
+          padding: 4px 10px;
+          color: var(--text-secondary);
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          overflow: hidden;
+          white-space: nowrap;
+        }
+        .mock-phone-body {
+          flex: 1;
+          background: var(--bg-card);
+          position: relative;
+        }
+
+        /* Chrome Menu */
+        .mock-chrome-menu {
+          position: absolute;
+          top: 4px;
+          right: 8px;
+          background: var(--bg-card);
+          border-radius: 8px;
+          box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+          border: 1px solid var(--border-color);
+          width: 170px;
+          padding: 6px 0;
+          z-index: 10;
+          display: flex;
+          flex-direction: column;
+          animation: slideInDown 0.3s ease;
+        }
+        .menu-item {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 8px 12px;
+          font-size: 0.75rem;
+          color: var(--text-primary);
+          text-align: left;
+        }
+        .highlighted-option {
+          background: rgba(79, 70, 229, 0.08);
+          border-left: 3px solid var(--color-brand);
+          position: relative;
+        }
+        .finger-indicator {
+          position: absolute;
+          right: 8px;
+          top: 6px;
+          font-size: 1rem;
+          animation: fingerTap 1.2s infinite alternate;
+        }
+
+        /* iOS Safari Bottom Bar */
+        .mock-ios-bottom-bar {
+          height: 44px;
+          background: #f8fafc;
+          border-top: 1px solid var(--border-color);
+          display: flex;
+          justify-content: space-around;
+          align-items: center;
+          padding: 0 8px;
+          color: #64748b;
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          z-index: 10;
+        }
+        .mock-ios-share-menu {
+          position: absolute;
+          bottom: 48px;
+          left: 8px;
+          right: 8px;
+          background: var(--bg-card);
+          border-radius: 12px;
+          box-shadow: 0 -5px 25px rgba(0,0,0,0.1);
+          border: 1px solid var(--border-color);
+          padding: 8px 0;
+          z-index: 10;
+          animation: slideInUp 0.3s ease;
+        }
+
+        /* Animations */
+        @keyframes fingerTap {
+          0% { transform: scale(1) translate(0, 0); }
+          100% { transform: scale(0.9) translate(-4px, 4px); }
+        }
+        @keyframes pulseGlow {
+          0% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.4); }
+          70% { box-shadow: 0 0 0 6px rgba(79, 70, 229, 0); }
+          100% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); }
+        }
+        .active-pulse {
+          animation: pulseGlow 1.5s infinite;
+          background: rgba(79, 70, 229, 0.1);
+          border-radius: 4px;
+        }
+        @keyframes slideInDown {
+          from { opacity: 0; transform: translateY(-10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideInUp {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      </style>
+
+      <div style="background: linear-gradient(135deg, rgba(79, 70, 229, 0.1), rgba(14, 165, 233, 0.1)); border: 1px solid rgba(79, 70, 229, 0.2); border-radius: var(--radius-md); padding: 32px 24px; text-align: center; margin-bottom: 24px; position: relative; overflow: hidden;">
+        <div style="position: absolute; right: -20px; top: -20px; font-size: 6rem; opacity: 0.05; transform: rotate(15deg);">📱</div>
+        <div style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; background: var(--color-brand); color: white; border-radius: 50%; margin-bottom: 16px; box-shadow: 0 8px 16px rgba(79, 70, 229, 0.3);">
+          <i data-lucide="smartphone" style="width: 32px; height: 32px;"></i>
+        </div>
+        <h2 style="font-size: 1.6rem; font-weight: 700; margin: 0 0 8px 0; color: var(--text-primary);">Anclar IMPULSA en tu Celular</h2>
+        <p style="color: var(--text-secondary); max-width: 550px; margin: 0 auto; font-size: 0.92rem; line-height: 1.5;">
+          Accede a tu panel de reputación inteligente al instante y con un solo toque desde tu pantalla de inicio, tal como una aplicación móvil instalada.
+        </p>
+      </div>
+
+      <div class="tabs-container" style="display: flex; gap: 12px; margin-bottom: 24px; background: var(--bg-secondary); padding: 6px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+        <button class="tab-btn active" id="tab-btn-android" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; border: none; border-radius: calc(var(--radius-sm) - 4px); font-family: var(--font-sans); font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: all var(--transition-fast);">
+          <span style="font-size: 1.2rem;">🤖</span> Android (Chrome)
+        </button>
+        <button class="tab-btn" id="tab-btn-ios" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; border: none; border-radius: calc(var(--radius-sm) - 4px); font-family: var(--font-sans); font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: all var(--transition-fast);">
+          <span style="font-size: 1.2rem;">🍎</span> iPhone / iOS (Safari)
+        </button>
+      </div>
+
+      <!-- PANEL ANDROID -->
+      <div id="tab-content-android" class="tab-pane active" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; animation: slideInUp 0.3s ease;">
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+          <h3 style="font-size: 1.15rem; font-weight: 700; margin: 0 0 4px 0; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+            <i data-lucide="info" style="color: var(--color-brand); width: 20px;"></i> Pasos para Android
+          </h3>
+          
+          <div class="step-card">
+            <div class="step-badge">1</div>
+            <div class="step-text">
+              <strong>Abre Google Chrome</strong>
+              <span>Entra a la aplicación usando el navegador Chrome en tu celular.</span>
+            </div>
+          </div>
+
+          <div class="step-card">
+            <div class="step-badge">2</div>
+            <div class="step-text">
+              <strong>Menú del Navegador</strong>
+              <span>Toca el icono de los tres puntos verticales (<code>⋮</code>) en la esquina superior derecha de la pantalla.</span>
+            </div>
+          </div>
+
+          <div class="step-card">
+            <div class="step-badge">3</div>
+            <div class="step-text">
+              <strong>Instalar / Agregar</strong>
+              <span>Selecciona la opción <strong>"Instalar aplicación"</strong> o <strong>"Agregar a la pantalla principal"</strong>.</span>
+            </div>
+          </div>
+
+          <div class="step-card">
+            <div class="step-badge">4</div>
+            <div class="step-text">
+              <strong>¡Listo para usar!</strong>
+              <span>Confirma presionando <strong>"Instalar"</strong>. El icono se añadirá automáticamente a tu pantalla inicial.</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: center; align-items: center; padding: 12px 0;">
+          <div class="mock-phone">
+            <div class="mock-phone-header">
+              <div class="mock-phone-time">12:30</div>
+              <div class="mock-phone-icons">🔋 📶 📶</div>
+            </div>
+            <div class="mock-browser-bar">
+              <div class="mock-browser-address">
+                <i data-lucide="lock" style="width: 10px; height: 10px; color: var(--color-success);"></i> app.impulsa.co
+              </div>
+              <div class="mock-browser-menu-btn active-pulse" style="font-size: 1.2rem; cursor: pointer; padding: 0 4px;">⋮</div>
+            </div>
+            <div class="mock-phone-body">
+              <div style="padding: 24px 16px; text-align: center; opacity: 0.25;">
+                <span style="font-size: 2rem;">🚀</span>
+                <h5 style="margin: 8px 0 0 0; font-size: 0.85rem;">IMPULSA</h5>
+                <div style="width: 100%; height: 6px; background: #cbd5e1; border-radius: 3px; margin-top: 12px;"></div>
+                <div style="width: 80%; height: 6px; background: #cbd5e1; border-radius: 3px; margin: 6px auto 0 auto;"></div>
+              </div>
+              <div class="mock-chrome-menu">
+                <div class="menu-item"><i data-lucide="star" style="width: 12px; height: 12px;"></i> Nueva pestaña</div>
+                <div class="menu-item"><i data-lucide="history" style="width: 12px; height: 12px;"></i> Historial</div>
+                <div class="menu-item highlighted-option">
+                  <i data-lucide="smartphone" style="width: 12px; height: 12px; color: var(--color-brand);"></i> 
+                  <strong>Instalar aplicación</strong>
+                  <span class="finger-indicator">👆</span>
+                </div>
+                <div class="menu-item"><i data-lucide="share-2" style="width: 12px; height: 12px;"></i> Compartir</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANEL IOS -->
+      <div id="tab-content-ios" class="tab-pane" style="display: none; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; animation: slideInUp 0.3s ease;">
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+          <h3 style="font-size: 1.15rem; font-weight: 700; margin: 0 0 4px 0; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+            <i data-lucide="info" style="color: var(--color-brand); width: 20px;"></i> Pasos para iPhone (iOS)
+          </h3>
+          
+          <div class="step-card">
+            <div class="step-badge">1</div>
+            <div class="step-text">
+              <strong>Usa Safari</strong>
+              <span>Abre obligatoriamente el navegador <strong>Safari</strong> de Apple para acceder al sistema.</span>
+            </div>
+          </div>
+
+          <div class="step-card">
+            <div class="step-badge">2</div>
+            <div class="step-text">
+              <strong>Toca Compartir</strong>
+              <span>Presiona el icono de <strong>Compartir</strong> (un cuadrado con una flecha hacia arriba) en la barra de navegación inferior.</span>
+            </div>
+          </div>
+
+          <div class="step-card">
+            <div class="step-badge">3</div>
+            <div class="step-text">
+              <strong>Agregar al Inicio</strong>
+              <span>Desplázate hacia abajo en el menú de opciones y selecciona <strong>"Agregar a pantalla de inicio"</strong>.</span>
+            </div>
+          </div>
+
+          <div class="step-card">
+            <div class="step-badge">4</div>
+            <div class="step-text">
+              <strong>Guardar Configuración</strong>
+              <span>Configura el nombre como "IMPULSA" y toca <strong>"Agregar"</strong> en la esquina superior derecha.</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: center; align-items: center; padding: 12px 0;">
+          <div class="mock-phone">
+            <div class="mock-phone-header">
+              <div class="mock-phone-time">12:30</div>
+              <div class="mock-phone-icons">🔋 📶 📶</div>
+            </div>
+            <div class="mock-phone-body" style="padding-bottom: 44px;">
+              <div style="padding: 24px 16px; text-align: center; opacity: 0.25;">
+                <span style="font-size: 2rem;">🚀</span>
+                <h5 style="margin: 8px 0 0 0; font-size: 0.85rem;">IMPULSA</h5>
+                <div style="width: 100%; height: 6px; background: #cbd5e1; border-radius: 3px; margin-top: 12px;"></div>
+              </div>
+              
+              <div class="mock-ios-share-menu">
+                <div style="text-align: center; padding: 2px 6px 8px 6px; border-bottom: 1px solid #f1f5f9; margin-bottom: 6px;">
+                  <strong style="font-size: 0.7rem; color: var(--text-secondary);">Opciones de la Página</strong>
+                </div>
+                <div class="menu-item"><i data-lucide="bookmark" style="width: 12px; height: 12px;"></i> Agregar a Marcadores</div>
+                <div class="menu-item highlighted-option">
+                  <i data-lucide="plus-square" style="width: 12px; height: 12px; color: var(--color-brand);"></i> 
+                  <strong>Agregar a pantalla de inicio</strong>
+                  <span class="finger-indicator" style="top: 8px;">👆</span>
+                </div>
+                <div class="menu-item"><i data-lucide="copy" style="width: 12px; height: 12px;"></i> Copiar enlace</div>
+              </div>
+            </div>
+            <div class="mock-ios-bottom-bar">
+              <i data-lucide="chevron-left" style="width: 14px; height: 14px;"></i>
+              <i data-lucide="chevron-right" style="width: 14px; height: 14px;"></i>
+              <div class="active-pulse" style="padding: 6px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; color: var(--color-brand);">
+                <i data-lucide="share" style="width: 14px; height: 14px; stroke-width: 2.5;"></i>
+              </div>
+              <i data-lucide="book-open" style="width: 14px; height: 14px;"></i>
+              <i data-lucide="copy" style="width: 14px; height: 14px;"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FOOTER DE LA GUÍA -->
+      <div class="card" style="margin-top: 24px; border-top: 4px solid var(--color-brand); background-color: rgba(79, 70, 229, 0.02);">
+        <h4 style="font-size: 1rem; font-weight: 700; margin: 0 0 8px 0; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+          <i data-lucide="sparkles" style="color: var(--color-brand); width: 18px;"></i> Ventajas del anclaje PWA
+        </h4>
+        <ul style="margin: 0; padding-left: 20px; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6; display: flex; flex-direction: column; gap: 6px;">
+          <li><strong>Experiencia de Pantalla Completa:</strong> Se abrirá sin barra de navegación del navegador, brindándote una interfaz limpia y nativa.</li>
+          <li><strong>Consumo Mínimo de Recursos:</strong> A diferencia de las apps tradicionales de las tiendas, ocupa menos de 1 MB en tu teléfono móvil.</li>
+          <li><strong>Acceso Instantáneo:</strong> Visualiza estadísticas, gestiona tus sucursales y maneja las valoraciones de tus locales directamente desde el icono.</li>
+        </ul>
+      </div>
+    `;
+
+    // Lógica para cambiar de pestañas
+    const btnAndroid = document.getElementById('tab-btn-android');
+    const btnIos = document.getElementById('tab-btn-ios');
+    const contentAndroid = document.getElementById('tab-content-android');
+    const contentIos = document.getElementById('tab-content-ios');
+
+    if (btnAndroid && btnIos && contentAndroid && contentIos) {
+      btnAndroid.addEventListener('click', () => {
+        btnAndroid.classList.add('active');
+        btnIos.classList.remove('active');
+        contentAndroid.style.display = 'grid';
+        contentIos.style.display = 'none';
+      });
+
+      btnIos.addEventListener('click', () => {
+        btnIos.classList.add('active');
+        btnAndroid.classList.remove('active');
+        contentAndroid.style.display = 'none';
+        contentIos.style.display = 'grid';
+      });
+    }
+
+    this.translateInterface();
   },
 
   // ==========================================================================

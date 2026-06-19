@@ -23,6 +23,7 @@ const translations = {
     nav_statistics: "Mis Reportes",
     nav_billing: "Mi Suscripción",
     nav_admin: "Super Admin",
+    nav_install: "Anclar a Pantalla",
     nav_support: "Soporte",
 
     // Header
@@ -223,6 +224,7 @@ const translations = {
     nav_statistics: "My Reports",
     nav_billing: "My Subscription",
     nav_admin: "Super Admin",
+    nav_install: "Pin to Screen",
     nav_support: "Support",
 
     // Header
