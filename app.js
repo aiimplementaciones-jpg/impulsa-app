@@ -846,6 +846,38 @@ const App = {
         </div>
       </section>
 
+      <!-- Sección de Hablador Físico Real -->
+      <section style="margin-top: 60px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 32px; align-items: center; background: var(--bg-card); border: 1px solid var(--border-color); padding: 32px; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);">
+        <div style="text-align: center; order: 2; display: flex; justify-content: center;">
+          <img src="https://qmhgmroeootlwrjfxjne.supabase.co/storage/v1/object/public/logos/review-us-google-1.png" alt="Hablador Google IMPULSA" style="max-width: 100%; width: 280px; border-radius: var(--radius-md); box-shadow: 0 15px 35px rgba(0,0,0,0.15); border: 4px solid var(--bg-primary); transition: transform var(--transition-fast);" onmouseover="this.style.transform='translateY(-5px) scale(1.02)'" onmouseout="this.style.transform='translateY(0) scale(1)'">
+        </div>
+        <div style="order: 1; display: flex; flex-direction: column; gap: 16px;">
+          <div style="background: rgba(34, 197, 94, 0.1); color: var(--color-success); padding: 6px 14px; border-radius: 100px; font-size: 0.72rem; font-weight: 700; align-self: flex-start; text-transform: uppercase; font-family: var(--font-sans);">
+            📍 Material para tu Local
+          </div>
+          <h2 style="font-size: 1.5rem; font-weight: 700; margin: 0; color: var(--text-primary); line-height: 1.3;">
+            Tus clientes calificarán en segundos desde sus mesas
+          </h2>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6; margin: 0;">
+            Te entregamos habladores de mesa listos para colocar en tu negocio con tu marca y códigos QR en alta resolución. 
+          </p>
+          <ul style="margin: 0; padding-left: 0; list-style-type: none; font-size: 0.88rem; color: var(--text-secondary); display: flex; flex-direction: column; gap: 12px;">
+            <li style="display: flex; align-items: flex-start; gap: 8px;">
+              <i data-lucide="check" style="width: 16px; height: 16px; color: var(--color-success); flex-shrink: 0; margin-top: 2px;"></i>
+              <span><strong>Diseño Premium Oficial:</strong> Atrae la mirada de tus clientes de forma natural en el local.</span>
+            </li>
+            <li style="display: flex; align-items: flex-start; gap: 8px;">
+              <i data-lucide="check" style="width: 16px; height: 16px; color: var(--color-success); flex-shrink: 0; margin-top: 2px;"></i>
+              <span><strong>Código QR Inteligente:</strong> Vinculado dinámicamente al filtro estratégico de IMPULSA.</span>
+            </li>
+            <li style="display: flex; align-items: flex-start; gap: 8px;">
+              <i data-lucide="check" style="width: 16px; height: 16px; color: var(--color-success); flex-shrink: 0; margin-top: 2px;"></i>
+              <span><strong>Fácil Implementación:</strong> Solo imprime, coloca en tus mesas y mira cómo crecen tus opiniones excelentes.</span>
+            </li>
+          </ul>
+        </div>
+      </section>
+
       <!-- Ventajas y Funcionalidades -->
       <section style="margin-top: 40px;">
         <h2 style="text-align:center; font-size:1.5rem; margin-bottom:8px;" data-i18n="land_features_title">¿Por qué los comercios prefieren IMPULSA?</h2>
