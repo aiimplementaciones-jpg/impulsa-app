@@ -66,7 +66,9 @@ const App = {
     locations: [],      // Locales registrados
     leads: [],          // Reseñas negativas capturadas
     locationRequests: [], // Solicitudes de creación de sucursales
-    messages: [],         // NUEVO: Mensajes del administrador
+    messages: [],         // Mensajes del administrador
+    fiveStarRedirects: [],    // ⭐ Registro de calificaciones 5★ enviadas a Google Maps
+    googleReviewsSnapshots: [], // 📊 Historial de conteo de reseñas en Google Maps (cada 15 días)
     proxyLogs: [],      // Logs del Servidor seguro /api/support
     visits: 0,          // Semilla global de visitas
     wompiConfig: {      // Configuración de Pasarela Wompi
@@ -137,8 +139,18 @@ const App = {
     this.applyTheme();
     this.bindGlobalEvents();
     
-    // Iniciar monitoreo de notificaciones (NUEVO)
+    // Iniciar monitoreo de notificaciones
     this.initNotificationSystem();
+
+    // ⏰ Iniciar verificación periódica de snapshot de reseñas Google (cada 15 días)
+    // Se verifica al cargar la app (con delay para no bloquear arranque) y luego se
+    // programa un chequeo diario mientras la app está abierta.
+    setTimeout(() => {
+      if (this.State.currentUser) this.checkAndPromptPeriodicSnapshot();
+    }, 4000);
+    setInterval(() => {
+      if (this.State.currentUser) this.checkAndPromptPeriodicSnapshot();
+    }, 1000 * 60 * 60 * 24); // Chequea 1 vez al día mientras esté abierta
 
     // Iniciar Router dinámico
     this.handleRouting();
@@ -422,7 +434,7 @@ const App = {
         date: r.created_at
       }));
 
-      // 6. Obtener Mensajes (NUEVO)
+      // 6. Obtener Mensajes
       try {
         let queryMsg = supabaseClient.from('messages').select('*').order('created_at', { ascending: false });
         if (this.State.currentUser && !this.State.isSuperAdmin) {
@@ -449,8 +461,60 @@ const App = {
         this.State.messages = [];
       }
 
+      // 7. ⭐ Obtener registros de redirects de 5 estrellas
+      try {
+        let queryFive = supabaseClient
+          .from('five_star_redirects')
+          .select('*')
+          .order('created_at', { ascending: false });
+        if (!this.State.isSuperAdmin && this.State.currentUser) {
+          queryFive = queryFive.eq('tenant_id', this.State.currentUser.id);
+        }
+        const { data: fiveData, error: fiveErr } = await queryFive;
+        if (!fiveErr && fiveData) {
+          this.State.fiveStarRedirects = fiveData.map(r => ({
+            id: r.id,
+            locationId: r.location_id,
+            tenantId: r.tenant_id,
+            date: r.created_at
+          }));
+        } else {
+          this.State.fiveStarRedirects = [];
+          if (fiveErr && fiveErr.code !== '42P01') console.warn('[5★] Error cargando redirects:', fiveErr.message);
+        }
+      } catch (e) {
+        this.State.fiveStarRedirects = [];
+      }
+
+      // 8. 📊 Obtener snapshots históricos de reseñas de Google Maps
+      try {
+        let querySnap = supabaseClient
+          .from('google_reviews_snapshots')
+          .select('*')
+          .order('created_at', { ascending: true });
+        if (!this.State.isSuperAdmin && this.State.currentUser) {
+          querySnap = querySnap.eq('tenant_id', this.State.currentUser.id);
+        }
+        const { data: snapData, error: snapErr } = await querySnap;
+        if (!snapErr && snapData) {
+          this.State.googleReviewsSnapshots = snapData.map(s => ({
+            id: s.id,
+            locationId: s.location_id,
+            tenantId: s.tenant_id,
+            reviewCount: s.review_count,
+            mapsRating: s.maps_rating,
+            date: s.created_at
+          }));
+        } else {
+          this.State.googleReviewsSnapshots = [];
+          if (snapErr && snapErr.code !== '42P01') console.warn('[📊] Error cargando snapshots:', snapErr.message);
+        }
+      } catch (e) {
+        this.State.googleReviewsSnapshots = [];
+      }
+
       // Refrescar la página actual para mostrar los datos recién cargados (especialmente planes)
-      this.addLog('SYSTEM', `Sincronización con Supabase exitosa: ${this.State.locations.length} sucursales, ${this.State.leads.length} casos y ${this.State.messages.length} mensajes cargados.`);
+      this.addLog('SYSTEM', `Sincronización con Supabase exitosa: ${this.State.locations.length} sucursales, ${this.State.leads.length} casos, ${this.State.fiveStarRedirects.length} redirects ★5 y ${this.State.googleReviewsSnapshots.length} snapshots Google cargados.`);
       if (this.State.activePage) {
         this.renderPageContent(this.State.activePage);
       }
@@ -1291,9 +1355,12 @@ const App = {
 
     // Métricas reales
     const totalLeads = userLeads.length;
-    // Las visitas son 0 a menos que haya leads (mínimo real detectable)
-    const userVisits = Math.max(this.State.visits, totalLeads); 
-    const conversionRate = userVisits > 0 ? Math.round(((userVisits - totalLeads) / userVisits) * 100) : 100;
+    // ⭐ Redirects de 5 estrellas enviados a Google Maps (anónimos)
+    const userFiveStarCount = (this.State.fiveStarRedirects || []).filter(r => userLocIds.includes(r.locationId)).length;
+    // Las visitas totales incluyen los redirects de 5★ + leads internos
+    const totalInteractions = totalLeads + userFiveStarCount;
+    const userVisits = Math.max(this.State.visits, totalInteractions);
+    const conversionRate = totalInteractions > 0 ? Math.round((userFiveStarCount / totalInteractions) * 100) : 100;
     const avgRating = totalLeads > 0 
       ? (userLeads.reduce((acc, curr) => acc + curr.rating, 0) / totalLeads).toFixed(1)
       : '5.0';
@@ -1383,6 +1450,10 @@ const App = {
         <div class="metric-card">
           <span class="metric-label" data-i18n="dash_saved_reputation">Crisis Mitigadas</span>
           <div class="metric-value" style="color: var(--color-success);">${totalLeads}</div>
+        </div>
+        <div class="metric-card" style="border-top: 3px solid #FFD700;">
+          <span class="metric-label">Enviados a Google ★5</span>
+          <div class="metric-value" style="color: #b45309;">${userFiveStarCount}</div>
         </div>
       </div>
 
@@ -3012,6 +3083,9 @@ const App = {
     if (rating === 5) {
       this.addLog('SYSTEM', `Estrategia: Cliente dio ${rating} estrellas a ${loc.name}. Redirigiendo a Google Maps...`);
 
+      // ⭐ REGISTRAR REDIRECT DE 5 ESTRELLAS EN SUPABASE
+      this.recordFiveStarRedirect(locationId, loc.userId || tenant.id || loc.tenantId);
+
       feedbackBox.innerHTML = `
         <div style="text-align: center; display: flex; flex-direction: column; gap: 16px;">
           <p style="font-size: 0.95rem; font-weight: 500;" data-i18n="port_stars_high">¡Qué gran alegría! Nos encanta saber que tuviste una experiencia espectacular...</p>
@@ -3020,6 +3094,8 @@ const App = {
             <i data-lucide="map"></i>
             <span data-i18n="port_go_to_google">Publicar en Google Maps</span>
           </a>
+
+          <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 4px;">🔒 Tu opinión es anónima y ayuda a mejorar la calificación del negocio.</p>
         </div>
       `;
 
@@ -3134,6 +3210,223 @@ const App = {
     }
   },
 
+  // ⭐ REGISTRAR REDIRECT DE 5 ESTRELLAS (Anónimo, solo contabilidad interna)
+  async recordFiveStarRedirect(locationId, tenantId) {
+    if (!supabaseClient || !locationId || !tenantId) return;
+
+    try {
+      const { error } = await supabaseClient.from('five_star_redirects').insert([{
+        location_id: locationId,
+        tenant_id: tenantId
+      }]);
+
+      if (!error) {
+        this.addLog('POST', `[5★ Tracker] Redirect anónimo a Google Maps registrado para sucursal: ${locationId}`);
+        // Actualizar el contador local inmediatamente
+        this.State.fiveStarRedirects.push({
+          locationId,
+          tenantId,
+          date: new Date().toISOString()
+        });
+      } else {
+        this.addLog('SYSTEM', `[5★ Tracker] Aviso: No se pudo registrar el redirect - ${error.message}`);
+      }
+    } catch (e) {
+      console.warn('[5★ Tracker] Error al registrar redirect:', e);
+    }
+  },
+
+  // 📊 TOMAR SNAPSHOT MANUAL DE RESEÑAS DE GOOGLE MAPS (ingresado por admin)
+  async takeGoogleReviewsSnapshot(locationId, tenantId, reviewCount, mapsRating) {
+    if (!supabaseClient) return false;
+
+    try {
+      const { error } = await supabaseClient.from('google_reviews_snapshots').insert([{
+        location_id: locationId,
+        tenant_id: tenantId,
+        review_count: reviewCount,
+        maps_rating: mapsRating || null
+      }]);
+
+      if (!error) {
+        this.addLog('POST', `[📊 Snapshot] Historial de reseñas Google guardado: ${reviewCount} reseñas para sucursal ${locationId}`);
+        await this.syncGoogleSnapshotsFromSupabase();
+        return true;
+      } else {
+        this.addLog('SYSTEM', `[📊 Snapshot] Error guardando snapshot: ${error.message}`);
+        return false;
+      }
+    } catch (e) {
+      console.warn('[📊 Snapshot] Error:', e);
+      return false;
+    }
+  },
+
+  // 📊 SINCRONIZAR SNAPSHOTS DE GOOGLE DESDE SUPABASE
+  async syncGoogleSnapshotsFromSupabase() {
+    if (!supabaseClient) return;
+    try {
+      let query = supabaseClient
+        .from('google_reviews_snapshots')
+        .select('*')
+        .order('created_at', { ascending: true });
+
+      if (!this.State.isSuperAdmin && this.State.currentUser) {
+        query = query.eq('tenant_id', this.State.currentUser.id);
+      }
+
+      const { data, error } = await query;
+      if (!error && data) {
+        this.State.googleReviewsSnapshots = data.map(s => ({
+          id: s.id,
+          locationId: s.location_id,
+          tenantId: s.tenant_id,
+          reviewCount: s.review_count,
+          mapsRating: s.maps_rating,
+          date: s.created_at
+        }));
+      }
+    } catch (e) {
+      console.warn('[📊 Snapshot] Error sincronizando snapshots:', e);
+    }
+  },
+
+  // 🕐 VERIFICAR SI SE DEBE TOMAR SNAPSHOT AUTOMÁTICO (cada 15 días)
+  checkAndPromptPeriodicSnapshot() {
+    if (!this.State.currentUser || !supabaseClient) return;
+
+    const userLocs = this.State.locations.filter(l => l.userId === this.State.currentUser.id);
+    if (userLocs.length === 0) return;
+
+    const now = new Date();
+    const lastSnapshotKey = `impulsa_last_snapshot_${this.State.currentUser.id}`;
+    const lastSnapshot = Storage.getItem(lastSnapshotKey);
+    const daysSinceLast = lastSnapshot
+      ? Math.floor((now - new Date(lastSnapshot)) / (1000 * 60 * 60 * 24))
+      : 999;
+
+    if (daysSinceLast >= 15) {
+      this.addLog('SYSTEM', '[📊 Snapshot] Han pasado 15+ días. Mostrando formulario de actualización de reseñas Google.');
+      this.showSnapshotReminderModal();
+    }
+  },
+
+  // 🔔 MOSTRAR MODAL DE RECORDATORIO DE SNAPSHOT
+  showSnapshotReminderModal() {
+    const userLocs = this.State.locations.filter(l => l.userId === this.State.currentUser?.id);
+    if (userLocs.length === 0) return;
+
+    const existingModal = document.getElementById('snapshot-reminder-modal');
+    if (existingModal) return; // No mostrar doble
+
+    const modal = document.createElement('div');
+    modal.id = 'snapshot-reminder-modal';
+    modal.style.cssText = `
+      position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 10000;
+      display: flex; align-items: center; justify-content: center; padding: 16px;
+      backdrop-filter: blur(4px);
+    `;
+
+    modal.innerHTML = `
+      <div style="background: var(--bg-card); border-radius: var(--radius-lg); padding: 28px; max-width: 480px; width: 100%; box-shadow: 0 24px 64px rgba(0,0,0,0.25); border: 1px solid var(--border-color);">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+          <div style="width: 44px; height: 44px; background: rgba(79,70,229,0.12); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">📊</div>
+          <div>
+            <h3 style="margin: 0; font-size: 1.05rem;">Actualización Quincenal de Reseñas</h3>
+            <p style="margin: 2px 0 0 0; font-size: 0.78rem; color: var(--text-secondary);">Registro automático cada 15 días</p>
+          </div>
+          <button id="close-snapshot-modal" style="margin-left: auto; background: none; border: none; cursor: pointer; color: var(--text-secondary); font-size: 1.3rem; line-height: 1;">✕</button>
+        </div>
+
+        <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 20px; line-height: 1.5;">
+          Para medir la efectividad de IMPULSA, ingresa el número actual de reseñas que aparecen en el perfil de Google Maps de cada sucursal.
+        </p>
+
+        <div id="snapshot-locations-form" style="display: flex; flex-direction: column; gap: 14px;">
+          ${userLocs.map(loc => `
+            <div style="padding: 14px; background: var(--bg-primary); border-radius: 10px; border: 1px solid var(--border-color);">
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+                <i data-lucide="map-pin" style="width:16px; height:16px; color: var(--color-brand);"></i>
+                <strong style="font-size: 0.88rem;">${loc.name}</strong>
+              </div>
+              <div style="display: flex; gap: 10px;">
+                <div style="flex: 1;">
+                  <label style="font-size: 0.72rem; color: var(--text-secondary); display: block; margin-bottom: 4px;">N° de Reseñas en Google</label>
+                  <input type="number" min="0" id="snap-reviews-${loc.id}" class="form-control" placeholder="Ej: 47" style="height: 38px; font-size: 0.9rem;">
+                </div>
+                <div style="flex: 1;">
+                  <label style="font-size: 0.72rem; color: var(--text-secondary); display: block; margin-bottom: 4px;">Calificación Google (opcional)</label>
+                  <input type="number" min="1" max="5" step="0.1" id="snap-rating-${loc.id}" class="form-control" placeholder="Ej: 4.7" style="height: 38px; font-size: 0.9rem;">
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+          <button id="save-snapshot-btn" class="btn btn-primary" style="flex: 1; height: 44px;">
+            <i data-lucide="save"></i>
+            <span>Guardar Registro</span>
+          </button>
+          <button id="skip-snapshot-btn" class="btn btn-secondary" style="width: auto; padding: 0 16px; height: 44px; font-size: 0.82rem;">
+            Recordar después
+          </button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+    if (window.lucide) lucide.createIcons();
+
+    document.getElementById('close-snapshot-modal').onclick = () => modal.remove();
+    document.getElementById('skip-snapshot-btn').onclick = () => modal.remove();
+
+    document.getElementById('save-snapshot-btn').onclick = async () => {
+      const btn = document.getElementById('save-snapshot-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<i data-lucide="loader"></i> Guardando...';
+      if (window.lucide) lucide.createIcons();
+
+      let saved = 0;
+      for (const loc of userLocs) {
+        const countInput = document.getElementById(`snap-reviews-${loc.id}`);
+        const ratingInput = document.getElementById(`snap-rating-${loc.id}`);
+        const count = parseInt(countInput?.value);
+        const rating = parseFloat(ratingInput?.value) || null;
+
+        if (!isNaN(count) && count >= 0) {
+          const ok = await this.takeGoogleReviewsSnapshot(loc.id, this.State.currentUser.id, count, rating);
+          if (ok) saved++;
+        }
+      }
+
+      Storage.setItem(`impulsa_last_snapshot_${this.State.currentUser.id}`, new Date().toISOString());
+      modal.remove();
+
+      if (saved > 0) {
+        this.showToast(`✅ Registro guardado para ${saved} sucursal${saved > 1 ? 'es' : ''}. ¡Historial actualizado!`, 'success');
+        if (this.State.activePage === 'statistics') this.renderPageContent('statistics');
+      }
+    };
+  },
+
+  // 💬 TOAST NOTIFICATION (reutilizable)
+  showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+      position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+      background: ${type === 'success' ? 'var(--color-success)' : type === 'error' ? 'var(--color-danger)' : 'var(--color-brand)'};
+      color: white; padding: 12px 20px; border-radius: 50px;
+      font-size: 0.88rem; font-weight: 500; z-index: 99999;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+      animation: slideUp 0.3s ease;
+      white-space: nowrap; max-width: 90vw; text-align: center;
+    `;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 4000);
+  },
+
   shootConfetti() {
     const container = document.getElementById('confetti-container');
     if (!container) return;
@@ -3163,12 +3456,49 @@ const App = {
     const userLocIds = userLocations.map(l => l.id);
     const userLeads = this.State.leads.filter(lead => userLocIds.includes(lead.locationId));
 
-    const totalVisits = this.State.visits;
+    // ⭐ Métricas de 5 estrellas enviadas a Google
+    const fiveStarRedirects = (this.State.fiveStarRedirects || []).filter(r => userLocIds.includes(r.locationId));
+    const totalFiveStars = fiveStarRedirects.length;
     const totalLeads = userLeads.length;
-    const conversionRate = totalVisits > 0 ? Math.round(((totalVisits - totalLeads) / totalVisits) * 100) : 100;
+    const totalInteractions = totalLeads + totalFiveStars;
+    const conversionRate = totalInteractions > 0 ? Math.round((totalFiveStars / totalInteractions) * 100) : 100;
     const avgRating = totalLeads > 0 
       ? (userLeads.reduce((acc, curr) => acc + curr.rating, 0) / totalLeads).toFixed(1)
       : '5.0';
+
+    // 📊 Snapshots de Google Reviews por sucursal
+    const snapshots = (this.State.googleReviewsSnapshots || []).filter(s => userLocIds.includes(s.locationId));
+    // Para el gráfico: snapshots ordenados cronológicamente
+    const snapshotsByLoc = {};
+    userLocations.forEach(loc => {
+      snapshotsByLoc[loc.id] = snapshots.filter(s => s.locationId === loc.id);
+    });
+
+    // Construir datos del gráfico de snapshots (últimas entradas globales)
+    const allSnapsSorted = [...snapshots].sort((a, b) => new Date(a.date) - new Date(b.date));
+    const chartPoints = allSnapsSorted.slice(-8); // Últimos 8 snapshots para el gráfico
+    const maxReviews = chartPoints.length > 0 ? Math.max(...chartPoints.map(s => s.reviewCount), 1) : 10;
+
+    // Generar puntos SVG del gráfico de snapshots
+    const chartW = 500, chartH = 160, padY = 20;
+    const svgPoints = chartPoints.map((s, i) => {
+      const x = chartPoints.length === 1 ? chartW / 2 : (i / (chartPoints.length - 1)) * chartW;
+      const y = padY + (1 - s.reviewCount / maxReviews) * (chartH - padY);
+      return { x, y, s };
+    });
+    const linePath = svgPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ');
+    const fillPath = svgPoints.length > 0
+      ? `M ${svgPoints[0].x.toFixed(1)} ${chartH} ` + svgPoints.map(p => `L ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ') + ` L ${svgPoints[svgPoints.length-1].x.toFixed(1)} ${chartH} Z`
+      : '';
+
+    // ★ Redirects 5★ por sucursal para la tabla
+    const fiveByLoc = {};
+    userLocations.forEach(loc => {
+      fiveByLoc[loc.id] = fiveStarRedirects.filter(r => r.locationId === loc.id).length;
+    });
+
+    const today = new Date().toISOString().substring(0, 10);
+    const monthStart = today.substring(0, 7) + '-01';
 
     container.innerHTML = `
       <div style="margin-bottom: 24px;">
@@ -3176,11 +3506,183 @@ const App = {
         <p style="color: var(--text-secondary); font-size: 0.88rem;" data-i18n="stat_subtitle">Visualiza el rendimiento de tus sucursales y exporta reportes de leads.</p>
       </div>
 
+      <!-- 🌟 PANEL: EFECTIVIDAD - REDIRECCIONADOS A GOOGLE -->
+      <div class="card" style="border-top: 4px solid #FFD700; margin-bottom: 20px;">
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+          <span style="font-size: 1.5rem;">⭐</span>
+          <div>
+            <h3 style="margin: 0; font-size: 1rem;">Efectividad IMPULSA: Reseñas Enviadas a Google</h3>
+            <p style="margin: 2px 0 0 0; font-size: 0.78rem; color: var(--text-secondary);">Clientes de 5★ redirigidos anónimamente a tu perfil de Google Maps</p>
+          </div>
+        </div>
+
+        <div class="metrics-row" style="margin-bottom: 16px;">
+          <div class="metric-card" style="background: linear-gradient(135deg, rgba(255,215,0,0.12), rgba(180,83,9,0.06));">
+            <span class="metric-label">Total Enviados a Google</span>
+            <div class="metric-value" style="color: #b45309; font-size: 2rem;">${totalFiveStars}</div>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">Crisis Mitigadas</span>
+            <div class="metric-value" style="color: var(--color-success);">${totalLeads}</div>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">Tasa de Conversión ★5</span>
+            <div class="metric-value">${conversionRate}%</div>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">Calif. Promedio (Leads)</span>
+            <div class="metric-value">${avgRating} ★</div>
+          </div>
+        </div>
+
+        <!-- Tabla por sucursal -->
+        ${userLocations.length > 0 ? `
+          <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+              <thead>
+                <tr style="border-bottom: 2px solid var(--border-color);">
+                  <th style="text-align: left; padding: 8px 10px; color: var(--text-secondary); font-weight: 600;">Sucursal</th>
+                  <th style="text-align: center; padding: 8px 10px; color: #b45309; font-weight: 600;">★5 → Google</th>
+                  <th style="text-align: center; padding: 8px 10px; color: var(--color-danger); font-weight: 600;">Leads Internos</th>
+                  <th style="text-align: center; padding: 8px 10px; color: var(--text-secondary); font-weight: 600;">Conversión</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${userLocations.map(loc => {
+                  const locFive = fiveByLoc[loc.id] || 0;
+                  const locLeads = userLeads.filter(l => l.locationId === loc.id).length;
+                  const locTotal = locFive + locLeads;
+                  const locConv = locTotal > 0 ? Math.round((locFive / locTotal) * 100) : 0;
+                  return `
+                    <tr style="border-bottom: 1px solid var(--border-color);">
+                      <td style="padding: 10px 10px;">
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                          <i data-lucide="map-pin" style="width:14px; height:14px; color: var(--color-brand);"></i>
+                          <span>${loc.name}</span>
+                        </div>
+                      </td>
+                      <td style="text-align: center; padding: 10px; font-weight: 700; color: #b45309; font-size: 1rem;">${locFive}</td>
+                      <td style="text-align: center; padding: 10px; font-weight: 700; color: var(--color-danger);">${locLeads}</td>
+                      <td style="text-align: center; padding: 10px;">
+                        <span style="display: inline-block; background: ${locConv >= 60 ? 'rgba(16,185,129,0.12)' : locConv >= 30 ? 'rgba(245,158,11,0.12)' : 'rgba(239,68,68,0.12)'}; color: ${locConv >= 60 ? 'var(--color-success)' : locConv >= 30 ? 'var(--color-warning)' : 'var(--color-danger)'}; padding: 3px 10px; border-radius: 20px; font-weight: 600; font-size: 0.82rem;">${locConv}%</span>
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        ` : `<p style="color: var(--text-secondary); font-size: 0.88rem; text-align: center; padding: 16px 0;">No hay sucursales activas para mostrar.</p>`}
+      </div>
+
+      <!-- 📊 PANEL: HISTORIAL DE RESEÑAS EN GOOGLE MAPS -->
+      <div class="card" style="border-top: 4px solid var(--color-brand); margin-bottom: 20px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 16px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 1.5rem;">📊</span>
+            <div>
+              <h3 style="margin: 0; font-size: 1rem;">Historial de Reseñas en Google Maps</h3>
+              <p style="margin: 2px 0 0 0; font-size: 0.78rem; color: var(--text-secondary);">Consulta histórica quincenal · Registro automático cada 15 días</p>
+            </div>
+          </div>
+          <button id="add-snapshot-btn" class="btn btn-primary" style="height: 38px; font-size: 0.82rem; padding: 0 14px;">
+            <i data-lucide="plus"></i>
+            <span>Agregar Registro Hoy</span>
+          </button>
+        </div>
+
+        ${snapshots.length === 0 ? `
+          <div style="text-align: center; padding: 32px 16px; color: var(--text-secondary);">
+            <div style="font-size: 3rem; margin-bottom: 12px;">📋</div>
+            <p style="font-size: 0.9rem; font-weight: 500;">Sin registros históricos todavía</p>
+            <p style="font-size: 0.82rem;">Haz clic en "Agregar Registro Hoy" para comenzar el seguimiento quincenal de tus reseñas de Google Maps.</p>
+          </div>
+        ` : `
+          <!-- Gráfico de evolución de reseñas Google -->
+          ${chartPoints.length >= 2 ? `
+            <div style="margin-bottom: 20px;">
+              <h4 style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 10px; font-weight: 600;">EVOLUCIÓN DE RESEÑAS GOOGLE MAPS</h4>
+              <div class="chart-container" style="height: 180px;">
+                <svg class="chart-svg" viewBox="0 0 ${chartW} ${chartH + padY}" preserveAspectRatio="none" style="width:100%; height:100%;">
+                  <defs>
+                    <linearGradient id="gmaps-gradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="#4285F4" stop-opacity="0.35"/>
+                      <stop offset="100%" stop-color="#4285F4" stop-opacity="0"/>
+                    </linearGradient>
+                  </defs>
+                  <line x1="0" y1="${chartH}" x2="${chartW}" y2="${chartH}" stroke="var(--border-color)" stroke-width="1.5" />
+                  <line x1="0" y1="${(chartH + padY) / 2}" x2="${chartW}" y2="${(chartH + padY) / 2}" stroke="var(--border-color)" stroke-width="1" stroke-dasharray="4,4" />
+                  ${fillPath ? `<path d="${fillPath}" fill="url(#gmaps-gradient)" />` : ''}
+                  ${linePath ? `<path d="${linePath}" fill="none" stroke="#4285F4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />` : ''}
+                  ${svgPoints.map(p => `
+                    <circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="5" fill="#4285F4" stroke="white" stroke-width="2" />
+                    <text x="${p.x.toFixed(1)}" y="${(p.y - 10).toFixed(1)}" text-anchor="middle" font-size="10" fill="var(--text-secondary)">${p.s.reviewCount}</text>
+                  `).join('')}
+                </svg>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin-top: 4px;">
+                ${chartPoints.map(p => `<span style="font-size: 0.65rem; color: var(--text-secondary); text-align: center;">${new Date(p.date).toLocaleDateString('es', {day:'2-digit', month:'short'})}</span>`).join('')}
+              </div>
+            </div>
+          ` : ''}
+
+          <!-- Tabla histórica por sucursal -->
+          ${userLocations.map(loc => {
+            const locSnaps = (snapshotsByLoc[loc.id] || []).slice().reverse(); // más reciente primero
+            if (locSnaps.length === 0) return '';
+            const latest = locSnaps[0];
+            const previous = locSnaps[1];
+            const diff = previous ? latest.reviewCount - previous.reviewCount : null;
+            return `
+              <div style="margin-bottom: 16px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                  <div style="display: flex; align-items: center; gap: 6px;">
+                    <i data-lucide="map-pin" style="width:14px; height:14px; color: var(--color-brand);"></i>
+                    <strong style="font-size: 0.9rem;">${loc.name}</strong>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 1.2rem; font-weight: 700; color: var(--color-brand);">${latest.reviewCount} reseñas</span>
+                    ${latest.mapsRating ? `<span style="font-size: 0.85rem; color: #b45309; font-weight: 600;">★ ${latest.mapsRating}</span>` : ''}
+                    ${diff !== null ? `<span style="font-size: 0.78rem; font-weight: 600; color: ${diff >= 0 ? 'var(--color-success)' : 'var(--color-danger)'}; background: ${diff >= 0 ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)'}; padding: 2px 8px; border-radius: 20px;">${diff >= 0 ? '+' : ''}${diff} vs anterior</span>` : ''}
+                  </div>
+                </div>
+                <div style="overflow-x: auto;">
+                  <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 300px;">
+                    <thead>
+                      <tr style="background: var(--bg-primary);">
+                        <th style="text-align: left; padding: 6px 10px; color: var(--text-secondary);">Fecha</th>
+                        <th style="text-align: center; padding: 6px 10px; color: var(--text-secondary);">Reseñas</th>
+                        <th style="text-align: center; padding: 6px 10px; color: var(--text-secondary);">Cal. Google</th>
+                        <th style="text-align: center; padding: 6px 10px; color: var(--text-secondary);">Variación</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${locSnaps.map((snap, idx) => {
+                        const prev = locSnaps[idx + 1];
+                        const d = prev ? snap.reviewCount - prev.reviewCount : null;
+                        return `
+                          <tr style="border-bottom: 1px solid var(--border-color);">
+                            <td style="padding: 8px 10px;">${new Date(snap.date).toLocaleDateString('es', {day:'2-digit', month:'short', year:'2-digit'})}</td>
+                            <td style="text-align: center; padding: 8px 10px; font-weight: 600;">${snap.reviewCount}</td>
+                            <td style="text-align: center; padding: 8px 10px; color: #b45309;">${snap.mapsRating ? `★ ${snap.mapsRating}` : '—'}</td>
+                            <td style="text-align: center; padding: 8px 10px;">${d !== null ? `<span style="color: ${d >= 0 ? 'var(--color-success)' : 'var(--color-danger)'}; font-weight: 600;">${d >= 0 ? '+' : ''}${d}</span>` : '—'}</td>
+                          </tr>
+                        `;
+                      }).join('')}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        `}
+      </div>
+
       <!-- Filtros Estratégicos (Plan Star) -->
       <div class="card" style="padding: 16px; border: 1px solid var(--color-brand); background-color: rgba(79, 70, 229, 0.02);">
         <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
           <i data-lucide="sparkles" style="color: var(--color-brand); width: 18px;"></i>
-          <h3 style="font-size: 0.9rem; color: var(--color-brand); font-weight: 700;">Filtro Estratégico de Reseñas</h3>
+          <h3 style="font-size: 0.9rem; color: var(--color-brand); font-weight: 700;">Filtro Estratégico de Leads Internos</h3>
           ${user.plan !== 'star' ? `<span style="font-size: 0.65rem; background: var(--color-brand); color: white; padding: 2px 6px; border-radius: 4px; text-transform: uppercase;">Premium Star</span>` : ''}
         </div>
         
@@ -3211,73 +3713,24 @@ const App = {
         ` : ''}
       </div>
 
-      <!-- Filtros por Fechas -->
+      <!-- Filtros por Fechas y Exportar -->
       <div class="card" style="padding: 16px;">
         <div class="form-row" style="align-items: flex-end;">
           <div class="form-group" style="margin-bottom: 0;">
             <label class="form-label" data-i18n="stat_date_start">Fecha de inicio</label>
-            <input type="date" class="form-control" id="filter-start-date" value="2026-05-01">
+            <input type="date" class="form-control" id="filter-start-date" value="${monthStart}">
           </div>
           <div class="form-group" style="margin-bottom: 0;">
             <label class="form-label" data-i18n="stat_date_end">Fecha final</label>
-            <input type="date" class="form-control" id="filter-end-date" value="2026-05-31">
+            <input type="date" class="form-control" id="filter-end-date" value="${today}">
           </div>
         </div>
         
         <div style="margin-top: 14px;">
           <button class="btn btn-primary" id="export-csv-btn">
             <i data-lucide="file-spreadsheet"></i>
-            <span data-i18n="stat_export_csv">Exportar Reporte (CSV)</span>
+            <span data-i18n="stat_export_csv">Exportar Reporte de Leads (CSV)</span>
           </button>
-        </div>
-      </div>
-
-      <!-- Métricas Resumen -->
-      <div class="metrics-row">
-        <div class="metric-card">
-          <span class="metric-label" data-i18n="dash_total_reviews">Visitas</span>
-          <div class="metric-value">${totalVisits}</div>
-        </div>
-        <div class="metric-card">
-          <span class="metric-label" data-i18n="stat_conversion_rate">Conversión</span>
-          <div class="metric-value">${conversionRate}%</div>
-        </div>
-        <div class="metric-card">
-          <span class="metric-label" data-i18n="dash_avg_stars">Calificación Promedio</span>
-          <div class="metric-value">${avgRating} ★</div>
-        </div>
-        <div class="metric-card">
-          <span class="metric-label" data-i18n="stat_leads_count">Leads</span>
-          <div class="metric-value">${totalLeads}</div>
-        </div>
-      </div>
-
-      <!-- Gráfico SVG Premium Autoadaptable -->
-      <div class="card">
-        <h3 class="card-title" data-i18n="stat_monthly_evolution">Visitas Mensuales vs Opiniones Recibidas</h3>
-        <div class="chart-container">
-          <svg class="chart-svg" viewBox="0 0 500 200" preserveAspectRatio="none">
-            <defs>
-              <linearGradient id="chart-gradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="var(--color-brand)" stop-opacity="0.4"/>
-                <stop offset="100%" stop-color="var(--color-brand)" stop-opacity="0"/>
-              </linearGradient>
-            </defs>
-            <line x1="0" y1="180" x2="500" y2="180" stroke="var(--border-color)" stroke-width="1.5" />
-            <line x1="0" y1="100" x2="500" y2="100" stroke="var(--border-color)" stroke-width="1" stroke-dasharray="4,4" />
-            <line x1="0" y1="20" x2="500" y2="20" stroke="var(--border-color)" stroke-width="1" stroke-dasharray="4,4" />
-            
-            <path class="chart-gradient-fill" d="M 0 180 L 0 140 L 100 110 L 200 130 L 300 70 L 400 90 L 500 40 L 500 180 Z" />
-            <path class="chart-line" d="M 0 140 L 100 110 L 200 130 L 300 70 L 400 90 L 500 40" />
-            <path class="chart-line" d="M 0 170 L 100 160 L 200 165 L 300 140 L 400 150 L 500 120" stroke="var(--color-accent)" stroke-width="2.5" />
-            
-            <circle class="chart-point" cx="0" cy="140" r="5" />
-            <circle class="chart-point" cx="100" cy="110" r="5" />
-            <circle class="chart-point" cx="200" cy="130" r="5" />
-            <circle class="chart-point" cx="300" cy="70" r="5" />
-            <circle class="chart-point" cx="400" cy="90" r="5" />
-            <circle class="chart-point" cx="500" cy="40" r="5" />
-          </svg>
         </div>
       </div>
     `;
@@ -3299,6 +3752,15 @@ const App = {
 
       this.exportLeadsCSV(finalLeads);
     });
+
+    // Botón para abrir modal de snapshot manual
+    const addSnapshotBtn = document.getElementById('add-snapshot-btn');
+    if (addSnapshotBtn) {
+      addSnapshotBtn.addEventListener('click', () => {
+        Storage.setItem(`impulsa_last_snapshot_${user.id}`, '2000-01-01'); // Forzar que aparezca el modal
+        this.showSnapshotReminderModal();
+      });
+    }
   },
 
   exportLeadsCSV(userLeads) {
