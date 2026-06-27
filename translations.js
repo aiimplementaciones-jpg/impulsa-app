@@ -198,7 +198,8 @@ const translations = {
     sup_test_send_btn: "Probar Proxy /api/support",
     sup_chat_widget_title: "Soporte IMPULSA",
     sup_chat_widget_input: "Escribe tu consulta...",
-    sup_chat_agent_welcome: "¡Hola! Soy el asistente virtual de IMPULSA. ¿En qué puedo ayudarte hoy?"
+    sup_chat_agent_welcome: "¡Hola! Soy el asistente virtual de IMPULSA. ¿En qué puedo ayudarte hoy?",
+    sup_chat_notice_text: "🤖 <strong>Chat Bot IA:</strong> Resuelve dudas y consulta sobre la app y su funcionamiento aquí."
   },
   en: {
     // General
@@ -393,7 +394,8 @@ const translations = {
     sup_test_send_btn: "Test Proxy /api/support",
     sup_chat_widget_title: "IMPULSA Support",
     sup_chat_widget_input: "Type your query...",
-    sup_chat_agent_welcome: "Hello! I am IMPULSA's virtual assistant. How can I help you today?"
+    sup_chat_agent_welcome: "Hello! I am IMPULSA's virtual assistant. How can I help you today?",
+    sup_chat_notice_text: "🤖 <strong>AI Chat Bot:</strong> Resolve doubts and ask anything about the app and its functions here."
   }
 };
 

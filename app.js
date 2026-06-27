@@ -136,6 +136,41 @@ const App = {
       });
     }
 
+    // Cargar Habladores NFC desde Storage o precargar datos iniciales
+    try {
+      const storedNfc = Storage.getItem('impulsa_nfc_tags');
+      if (storedNfc) {
+        this.State.nfcTags = JSON.parse(storedNfc);
+      } else {
+        this.State.nfcTags = [
+          { 
+            id: 'NFC-IMP-9841', 
+            tenantId: 'demo-1', 
+            tenantName: 'Restaurante Gourmet El Patio', 
+            locationId: 'demo-loc-1', 
+            locationName: 'Sede Principal', 
+            type: 'acrylic', 
+            status: 'active', 
+            taps: 124 
+          },
+          { 
+            id: 'NFC-IMP-5421', 
+            tenantId: 'demo-2', 
+            tenantName: 'Café Express', 
+            locationId: 'demo-loc-2', 
+            locationName: 'Sucursal Centro', 
+            type: 'sticker', 
+            status: 'active', 
+            taps: 48 
+          }
+        ];
+        Storage.setItem('impulsa_nfc_tags', JSON.stringify(this.State.nfcTags));
+      }
+    } catch (e) {
+      console.error('Error cargando NFC tags:', e);
+      this.State.nfcTags = [];
+    }
+
     this.applyTheme();
     this.bindGlobalEvents();
     
@@ -568,11 +603,19 @@ const App = {
     const sidebar = document.querySelector('.sidebar');
     const bottomNav = document.querySelector('.bottom-nav');
     const chatBubble = document.getElementById('chat-bubble');
+    const chatNotice = document.getElementById('chat-notice-container');
 
     if (header) header.style.display = '';
     if (sidebar) sidebar.style.display = '';
     if (bottomNav) bottomNav.style.display = '';
     if (chatBubble) chatBubble.style.display = '';
+    if (chatNotice) {
+      if (Storage.getItem('impulsa_chat_notice_closed') !== 'true') {
+        chatNotice.style.display = 'block';
+      } else {
+        chatNotice.style.display = 'none';
+      }
+    }
 
     // Manejo de la ruta del Portal de Calificación del Cliente
     if (hash.startsWith('#portal')) {
@@ -581,6 +624,7 @@ const App = {
       if (sidebar) sidebar.style.display = 'none';
       if (bottomNav) bottomNav.style.display = 'none';
       if (chatBubble) chatBubble.style.display = 'none';
+      if (chatNotice) chatNotice.style.display = 'none';
       
       const urlParams = new URLSearchParams(hash.substring(hash.indexOf('?')));
       const locationId = urlParams.get('id');
@@ -4114,6 +4158,7 @@ const App = {
         <button class="admin-tab-btn active" data-tab="leads"><i data-lucide="message-square"></i> <span data-i18n="admin_leads_tab">Opiniones Globales</span></button>
         <button class="admin-tab-btn" data-tab="marketing"><i data-lucide="megaphone"></i> <span>Mercadeo</span></button>
         <button class="admin-tab-btn" data-tab="requests"><i data-lucide="sparkles"></i> <span>Solicitudes</span></button>
+        <button class="admin-tab-btn" data-tab="nfc"><i data-lucide="smartphone"></i> <span>Habladores NFC (Beta)</span></button>
         <button class="admin-tab-btn" data-tab="tenants"><i data-lucide="users"></i> <span data-i18n="admin_users_tab">Cuentas de Comercios</span></button>
         <button class="admin-tab-btn" data-tab="plans"><i data-lucide="credit-card"></i> <span>Gestionar Planes</span></button>
         <button class="admin-tab-btn" data-tab="terminal"><i data-lucide="terminal"></i> <span data-i18n="admin_logs_tab">Consola de Servidor</span></button>
@@ -4478,6 +4523,9 @@ const App = {
           }
         });
       });
+    } else if (tab === 'nfc') {
+      this.addLog('GET', `Súper Admin: Cargando módulo beta de Habladores NFC`);
+      this.renderNFCTabContent(tabContent);
     } else if (tab === 'terminal') {
       this.addLog('GET', `Súper Admin: Cargando consola segura de API Proxy`);
       tabContent.innerHTML = `
@@ -4775,6 +4823,305 @@ const App = {
     } else {
       alert("Error: Supabase no está conectado.");
     }
+  },
+
+  // ==========================================================================
+  // 📱 MÓDULO SUPER ADMIN: GESTIÓN DE HABLADORES NFC / NFS (Beta)
+  // ==========================================================================
+  renderNFCTabContent(tabContent) {
+    const defaultUsers = [
+      { id: 'demo-1', businessName: 'Restaurante Gourmet El Patio' },
+      { id: 'demo-2', businessName: 'Café Express' }
+    ];
+    const defaultLocations = [
+      { id: 'demo-loc-1', userId: 'demo-1', name: 'Sede Principal' },
+      { id: 'demo-loc-2', userId: 'demo-2', name: 'Sucursal Centro' }
+    ];
+
+    const users = this.State.users && this.State.users.length > 0 ? this.State.users : defaultUsers;
+    const locations = this.State.locations && this.State.locations.length > 0 ? this.State.locations : defaultLocations;
+
+    const userSelectOptions = users.map(u => `<option value="${u.id}">${u.businessName}</option>`).join('');
+
+    tabContent.innerHTML = `
+      <div class="card" style="border-top: 4px solid var(--color-brand); margin-bottom: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <h3 class="card-title" style="margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
+              <i data-lucide="smartphone"></i> Habladores Inteligentes NFC / NFS
+            </h3>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0;">
+              Exclusivo de Súper Administrador. Prepara e implementa habladores físicos con microchips de aproximación para capturar reseñas.
+            </p>
+          </div>
+          <span style="font-size: 0.7rem; background: var(--color-accent); color: white; padding: 4px 10px; border-radius: 100px; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em;">BETA / PRÓXIMAMENTE</span>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr; gap: 20px; margin-bottom: 24px;" class="pricing-tabs">
+        <!-- FORMULARIO DE REGISTRO -->
+        <div class="card" style="padding: 20px;">
+          <h4 style="margin-bottom: 16px; font-size: 0.95rem; font-weight: 600; display: flex; align-items: center; gap: 6px;">
+            <i data-lucide="plus-circle" style="color: var(--color-brand); width: 18px;"></i> Vincular Nuevo Hablador NFC
+          </h4>
+          <form id="nfc-vinculacion-form" style="display: flex; flex-direction: column; gap: 12px;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" style="font-size: 0.75rem; margin-bottom: 4px;">Comercio Destino</label>
+              <select class="form-control" id="nfc-user-select" required style="height: 38px; font-size: 0.85rem;">
+                ${userSelectOptions}
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" style="font-size: 0.75rem; margin-bottom: 4px;">Sucursal Asociada</label>
+              <select class="form-control" id="nfc-location-select" required style="height: 38px; font-size: 0.85rem;">
+                <!-- Dinámico -->
+              </select>
+            </div>
+            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-size: 0.75rem; margin-bottom: 4px;">Tipo de Dispositivo</label>
+                <select class="form-control" id="nfc-type-select" style="height: 38px; font-size: 0.85rem;">
+                  <option value="acrylic">Hablador Acrílico de Mesa</option>
+                  <option value="sticker">Sticker NFC Adhesivo</option>
+                  <option value="keychain">Llavero Inteligente</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-size: 0.75rem; margin-bottom: 4px;">Estado del Chip</label>
+                <select class="form-control" id="nfc-status-select" style="height: 38px; font-size: 0.85rem;">
+                  <option value="active">Activo / En Producción</option>
+                  <option value="setup">En Configuración / Pruebas</option>
+                  <option value="inactive">Inactivo</option>
+                </select>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary" style="height: 40px; margin-top: 8px;">
+              <i data-lucide="link-2"></i> Vincular y Grabar Chip
+            </button>
+          </form>
+        </div>
+
+        <!-- SIMULADOR DE LECTURA -->
+        <div class="card" style="padding: 20px; background: linear-gradient(135deg, rgba(79, 70, 229, 0.02), rgba(14, 165, 233, 0.02)); border: 1px dashed rgba(79, 70, 229, 0.2);">
+          <h4 style="margin-bottom: 8px; font-size: 0.95rem; font-weight: 600; display: flex; align-items: center; gap: 6px;">
+            <i data-lucide="smartphone" style="color: var(--color-accent); width: 18px;"></i> Simulador Físico NFC (Tap de Cliente)
+          </h4>
+          <p style="font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 16px;">
+            Pon a prueba cómo respondería la app cuando un cliente acerque su smartphone al hablador NFC físico.
+          </p>
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px 0; gap: 12px;">
+            <div class="form-group" style="width: 100%; max-width: 280px; margin-bottom: 0;">
+              <label class="form-label" style="font-size: 0.72rem; text-align: center; display: block; margin-bottom: 6px;">Selecciona el Hablador a Testear</label>
+              <select class="form-control" id="nfc-sim-select" style="height: 38px; font-size: 0.85rem; text-align-last: center;">
+                <!-- Dinámico -->
+              </select>
+            </div>
+            <button class="btn btn-accent" id="nfc-sim-btn" style="height: 48px; border-radius: 24px; padding: 0 24px; font-weight: 600; width: 100%; max-width: 280px; box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3); display: flex; align-items: center; justify-content: center; gap: 8px;">
+              📱 SIMULAR LECTURA NFC (TAP)
+            </button>
+            <div id="nfc-sim-feedback" style="display: none; width: 100%; max-width: 280px; text-align: center; font-size: 0.8rem; padding: 10px; border-radius: 8px; margin-top: 4px;">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LISTADO DE HABLADORES REGISTRADOS -->
+      <div class="leads-table-container">
+        <h4 style="margin-bottom: 12px; font-size: 0.95rem; font-weight: 600; display: flex; align-items: center; gap: 6px; padding: 0 4px;">
+          <i data-lucide="list" style="color: var(--text-secondary); width: 18px;"></i> Chips NFC / NFS Vinculados
+        </h4>
+        <table class="leads-table">
+          <thead>
+            <tr>
+              <th>ID Chip</th>
+              <th>Comercio</th>
+              <th>Sucursal Asociada</th>
+              <th>Tipo</th>
+              <th>Estado</th>
+              <th style="text-align: center;">Taps (Lecturas)</th>
+              <th>Enlace Destino</th>
+              <th style="text-align: center;">Acción</th>
+            </tr>
+          </thead>
+          <tbody id="nfc-tags-tbody">
+            <!-- Dinámico -->
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    const userSelect = document.getElementById('nfc-user-select');
+    const locationSelect = document.getElementById('nfc-location-select');
+    
+    // Función para actualizar locaciones del formulario
+    const updateLocations = () => {
+      if (!userSelect || !locationSelect) return;
+      const selectedUser = userSelect.value;
+      const filteredLocs = locations.filter(loc => loc.userId === selectedUser || loc.tenantId === selectedUser);
+      if (filteredLocs.length === 0) {
+        locationSelect.innerHTML = '<option value="">Sin sucursales</option>';
+      } else {
+        locationSelect.innerHTML = filteredLocs.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
+      }
+    };
+
+    if (userSelect) {
+      userSelect.addEventListener('change', updateLocations);
+      updateLocations(); // Carga inicial
+    }
+
+    // Renderizar listado de tags
+    const renderTagsList = () => {
+      const tbody = document.getElementById('nfc-tags-tbody');
+      const simSelect = document.getElementById('nfc-sim-select');
+      if (!tbody) return;
+
+      if (!this.State.nfcTags || this.State.nfcTags.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:30px; color:var(--text-secondary);">No hay habladores NFC registrados. ¡Vincula el primero arriba!</td></tr>';
+        if (simSelect) simSelect.innerHTML = '<option value="">No hay chips disponibles</option>';
+        return;
+      }
+
+      tbody.innerHTML = this.State.nfcTags.map(tag => {
+        const realUser = users.find(u => u.id === tag.tenantId);
+        const realLoc = locations.find(l => l.id === tag.locationId);
+        
+        const tenantName = realUser ? realUser.businessName : tag.tenantName;
+        const locationName = realLoc ? realLoc.name : tag.locationName;
+        const targetUrl = realLoc ? `${window.location.origin}${window.location.pathname}#portal?id=${realLoc.id}` : `${window.location.origin}${window.location.pathname}#portal?id=demo`;
+
+        const typeLabel = tag.type === 'acrylic' ? '🎨 Acrílico Mesa' : tag.type === 'sticker' ? '🏷️ Sticker Mesa' : '🔑 Llavero Config';
+        const statusLabel = tag.status === 'active' ? 'Activo' : tag.status === 'setup' ? 'Configuración' : 'Inactivo';
+        const statusColor = tag.status === 'active' ? 'var(--color-success)' : tag.status === 'setup' ? 'var(--color-warning)' : 'var(--text-secondary)';
+
+        return `
+          <tr>
+            <td><code style="font-weight: 700; color: var(--color-brand);">${tag.id}</code></td>
+            <td><strong>${tenantName}</strong></td>
+            <td><strong>${locationName}</strong></td>
+            <td style="font-size: 0.8rem;">${typeLabel}</td>
+            <td><span class="status-badge" style="background: rgba(0,0,0,0.05); color: ${statusColor}; border-left: 3px solid ${statusColor}; font-size: 0.7rem; border-radius: 4px; padding: 2px 6px;">${statusLabel}</span></td>
+            <td style="text-align: center; font-weight: 700; color: var(--color-accent);">${tag.taps}</td>
+            <td>
+              <a href="${targetUrl}" target="_blank" style="font-size: 0.72rem; color: var(--color-brand); text-decoration: none; word-break: break-all;">
+                ${targetUrl.substring(0, 45)}...
+              </a>
+            </td>
+            <td style="text-align: center; white-space: nowrap;">
+              <button class="btn btn-secondary delete-nfc-btn" data-id="${tag.id}" style="padding: 4px 8px; font-size: 0.72rem; width: auto; color: var(--color-danger); border-color: rgba(244,63,94,0.2);">
+                <i data-lucide="trash-2" style="width: 12px; height: 12px;"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      // Cargar selector del simulador
+      if (simSelect) {
+        simSelect.innerHTML = this.State.nfcTags.map(tag => {
+          const realLoc = locations.find(l => l.id === tag.locationId);
+          const locName = realLoc ? realLoc.name : tag.locationName;
+          return `<option value="${tag.id}">${tag.id} (${locName})</option>`;
+        }).join('');
+      }
+
+      // Re-vincular eventos de eliminación
+      document.querySelectorAll('.delete-nfc-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.getAttribute('data-id');
+          if (confirm(`¿Estás seguro de desvincular el chip NFC ${id}?`)) {
+            this.State.nfcTags = this.State.nfcTags.filter(t => t.id !== id);
+            Storage.setItem('impulsa_nfc_tags', JSON.stringify(this.State.nfcTags));
+            this.addLog('SYSTEM', `ADMIN: Chip NFC ${id} eliminado.`);
+            renderTagsList();
+          }
+        });
+      });
+
+      lucide.createIcons();
+    };
+
+    renderTagsList();
+
+    // Evento de creación de tag NFC
+    const nfcForm = document.getElementById('nfc-vinculacion-form');
+    if (nfcForm) {
+      nfcForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const selectedUserId = userSelect.value;
+        const selectedLocId = locationSelect.value;
+
+        const userObj = users.find(u => u.id === selectedUserId);
+        const locObj = locations.find(l => l.id === selectedLocId);
+
+        if (!userObj || !locObj) {
+          alert("Selecciona un comercio y una sucursal válidos.");
+          return;
+        }
+
+        const newId = 'NFC-IMP-' + Math.floor(1000 + Math.random() * 9000);
+        const newTag = {
+          id: newId,
+          tenantId: selectedUserId,
+          tenantName: userObj.businessName,
+          locationId: selectedLocId,
+          locationName: locObj.name,
+          type: document.getElementById('nfc-type-select').value,
+          status: document.getElementById('nfc-status-select').value,
+          taps: 0
+        };
+
+        this.State.nfcTags.push(newTag);
+        Storage.setItem('impulsa_nfc_tags', JSON.stringify(this.State.nfcTags));
+
+        this.addLog('SYSTEM', `ADMIN: Chip NFC ${newId} vinculado a la sucursal "${locObj.name}" de ${userObj.businessName}`);
+        alert(`¡Dispositivo NFC ${newId} vinculado y listo para distribución!`);
+        
+        renderTagsList();
+      });
+    }
+
+    // Simulador de Tap
+    const simBtn = document.getElementById('nfc-sim-btn');
+    const feedback = document.getElementById('nfc-sim-feedback');
+
+    if (simBtn) {
+      simBtn.addEventListener('click', () => {
+        const simSelect = document.getElementById('nfc-sim-select');
+        const tagId = simSelect ? simSelect.value : '';
+        if (!tagId) {
+          alert("No hay chips disponibles para simular.");
+          return;
+        }
+
+        const tag = this.State.nfcTags.find(t => t.id === tagId);
+        if (!tag) return;
+
+        // Incrementar contador de taps
+        tag.taps += 1;
+        Storage.setItem('impulsa_nfc_tags', JSON.stringify(this.State.nfcTags));
+        renderTagsList();
+
+        feedback.style.display = 'block';
+        feedback.style.background = 'rgba(16, 185, 129, 0.1)';
+        feedback.style.color = 'var(--color-success)';
+        feedback.style.border = '1px solid rgba(16, 185, 129, 0.2)';
+        feedback.innerHTML = `📱 <strong>[NFC Tap Exitoso]</strong> Leyendo chip <strong>${tagId}</strong>... Redirigiendo al portal.`;
+
+        // Registrar en logs del Admin
+        this.addLog('GET', `NFC SIM: Dispositivo ${tagId} detectado por smartphone. Redirección en marcha.`);
+
+        setTimeout(() => {
+          feedback.style.display = 'none';
+          const targetUrl = tag.locationId && tag.locationId !== 'demo-loc-1' && tag.locationId !== 'demo-loc-2'
+            ? `${window.location.origin}${window.location.pathname}#portal?id=${tag.locationId}`
+            : `${window.location.origin}${window.location.pathname}#portal?id=demo`;
+          window.open(targetUrl, '_blank');
+        }, 1500);
+      });
+    }
+
+    lucide.createIcons();
   },
 
   // ==========================================================================
@@ -5408,12 +5755,34 @@ const App = {
     const chatInput = document.getElementById('chat-input');
     const messagesContainer = document.getElementById('chat-messages-container');
 
+    const chatNotice = document.getElementById('chat-notice-container');
+    const closeNoticeBtn = document.getElementById('close-chat-notice-btn');
+
     if (!chatBubble || !chatSheet) return;
+
+    // Mostrar aviso si no ha sido cerrado previamente
+    if (chatNotice && Storage.getItem('impulsa_chat_notice_closed') !== 'true') {
+      chatNotice.style.display = 'block';
+    }
+
+    if (closeNoticeBtn && chatNotice) {
+      closeNoticeBtn.addEventListener('click', (e) => {
+        e.stopPropagation(); // Evitar que el click se propague a la burbuja del chat
+        chatNotice.style.display = 'none';
+        Storage.setItem('impulsa_chat_notice_closed', 'true');
+      });
+    }
 
     chatBubble.addEventListener('click', () => {
       chatSheet.classList.add('active');
       // NUEVO: Cargar historial de mensajes al abrir
       this.renderChatHistory();
+      
+      // Ocultar aviso al abrir el chat
+      if (chatNotice) {
+        chatNotice.style.display = 'none';
+        Storage.setItem('impulsa_chat_notice_closed', 'true');
+      }
     });
 
     closeChatBtn.addEventListener('click', () => {

@@ -1543,3 +1543,138 @@ h1, h2, h3, h4, h5, h6 {
   margin: 0 auto;
 }
 
+/* ==========================================================================
+   🤖 CHAT BOT NOTICE & BADGE PREMIUM STYLES
+   ========================================================================== */
+
+/* Globito de aviso del Chat Bot */
+.chat-widget-notice-container {
+  position: fixed;
+  bottom: 88px;
+  right: 84px;
+  z-index: 1000;
+  width: 250px;
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  box-shadow: var(--shadow-md);
+  animation: noticeFadeIn 0.5s ease-out;
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
+}
+
+.chat-notice-bubble {
+  position: relative;
+}
+
+.chat-notice-close {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: none;
+  border: none;
+  font-size: 16px;
+  font-weight: bold;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 2px 6px;
+  line-height: 1;
+}
+
+.chat-notice-close:hover {
+  color: var(--color-danger);
+}
+
+.chat-notice-text {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+/* Triangulito que apunta a la burbuja del chat */
+.chat-widget-notice-container::after {
+  content: '';
+  position: absolute;
+  right: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-width: 8px 0 8px 8px;
+  border-style: solid;
+  border-color: transparent transparent transparent var(--bg-card);
+  display: block;
+  width: 0;
+  z-index: 2;
+}
+
+.chat-widget-notice-container::before {
+  content: '';
+  position: absolute;
+  right: -9px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-width: 8px 0 8px 8px;
+  border-style: solid;
+  border-color: transparent transparent transparent var(--border-color);
+  display: block;
+  width: 0;
+  z-index: 1;
+}
+
+/* Badge en la burbuja */
+.chat-bot-icon-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background-color: var(--color-accent);
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 10px;
+  border: 2px solid var(--color-brand);
+  box-shadow: var(--shadow-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+@keyframes noticeFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Adaptación responsive para pantallas más anchas que cambian la burbuja */
+@media (min-width: 768px) {
+  .chat-widget-notice-container {
+    bottom: 32px;
+    right: 92px;
+  }
+}
+
+/* Adaptación responsive para móviles muy pequeños */
+@media (max-width: 380px) {
+  .chat-widget-notice-container {
+    right: 16px;
+    bottom: 144px;
+    width: calc(100% - 32px);
+  }
+  .chat-widget-notice-container::after, .chat-widget-notice-container::before {
+    right: 20px;
+    top: auto;
+    bottom: -8px;
+    transform: none;
+    border-width: 8px 8px 0 8px;
+    border-color: var(--bg-card) transparent transparent transparent;
+  }
+  .chat-widget-notice-container::before {
+    bottom: -9px;
+    border-color: var(--border-color) transparent transparent transparent;
+  }
+}
+
