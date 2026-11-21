@@ -300,10 +300,10 @@ async function callGeminiApi({ systemInstruction, prompt }) {
 
 function runAgyStep({ agent, prompt, onData }) {
   return new Promise((resolve, reject) => {
-    const args = ['--agent', agent, '--mode', 'accept-edits', '-p', prompt];
+    const args = ['--agent', agent, '--mode', 'accept-edits', '--dangerously-skip-permissions', '-p', prompt];
     const child = spawn('agy', args, {
       cwd: ROOT_DIR,
-      shell: false,
+      shell: true,
       env: { ...process.env },
     });
 

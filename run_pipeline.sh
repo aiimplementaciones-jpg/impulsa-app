@@ -12,8 +12,8 @@ fi
 
 TEMA="$1"
 
-# Opciones comunes del CLI de Antigravity (modo no interactivo, auto-aprobar ediciones)
-AGY_FLAGS=(--mode accept-edits)
+# Opciones comunes del CLI de Antigravity (modo no interactivo, auto-aprobar ediciones y permisos)
+AGY_FLAGS=(--mode accept-edits --dangerously-skip-permissions)
 
 # Generar un slug limpio (ej. "Cómo automatizar..." -> "como-automatizar...")
 SLUG=$(echo "$TEMA" | iconv -t ascii//TRANSLIT | tr -d "'\"\`^~" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g' | sed -E 's/^-+|-+$//g')

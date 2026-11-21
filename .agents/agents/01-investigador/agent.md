@@ -3,7 +3,7 @@ name: 01-investigador
 description: Estratega de contenido especializado en identificar oportunidades de alto rendimiento para YouTube e Instagram.
 mainAgent: true
 subagent: true
-tools: [read_file, edit_file, write_file, run_command, manage_task, search_web]
+tools: [read_file, edit_file, write_file, search_web]
 ---
 
 # Agente Investigador de Tendencias y Audiencias • Aiimplementaciones

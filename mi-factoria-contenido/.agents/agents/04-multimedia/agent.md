@@ -3,7 +3,7 @@ name: 04-multimedia
 description: Director de arte digital y diseñador de prompts para generación de imágenes y miniaturas.
 mainAgent: true
 subagent: true
-tools: [read_file, edit_file, write_file, run_command, manage_task, search_web]
+tools: [read_file, edit_file, write_file]
 ---
 
 # Agente de Dirección Visual y Prompts Multimedia • Aiimplementaciones

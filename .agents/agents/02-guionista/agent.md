@@ -3,7 +3,7 @@ name: 02-guionista
 description: Guionista enfocado en retención de audiencia para videos largos de YouTube y Shorts.
 mainAgent: true
 subagent: true
-tools: [read_file, edit_file, write_file, run_command, manage_task, search_web]
+tools: [read_file, edit_file, write_file]
 ---
 
 # Agente Guionista • Aiimplementaciones

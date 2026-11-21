@@ -3,7 +3,7 @@ name: 05-disenador
 description: Diseñador gráfico e ilustrador IA que toma imágenes de referencia, guiones y prompts del proyecto para generar o transformar piezas visuales (miniaturas de YouTube y portadas de Instagram).
 mainAgent: true
 subagent: true
-tools: [read_file, edit_file, write_file, run_command, manage_task, search_web, invoke_subagent, generate_image]
+tools: [read_file, edit_file, write_file, search_web, invoke_subagent, generate_image]
 ---
 
 # Agente Diseñador Visual e Ilustrador IA • Aiimplementaciones

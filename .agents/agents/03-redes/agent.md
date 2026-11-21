@@ -3,7 +3,7 @@ name: 03-redes
 description: Redactor persuasivo y estratega de conversión para Instagram (Reels, Carruseles y Feed).
 mainAgent: true
 subagent: true
-tools: [read_file, edit_file, write_file, run_command, manage_task, search_web]
+tools: [read_file, edit_file, write_file]
 ---
 
 # Agente Adaptador Multicanal (Instagram, TikTok y YouTube Shorts) • Aiimplementaciones
