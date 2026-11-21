@@ -1,0 +1,29 @@
+{
+  "01": {
+    "part": "Gancho",
+    "out_name": "Gancho 02.mp4",
+    "state": "done",
+    "job_id": "f15d933a",
+    "file": "2026-11-15-20h39m50s_seed562959346_For the target video, at 0.00 seconds into the tar.mp4",
+    "width": 544,
+    "height": 960,
+    "frames_out": 447,
+    "duration": 18.625,
+    "finished": "2026-11-16T03:19:36.112Z"
+  },
+  "02": {
+    "part": "Dolor",
+    "state": "error",
+    "error": "get_creation_context: Error executing tool get_creation_context: {\"detail\": {\"code\": \"maestro_access_denied\", \"message\": \"Agents may use registered media and Maestro storage paths; upload external files first\", \"login_url\": \"https://127.0.0.1:54318\"}}"
+  },
+  "03": {
+    "part": "Solucion",
+    "state": "error",
+    "error": "get_creation_context: Error executing tool get_creation_context: {\"detail\": {\"code\": \"maestro_access_denied\", \"message\": \"Agents may use registered media and Maestro storage paths; upload external files first\", \"login_url\": \"https://127.0.0.1:54318\"}}"
+  },
+  "04": {
+    "part": "CTA",
+    "state": "error",
+    "error": "get_creation_context: Error executing tool get_creation_context: {\"detail\": {\"code\": \"maestro_access_denied\", \"message\": \"Agents may use registered media and Maestro storage paths; upload external files first\", \"login_url\": \"https://127.0.0.1:54318\"}}"
+  }
+}

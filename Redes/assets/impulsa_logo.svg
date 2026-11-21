@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b132b" />
+      <stop offset="45%" stop-color="#1c2541" />
+      <stop offset="100%" stop-color="#0a1128" />
+    </linearGradient>
+
+    <!-- Tech Glow Gradient -->
+    <linearGradient id="primaryGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366f1" />
+      <stop offset="50%" stop-color="#4f46e5" />
+      <stop offset="100%" stop-color="#06b6d4" />
+    </linearGradient>
+
+    <!-- Rocket Body Gradient -->
+    <linearGradient id="rocketBody" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="60%" stop-color="#e2e8f0" />
+      <stop offset="100%" stop-color="#94a3b8" />
+    </linearGradient>
+
+    <!-- Flame Gradient -->
+    <linearGradient id="flameGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b" />
+      <stop offset="40%" stop-color="#f97316" />
+      <stop offset="100%" stop-color="#ef4444" />
+    </linearGradient>
+
+    <!-- Gold Star Gradient -->
+    <linearGradient id="starGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="50%" stop-color="#facc15" />
+      <stop offset="100%" stop-color="#eab308" />
+    </linearGradient>
+
+    <!-- Cyan Energy Gradient -->
+    <linearGradient id="energyGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#22d3ee" />
+      <stop offset="100%" stop-color="#3b82f6" />
+    </linearGradient>
+
+    <!-- Drop Shadows -->
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="10" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Base Rounded Container with subtle stroke -->
+  <rect x="16" y="16" width="480" height="480" rx="110" fill="url(#bgGrad)" stroke="rgba(99, 102, 241, 0.4)" stroke-width="4"/>
+
+  <!-- Outer Energy Ring -->
+  <circle cx="256" cy="240" r="185" fill="none" stroke="url(#energyGrad)" stroke-width="3" stroke-dasharray="14 10" opacity="0.35"/>
+  <circle cx="256" cy="240" r="160" fill="none" stroke="url(#primaryGlow)" stroke-width="2" opacity="0.45"/>
+
+  <!-- Ambient Light Pulses -->
+  <circle cx="370" cy="130" r="80" fill="#6366f1" opacity="0.25" filter="url(#glow)"/>
+  <circle cx="150" cy="340" r="90" fill="#06b6d4" opacity="0.2" filter="url(#glow)"/>
+
+  <!-- 5 Golden Rating Stars Arc -->
+  <g id="stars" fill="url(#starGrad)" stroke="#ca8a04" stroke-width="0.5">
+    <!-- Star 1 -->
+    <polygon points="120,125 125,138 139,139 128,148 132,161 120,153 108,161 112,148 101,139 115,138" />
+    <!-- Star 2 -->
+    <polygon points="182,90 188,104 203,105 191,114 195,128 182,120 169,128 173,114 161,105 176,104" />
+    <!-- Star 3 (Center Top) -->
+    <polygon points="256,72 263,88 280,89 267,100 271,116 256,107 241,116 245,100 232,89 249,88" transform="scale(1.1) translate(-23, -8)"/>
+    <!-- Star 4 -->
+    <polygon points="330,90 336,104 351,105 339,114 343,128 330,120 317,128 321,114 309,105 324,104" />
+    <!-- Star 5 -->
+    <polygon points="392,125 397,138 411,139 400,148 404,161 392,153 380,161 384,148 373,139 387,138" />
+  </g>
+
+  <!-- Central Emblem: Stylized 3D Rocket & Lightning -->
+  <g transform="translate(256, 235) rotate(-15) translate(-256, -235)">
+    <!-- Rocket Flame -->
+    <path d="M 235 295 Q 256 385 256 405 Q 256 385 277 295 Z" fill="url(#flameGrad)" opacity="0.95" filter="url(#glow)"/>
+    <path d="M 244 295 Q 256 355 256 370 Q 256 355 268 295 Z" fill="#fef08a" opacity="0.95"/>
+
+    <!-- Left Fin -->
+    <path d="M 215 285 L 180 325 Q 200 330 225 315 Z" fill="#3b82f6" />
+    <!-- Right Fin -->
+    <path d="M 297 285 L 332 325 Q 312 330 287 315 Z" fill="#1d4ed8" />
+
+    <!-- Rocket Body -->
+    <path d="M 256 125 Q 295 180 295 285 L 217 285 Q 217 180 256 125 Z" fill="url(#rocketBody)" stroke="#cbd5e1" stroke-width="2"/>
+
+    <!-- Rocket Nosecone Accent (Electric Indigo) -->
+    <path d="M 256 125 Q 275 160 280 185 L 232 185 Q 237 160 256 125 Z" fill="url(#primaryGlow)"/>
+
+    <!-- Porthole Window -->
+    <circle cx="256" cy="225" r="26" fill="#0f172a" stroke="#38bdf8" stroke-width="4"/>
+    <circle cx="256" cy="225" r="18" fill="url(#energyGrad)"/>
+    <circle cx="251" cy="220" r="6" fill="#ffffff" opacity="0.8"/>
+
+    <!-- Power Lightning Bolt Overlaid -->
+    <polygon points="262,260 242,286 254,286 246,310 270,280 258,280" fill="#fbbf24" stroke="#ffffff" stroke-width="1.5" filter="url(#glow)"/>
+  </g>
+
+  <!-- Wordmark Banner "IMPULSA" at bottom -->
+  <g transform="translate(0, 420)">
+    <!-- Pill Backdrop -->
+    <rect x="116" y="0" width="280" height="52" rx="26" fill="rgba(15, 23, 42, 0.85)" stroke="url(#energyGrad)" stroke-width="2"/>
+    <text x="256" y="34" font-family="'Plus Jakarta Sans', 'Outfit', system-ui, -apple-system, sans-serif" font-size="28" font-weight="900" fill="#ffffff" letter-spacing="4" text-anchor="middle">
+      IMPULSA
+    </text>
+  </g>
+</svg>

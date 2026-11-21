@@ -1,0 +1,22 @@
+{
+  "name": "factoria-contenido-aiimplementaciones",
+  "version": "1.0.0",
+  "description": "Factoría de Agentes de Contenido y Diseño IA para Aiimplementaciones",
+  "main": "factoria-server.js",
+  "scripts": {
+    "start": "node factoria-server.js"
+  },
+  "keywords": [
+    "agentes",
+    "inteligencia-artificial",
+    "contenido",
+    "reels",
+    "shorts",
+    "tiktok"
+  ],
+  "author": "Aiimplementaciones",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

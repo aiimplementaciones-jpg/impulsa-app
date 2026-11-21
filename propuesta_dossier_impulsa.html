@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dossier Ejecutivo de Reputación • IMPULSA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #070a13;
+      --bg-card: rgba(15, 23, 42, 0.75);
+      --bg-card-border: rgba(56, 189, 248, 0.25);
+      --cyan-neon: #00f2fe;
+      --cyan-glow: rgba(0, 242, 254, 0.35);
+      --gold-star: #fbbf24;
+      --gold-glow: rgba(251, 191, 36, 0.4);
+      --red-alert: #f43f5e;
+      --green-ok: #10b981;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      background-image: 
+        radial-gradient(circle at 15% 20%, rgba(6, 182, 212, 0.12) 0%, transparent 40%),
+        radial-gradient(circle at 85% 80%, rgba(59, 130, 246, 0.12) 0%, transparent 40%),
+        radial-gradient(circle at 50% 50%, rgba(251, 191, 36, 0.05) 0%, transparent 50%);
+      min-height: 100vh;
+      padding: 40px 20px;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    /* Top Floating Bar for Client Demo */
+    .top-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      padding: 14px 24px;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--bg-card-border);
+      border-radius: 16px;
+    }
+
+    .brand-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 1.2rem;
+      letter-spacing: 1px;
+      color: #fff;
+    }
+
+    .brand-badge span {
+      color: var(--cyan-neon);
+      text-shadow: 0 0 12px var(--cyan-glow);
+    }
+
+    .action-btn {
+      background: linear-gradient(135deg, #0ea5e9, #0284c7);
+      color: white;
+      border: none;
+      padding: 9px 18px;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+
+    .action-btn:hover {
+      box-shadow: 0 0 16px var(--cyan-glow);
+      transform: translateY(-1px);
+    }
+
+    .action-btn.secondary {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    /* Hero Section */
+    .hero-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--bg-card-border);
+      border-radius: 24px;
+      padding: 40px;
+      margin-bottom: 30px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    }
+
+    .hero-card::before {
+      content: '';
+      position: absolute;
+      top: -100px;
+      right: -100px;
+      width: 250px;
+      height: 250px;
+      background: var(--cyan-neon);
+      filter: blur(140px);
+      opacity: 0.25;
+      pointer-events: none;
+    }
+
+    .tag-prospecto {
+      display: inline-block;
+      padding: 6px 14px;
+      background: rgba(6, 182, 212, 0.15);
+      border: 1px solid var(--cyan-neon);
+      color: var(--cyan-neon);
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      border-radius: 100px;
+      margin-bottom: 16px;
+    }
+
+    .hero-title {
+      font-size: 2.3rem;
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 12px;
+      color: #ffffff;
+    }
+
+    .hero-subtitle {
+      font-size: 1.15rem;
+      color: var(--text-muted);
+      max-width: 800px;
+      margin-bottom: 24px;
+    }
+
+    .merchant-highlight {
+      background: rgba(255, 255, 255, 0.04);
+      border-left: 4px solid var(--gold-star);
+      padding: 16px 20px;
+      border-radius: 0 12px 12px 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 25px;
+      align-items: center;
+    }
+
+    .merchant-item strong {
+      display: block;
+      color: #fff;
+      font-size: 1.05rem;
+    }
+
+    .merchant-item span {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    /* Grid Sections */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 30px;
+    }
+
+    @media (max-width: 768px) {
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+      .hero-title {
+        font-size: 1.8rem;
+      }
+    }
+
+    .glass-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      padding: 30px;
+      position: relative;
+    }
+
+    .glass-card.alert-card {
+      border: 1px solid rgba(244, 63, 94, 0.4);
+      background: linear-gradient(180deg, rgba(244, 63, 94, 0.08) 0%, rgba(15, 23, 42, 0.7) 100%);
+    }
+
+    .glass-card.shield-card {
+      border: 1px solid rgba(6, 182, 212, 0.4);
+      background: linear-gradient(180deg, rgba(6, 182, 212, 0.08) 0%, rgba(15, 23, 42, 0.7) 100%);
+    }
+
+    .card-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .stat-number {
+      font-size: 2.5rem;
+      font-weight: 800;
+      line-height: 1;
+      margin: 10px 0;
+    }
+
+    .stat-number.loss {
+      color: var(--red-alert);
+      text-shadow: 0 0 20px rgba(244, 63, 94, 0.3);
+    }
+
+    .stat-number.gain {
+      color: var(--green-ok);
+      text-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+    }
+
+    /* Semáforo Digital Visual */
+    .semaforo-flow {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    .flow-branch {
+      padding: 16px;
+      border-radius: 14px;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+    }
+
+    .flow-branch.five-star {
+      background: rgba(251, 191, 36, 0.1);
+      border: 1px solid rgba(251, 191, 36, 0.3);
+    }
+
+    .flow-branch.private-star {
+      background: rgba(6, 182, 212, 0.1);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+    }
+
+    .flow-icon {
+      font-size: 1.8rem;
+      line-height: 1;
+    }
+
+    /* Mockup Hablador Interactivo */
+    .mockup-section {
+      background: linear-gradient(145deg, rgba(15, 23, 42, 0.9), rgba(7, 10, 19, 0.95));
+      border: 1px solid var(--cyan-glow);
+      border-radius: 24px;
+      padding: 40px;
+      margin-bottom: 30px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .hablador-preview {
+      width: 270px;
+      height: 380px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.04) 100%);
+      backdrop-filter: blur(20px);
+      border: 3px solid rgba(255, 255, 255, 0.4);
+      border-radius: 22px;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.7), 0 0 30px var(--cyan-glow);
+      padding: 24px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      margin: 25px 0;
+      transform: perspective(1000px) rotateY(-4deg);
+      transition: transform 0.3s ease;
+    }
+
+    .hablador-preview:hover {
+      transform: perspective(1000px) rotateY(0deg) scale(1.02);
+    }
+
+    .hablador-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 100px;
+      background: rgba(6, 182, 212, 0.2);
+      border: 1px solid var(--cyan-neon);
+      color: var(--cyan-neon);
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    .hablador-title {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #fff;
+      margin-top: 10px;
+    }
+
+    .hablador-qr {
+      background: white;
+      padding: 12px;
+      border-radius: 14px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+    }
+
+    .hablador-qr img {
+      width: 140px;
+      height: 140px;
+      display: block;
+    }
+
+    .hablador-stars {
+      color: var(--gold-star);
+      font-size: 1.4rem;
+      letter-spacing: 3px;
+    }
+
+    /* Pricing Table */
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    @media (max-width: 900px) {
+      .pricing-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .price-card {
+      background: var(--bg-card);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 28px 22px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+    }
+
+    .price-card.featured {
+      border: 2px solid var(--gold-star);
+      background: linear-gradient(180deg, rgba(251, 191, 36, 0.08) 0%, rgba(15, 23, 42, 0.85) 100%);
+      box-shadow: 0 0 25px rgba(251, 191, 36, 0.2);
+    }
+
+    .badge-pop {
+      position: absolute;
+      top: -12px;
+      right: 20px;
+      background: var(--gold-star);
+      color: #000;
+      padding: 4px 12px;
+      border-radius: 100px;
+      font-size: 0.75rem;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .price-val {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #fff;
+      margin: 12px 0;
+    }
+
+    .price-val small {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    .feature-list {
+      list-style: none;
+      margin: 16px 0;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .feature-list li {
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .feature-list li::before {
+      content: '✓';
+      color: var(--cyan-neon);
+      font-weight: 800;
+    }
+
+    /* Footer & CTA */
+    .cta-banner {
+      background: linear-gradient(135deg, #0284c7, #0369a1);
+      border-radius: 20px;
+      padding: 35px;
+      text-align: center;
+      color: white;
+    }
+
+    .cta-banner h2 {
+      font-size: 1.8rem;
+      margin-bottom: 10px;
+      font-weight: 800;
+    }
+
+    .cta-banner p {
+      font-size: 1.05rem;
+      opacity: 0.9;
+      margin-bottom: 24px;
+    }
+
+    .btn-whatsapp {
+      background: #25d366;
+      color: #fff;
+      padding: 14px 28px;
+      border-radius: 12px;
+      font-weight: 800;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.1rem;
+      box-shadow: 0 10px 20px rgba(37, 211, 102, 0.3);
+      transition: all 0.2s;
+    }
+
+    .btn-whatsapp:hover {
+      transform: scale(1.03);
+    }
+
+    /* Print friendly */
+    @media print {
+      body {
+        background: #ffffff !important;
+        color: #000000 !important;
+        padding: 0;
+      }
+      .top-actions, .btn-whatsapp {
+        display: none !important;
+      }
+      .hero-card, .glass-card, .mockup-section, .price-card {
+        background: #ffffff !important;
+        border: 1px solid #ddd !important;
+        color: #000000 !important;
+        box-shadow: none !important;
+      }
+      .hero-title, .card-title, .price-val {
+        color: #000000 !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+
+    <!-- Top Action Bar -->
+    <div class="top-actions">
+      <div class="brand-badge">
+        🚀 IMPULSA <span>PRO</span>
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <button class="action-btn secondary" onclick="window.print()">
+          🖨️ Imprimir / Guardar en PDF
+        </button>
+        <a class="action-btn" href="https://impulsa.ai.studio/#home" target="_blank">
+          📱 Probar Demo en Vivo ↗
+        </a>
+      </div>
+    </div>
+
+    <!-- Hero Card -->
+    <div class="hero-card">
+      <span class="tag-prospecto">Dossier Ejecutivo Personalizado</span>
+      <h1 class="hero-title">Sistema de Reputación Contactless & Dominio en Google Maps</h1>
+      <p class="hero-subtitle">
+        Diseñado para multiplicar reseñas de 5 estrellas en 3 segundos mediante tecnología NFC Fricción Cero y blindar el prestigio de tu comercio con el Escudo Anticríticas.
+      </p>
+
+      <!-- Merchant Details Dynamic Bar -->
+      <div class="merchant-highlight">
+        <div class="merchant-item">
+          <strong>AI Implementaciones</strong>
+          <span>Comercio / Empresa Titular</span>
+        </div>
+        <div class="merchant-item">
+          <strong>Cali, Colombia</strong>
+          <span>Sede / Ciudad</span>
+        </div>
+        <div class="merchant-item">
+          <strong>Servicios Profesionales & Consultoría</strong>
+          <span>Categoría Oficial</span>
+        </div>
+        <div class="merchant-item">
+          <strong>+57 302 296 6045</strong>
+          <span>WhatsApp Registrado</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Diagnostic & Pain Point -->
+    <div class="grid-2">
+      <div class="glass-card alert-card">
+        <div class="card-title">
+          <span>⚠️</span> La Injusticia del Comercio Local (Regla 90/1)
+        </div>
+        <p style="color: var(--text-muted); font-size: 0.95rem;">
+          El <strong>90% de tus clientes satisfechos</strong> se van felices pero nunca publican una reseña. Sin embargo, basta <strong>1 solo cliente molesto</strong> por un detalle menor para publicar una calificación de 1 estrella que quedará visible para siempre.
+        </p>
+        <div class="stat-number loss">-$2.850.000 COP</div>
+        <p style="font-size: 0.85rem; color: var(--text-muted);">
+          Fuga estimada mensual de capital por calificaciones menores a 4.8★ frente a competidores cercanos.
+        </p>
+      </div>
+
+      <div class="glass-card shield-card">
+        <div class="card-title">
+          <span>🛡️</span> El Semáforo Digital (Tu Escudo Protector)
+        </div>
+        <div class="semaforo-flow">
+          <div class="flow-branch five-star">
+            <div class="flow-icon">⭐⭐⭐⭐⭐</div>
+            <div>
+              <strong style="color: #fff; font-size: 0.95rem;">Promotores (5 Estrellas)</strong>
+              <p style="font-size: 0.85rem; color: var(--text-muted);">
+                Redirección instantánea a tu ficha oficial de Google Maps en 3 segundos. Multiplicas SEO y subes al Top 3.
+              </p>
+            </div>
+          </div>
+          <div class="flow-branch private-star">
+            <div class="flow-icon">🔒</div>
+            <div>
+              <strong style="color: #fff; font-size: 0.95rem;">Contención Privada (1 a 4 Estrellas)</strong>
+              <p style="font-size: 0.85rem; color: var(--text-muted);">
+                Acceso a Google bloqueado. Se abre un formulario privado interno y recibes una alerta inmediata en tu WhatsApp para solucionar la queja antes de que sea pública.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mockup Section -->
+    <div class="mockup-section">
+      <span class="tag-prospecto" style="border-color: var(--gold-star); color: var(--gold-star);">Muestra Digital de tu Dispositivo</span>
+      <h2 style="font-size: 1.8rem; margin-top: 10px; color: #fff;">Tu Hablador Acrílico Contactless en Mesa</h2>
+      <p style="color: var(--text-muted); max-width: 600px; font-size: 0.95rem;">
+        Chip NFC industrial NTAG213 de 13.56 MHz (sin baterías, resistente a líquidos) + código QR HD de respaldo. 100% compatible con iPhone y Android sin instalar aplicaciones.
+      </p>
+
+      <!-- 3D Stand Preview -->
+      <div class="hablador-preview">
+        <div class="hablador-chip">
+          <span>⚡ NFC NTAG213</span>
+        </div>
+        <div class="hablador-stars">★★★★★</div>
+        <div class="hablador-title">AI Implementaciones</div>
+        <div style="font-size: 0.75rem; color: #cbd5e1;">Acerca tu teléfono aquí o escanea</div>
+        
+        <div class="hablador-qr">
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://impulsa.ai.studio/%23home" alt="QR Demo">
+        </div>
+
+        <div style="font-size: 0.7rem; color: #94a3b8; letter-spacing: 0.5px;">IMPULSA • Smart Reputation</div>
+      </div>
+
+      <a href="https://impulsa.ai.studio/#home" target="_blank" class="action-btn" style="padding: 12px 24px; font-size: 1rem;">
+        📲 Escanea o Toca aquí para probarlo con tu celular
+      </a>
+    </div>
+
+    <!-- Investment Table -->
+    <h2 style="text-align: center; margin-bottom: 24px; font-size: 1.8rem;">Planes de Inversión (Precios Oficiales COP)</h2>
+    <div class="pricing-grid">
+      <!-- 1 Hablador -->
+      <div class="price-card">
+        <div>
+          <h3 style="font-size: 1.2rem; color: #fff;">1 Hablador L-Stand</h3>
+          <p style="color: var(--text-muted); font-size: 0.85rem;">Para punto de cobro o recepción</p>
+          <div class="price-val">$65.000 <small>COP</small></div>
+          <ul class="feature-list">
+            <li>1 Hablador Acrílico 3mm L-Stand</li>
+            <li>Chip NFC NTAG213 + QR HD</li>
+            <li>Filtro Dual (Escudo Anticríticas)</li>
+            <li>Propiedad total: 0 mensualidades</li>
+            <li>Despacho en 3 días hábiles</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Pack 2 Habladores (Featured) -->
+      <div class="price-card featured">
+        <span class="badge-pop">Más Vendido ⭐</span>
+        <div>
+          <h3 style="font-size: 1.2rem; color: #fff;">Pack 2 Habladores</h3>
+          <p style="color: var(--text-muted); font-size: 0.85rem;">Cubre salón principal y caja</p>
+          <div class="price-val" style="color: var(--gold-star);">$115.000 <small style="color: #fff;">COP</small></div>
+          <ul class="feature-list">
+            <li>2 Habladores Acrílicos L-Stand</li>
+            <li>Ahorro inmediato de $15.000 COP</li>
+            <li>Chip NFC de alta durabilidad</li>
+            <li>Soporte de activación express</li>
+            <li>Despacho prioritario nacional</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Combo Mesa + Pared -->
+      <div class="price-card">
+        <div>
+          <h3 style="font-size: 1.2rem; color: #fff;">Combo (Mesa + Pared)</h3>
+          <p style="color: var(--text-muted); font-size: 0.85rem;">Hablador + Placa Adhesiva 3M</p>
+          <div class="price-val">$95.000 <small>COP</small></div>
+          <ul class="feature-list">
+            <li>1 Hablador Acrílico L-Stand</li>
+            <li>1 Placa Adhesiva 3M para pared/puerta</li>
+            <li>Ambos con NFC + QR dinámico</li>
+            <li>Garantía de reposición en envío</li>
+            <li>Pago seguro vía Wompi</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Monthly Plan Highlight -->
+    <div class="glass-card" style="margin-bottom: 30px; border-color: rgba(56, 189, 248, 0.4); text-align: center;">
+      <h3 style="color: var(--cyan-neon); font-size: 1.3rem; margin-bottom: 8px;">¿Deseas acompañamiento total? • Plan Mensual VIP ($95.000 COP / mes)</h3>
+      <p style="color: var(--text-muted); font-size: 0.95rem; max-width: 750px; margin: 0 auto 16px;">
+        Incluye hasta 3 sucursales, respuesta garantizada a reseñas de clientes en menos de 4 horas (con IA + supervisión humana), y reportes mensuales de reputación directamente a tu correo y WhatsApp.
+      </p>
+    </div>
+
+    <!-- CTA Final -->
+    <div class="cta-banner">
+      <h2>¿Listo para blindar tu negocio y liderar en Google Maps?</h2>
+      <p>Te enviamos tu dispositivo listo para usar, configurado con tu ficha y sin configuraciones complicadas.</p>
+      <a class="btn-whatsapp" href="https://wa.me/573022966045?text=Hola,%20vi%20el%20dossier%20de%20IMPULSA%20y%20quiero%20activar%20mi%20comercio" target="_blank">
+        💬 Chatear por WhatsApp al +57 302 296 6045
+      </a>
+    </div>
+
+  </div>
+
+</body>
+</html>

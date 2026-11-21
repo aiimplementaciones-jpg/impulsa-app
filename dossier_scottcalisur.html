@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>IMPULSA | Dossier Oficial - SCOTT Cali Sur</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 10mm 14mm 10mm 14mm;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    body {
+      background-color: #f1f5f9;
+      color: #0f172a;
+      font-size: 10.5px;
+      line-height: 1.35;
+    }
+
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      padding: 12mm 15mm;
+      margin: 10px auto;
+      background: #ffffff;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    @media print {
+      body {
+        background: transparent;
+      }
+      .page {
+        margin: 0;
+        box-shadow: none;
+        page-break-after: always;
+        width: 100%;
+        min-height: 100vh;
+        padding: 0;
+      }
+      .no-print {
+        display: none !important;
+      }
+    }
+
+    .print-bar {
+      max-width: 210mm;
+      margin: 15px auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #0f2744;
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(15, 39, 68, 0.2);
+    }
+
+    .btn-print {
+      background: #0284c7;
+      color: white;
+      border: none;
+      padding: 8px 18px;
+      font-weight: 700;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      font-size: 8.5px;
+      font-weight: 700;
+      color: #64748b;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 4px;
+      margin-bottom: 8px;
+    }
+
+    .brand-title {
+      font-size: 26px;
+      font-weight: 900;
+      color: #0b2545;
+      letter-spacing: -0.5px;
+      line-height: 1;
+    }
+
+    .brand-subtitle {
+      font-size: 10px;
+      font-weight: 800;
+      color: #0284c7;
+      letter-spacing: 0.8px;
+      margin-top: 2px;
+      padding-bottom: 5px;
+      border-bottom: 2.5px solid #0284c7;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+    }
+
+    .personal-box {
+      border: 1px solid #bae6fd;
+      background: linear-gradient(180deg, #f0f9ff 0%, #ffffff 100%);
+      border-radius: 8px;
+      padding: 9px 12px;
+      margin-bottom: 10px;
+      position: relative;
+    }
+
+    .personal-box::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: #0284c7;
+      border-radius: 8px 0 0 8px;
+    }
+
+    .tag-personal {
+      font-size: 8px;
+      font-weight: 800;
+      color: #0284c7;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+
+    .establishment-name {
+      font-size: 14px;
+      font-weight: 800;
+      color: #0c4a6e;
+      margin-bottom: 2px;
+    }
+
+    .personal-meta {
+      display: flex;
+      justify-content: space-between;
+      color: #475569;
+      font-size: 9.5px;
+      font-weight: 500;
+    }
+
+    .lead-hook {
+      border-left: 3.5px solid #0284c7;
+      padding-left: 10px;
+      font-size: 10px;
+      color: #1e293b;
+      margin-bottom: 10px;
+      line-height: 1.4;
+      background: #f8fafc;
+      padding: 6px 10px;
+      border-radius: 0 6px 6px 0;
+    }
+
+    .hablador-hero-box {
+      border: 1.5px solid #38bdf8;
+      background: linear-gradient(180deg, #f0fdfa 0%, #ffffff 100%);
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-bottom: 10px;
+      box-shadow: 0 4px 14px rgba(56, 189, 248, 0.12);
+    }
+
+    .hablador-top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .badge-dual {
+      background: #059669;
+      color: white;
+      font-size: 8px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 100px;
+      letter-spacing: 0.5px;
+    }
+
+    .hablador-layout {
+      display: grid;
+      grid-template-columns: 205px 1fr;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .hablador-art {
+      width: 195px;
+      background: linear-gradient(180deg, #1b357d 0%, #174291 30%, #0d2864 100%);
+      border-radius: 16px;
+      padding: 12px 10px 8px 10px;
+      color: white;
+      text-align: center;
+      box-shadow: 0 8px 20px rgba(13, 40, 100, 0.35);
+      border: 2px solid #38bdf8;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
+
+    .art-stars {
+      color: #fbbf24;
+      font-size: 13px;
+      letter-spacing: 2px;
+      line-height: 1;
+    }
+
+    .art-brand {
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+    }
+
+    .art-tagline {
+      font-size: 7px;
+      color: #cbd5e1;
+      margin-bottom: 5px;
+    }
+
+    .google-pill {
+      background: #ffffff;
+      color: #1e293b;
+      padding: 2.5px 7px;
+      border-radius: 20px;
+      font-size: 7px;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      margin-bottom: 5px;
+    }
+
+    .art-scan-txt {
+      font-size: 10.5px;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+      color: #ffffff;
+      margin-bottom: 4px;
+    }
+
+    .qr-container {
+      background: white;
+      padding: 6px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+
+    .qr-container img {
+      width: 120px;
+      height: 120px;
+      display: block;
+    }
+
+    .art-nfc-txt {
+      font-size: 7.5px;
+      color: #e2e8f0;
+      margin-top: 5px;
+      font-weight: 600;
+    }
+
+    .art-address-strip {
+      background: #0284c7;
+      color: white;
+      font-size: 6.5px;
+      font-weight: 600;
+      width: 100%;
+      padding: 3px 4px;
+      margin: 5px 0 4px 0;
+      border-radius: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .art-hook-txt {
+      font-size: 7.5px;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .art-footer-links {
+      font-size: 5.5px;
+      color: #94a3b8;
+      margin-top: 4px;
+      line-height: 1.2;
+    }
+
+    .test-box {
+      border-radius: 8px;
+      padding: 9px 11px;
+      margin-bottom: 7px;
+      font-size: 9px;
+    }
+
+    .test-box-intro {
+      font-weight: 800;
+      color: #0f766e;
+      margin-bottom: 6px;
+      font-size: 10.5px;
+    }
+
+    .test-alert {
+      background: #fef2f2;
+      border-left: 3.5px solid #ef4444;
+      color: #991b1b;
+    }
+
+    .test-success {
+      background: #f0fdf4;
+      border-left: 3.5px solid #10b981;
+      color: #065f46;
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 800;
+      color: #0b2545;
+      margin-top: 8px;
+      margin-bottom: 5px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 8px;
+      font-size: 9px;
+    }
+
+    th {
+      background: #0b2545;
+      color: #ffffff;
+      font-weight: 700;
+      padding: 4px 7px;
+      text-align: left;
+      border: 1px solid #0b2545;
+    }
+
+    td {
+      padding: 5px 7px;
+      border: 1px solid #cbd5e1;
+      vertical-align: top;
+      color: #1e293b;
+    }
+
+    tr:nth-child(even) td {
+      background-color: #f8fafc;
+    }
+
+    .stars-5 { color: #eab308; font-weight: 800; }
+    .stars-14 { color: #f59e0b; font-weight: 800; }
+    .impact-green { color: #047857; font-weight: 700; }
+    .impact-red { color: #b91c1c; font-weight: 700; }
+    .price-tag { font-weight: 800; color: #0b2545; font-size: 10px; }
+    .badge-pop {
+      display: inline-block;
+      background: #0284c7;
+      color: white;
+      font-size: 7.5px;
+      font-weight: 800;
+      padding: 1px 4px;
+      border-radius: 3px;
+    }
+
+    .trust-strip {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 6px;
+      padding: 8px;
+      background: #f1f5f9;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 8px;
+      color: #475569;
+    }
+
+    .trust-item strong {
+      display: block;
+      color: #0b2545;
+      font-size: 9px;
+      margin-bottom: 1px;
+    }
+
+    .page2-intro {
+      background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 100%);
+      border: 1px solid #86efac;
+      padding: 8px 12px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      font-size: 9.5px;
+      color: #166534;
+    }
+
+    .bottom-cta-box {
+      border: 1px solid #93c5fd;
+      background: linear-gradient(180deg, #f0f9ff 0%, #ffffff 100%);
+      border-radius: 8px;
+      text-align: center;
+      padding: 10px;
+      margin-top: 6px;
+    }
+
+    .bottom-cta-title {
+      font-size: 11px;
+      font-weight: 800;
+      color: #0c4a6e;
+      margin-bottom: 2px;
+    }
+
+    .bottom-cta-sub {
+      font-size: 9px;
+      color: #475569;
+      margin-bottom: 5px;
+    }
+
+    .footer-bar {
+      border-top: 1px solid #cbd5e1;
+      padding-top: 5px;
+      font-size: 8px;
+      color: #64748b;
+      text-align: center;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Floating Print Bar -->
+  <div class="print-bar no-print">
+    <div>
+      <strong>📄 Dossier Oficial IMPULSA • SCOTT Cali Sur</strong> &bull; Hablador en Página 1
+    </div>
+    <button class="btn-print" onclick="window.print()">🖨️ Imprimir / Guardar en PDF</button>
+  </div>
+
+  <!-- ==================== PÁGINA 1 ==================== -->
+  <div class="page">
+    <div>
+      <div class="header-top">
+        <span>IMPULSA | DOSSIER DE SERVICIOS Y PLANES OFICIALES</span>
+        <span>Página 1</span>
+      </div>
+
+      <div class="brand-title">IMPULSA</div>
+      <div class="brand-subtitle">SISTEMA INTEGRAL DE REPUTACIÓN Y FIDELIZACIÓN 5★ EN GOOGLE MAPS</div>
+
+      <!-- Cuadro Oficial Personalizado -->
+      <div class="personal-box">
+        <div class="tag-personal">DOCUMENTO OFICIAL PERSONALIZADO</div>
+        <div style="font-size: 11px; font-weight: 700; color: #0f172a;">Dirigido a: Gerencia Comercial & Dirección de Servicio Técnico</div>
+        <div class="establishment-name">Establecimiento: SCOTT Cali Sur</div>
+        <div class="personal-meta">
+          <span>📍 Zona Sur, Cali, Valle del Cauca, Colombia (@scottcalisur)</span>
+          <span>🗓️ Emisión: 20 de noviembre de 2026</span>
+        </div>
+      </div>
+
+      <div class="lead-hook">
+        <strong>IMPULSA</strong> transforma la pasión y satisfacción de los ciclistas de <strong>SCOTT Cali Sur</strong> en un flujo continuo de calificaciones 5 estrellas en Google Maps mediante tecnología física dual Tap NFC + QR dinámico de alta velocidad. Protegemos la reputación de tu tienda y taller capturando cualquier inquietud mecánica de forma 100% confidencial antes de que impacte negativamente tu perfil en internet.
+      </div>
+
+      <!-- HABLADOR OFICIAL EN PÁGINA 1 -->
+      <div class="hablador-hero-box">
+        <div class="hablador-top-bar">
+          <div>
+            <span style="font-size: 11px; font-weight: 800; color: #0b2545;">🏷️ TU HABLADOR OFICIAL PERSONALIZADO & PRUEBA EN VIVO</span><br>
+            <span style="font-size: 8.5px; color: #475569;">Diseño idéntico al generado para <strong style="color: #0284c7;">SCOTT Cali Sur (Mostrador Taller / Caja)</strong></span>
+          </div>
+          <span class="badge-dual">DUAL QR + NFC ACTIVO</span>
+        </div>
+
+        <div class="hablador-layout">
+          <!-- Standee Visual Exact Replica -->
+          <div class="hablador-art">
+            <div class="art-stars">★★★★★</div>
+            <div class="art-brand">IMPULSA</div>
+            <div class="art-tagline">Reputación & Reseñas de Google</div>
+
+            <div class="google-pill">
+              <span style="color: #4285F4;">G</span><span style="color: #EA4335;">o</span><span style="color: #FBBC05;">o</span><span style="color: #4285F4;">g</span><span style="color: #34A853;">l</span><span style="color: #EA4335;">e</span>
+              <span style="color: #f59e0b;">★★★★★</span>
+              <span>¡Déjanos tu opinión!</span>
+            </div>
+
+            <div class="art-scan-txt">ESCANEA AQUÍ</div>
+
+            <div class="qr-container">
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://impulsa.ai.studio/%23home" alt="QR SCOTT Cali Sur">
+            </div>
+
+            <div class="art-nfc-txt">o acerca tu teléfono aquí (NFC)</div>
+
+            <div class="art-address-strip">
+              SCOTT Cali Sur • Zona Sur, Cali, Colombia
+            </div>
+
+            <div class="art-hook-txt">
+              ¿Tu bici quedó lista para la ruta?<br>
+              ¡Toma solo 3 segundos! 🚴💨
+            </div>
+
+            <div class="art-footer-links">
+              aiimplementaciones@gmail.com &bull; https://impulsa.ai.studio/#home<br>
+              Instagram: @scottcalisur &bull; @aiimplementaciones
+            </div>
+          </div>
+
+          <!-- Instructions on the Right -->
+          <div>
+            <div class="test-box-intro">
+              📱 ¡Haz la prueba interactiva ahora mismo desde tu celular!
+            </div>
+            <p style="font-size: 8.5px; color: #475569; margin-bottom: 6px;">
+              Apunta la cámara de tu smartphone al código QR del hablador oficial que ves a la izquierda (o acércalo por NFC) y realiza estas dos comprobaciones para comprobar en tiempo real cómo opera nuestro <strong>Filtro Inteligente de Reputación</strong>:
+            </p>
+
+            <div class="test-box test-alert">
+              <strong>⚠️ PRUEBA 1: Califica con 1 a 4 estrellas (★ a ★★★★)</strong><br>
+              Comprobarás cómo el sistema <strong>bloquea automáticamente el acceso público a Google Maps</strong>. Se abre de inmediato nuestro buzón confidencial para recoger la queja o desajuste de taller y enviarla de forma privada a tu WhatsApp, neutralizando la crisis antes de que afecte tu promedio.
+            </div>
+
+            <div class="test-box test-success">
+              <strong>🌟 PRUEBA 2: Califica con 5 estrellas (★★★★★)</strong><br>
+              Experimentarás la <strong>redirección ultrarrápida en 3 segundos</strong> directamente a tu perfil oficial en Google Maps. El ciclista satisfecho publica su reseña 5 estrellas en segundos, impulsando tu tienda hacia el Top 1 de Cali.
+            </div>
+
+            <div style="font-size: 8px; color: #64748b; margin-top: 4px;">
+              📐 <strong>Formato Acrílico A6 (10 &times; 15 cm)</strong> &bull; <strong>QR HD de ~4.9 cm</strong> &bull; Chip NTAG213 Industrial
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resumen del Portal de Opinión Inteligente -->
+      <div class="section-title">El Portal de Opinión Inteligente (Rangos de Calificación)</div>
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 25%;">Rango de Estrellas</th>
+            <th style="width: 45%;">Destino y Comportamiento del Sistema</th>
+            <th style="width: 30%;">Impacto Comercial</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong class="stars-5">5 Estrellas (★★★★★)</strong></td>
+            <td>
+              <strong>Enrutamiento Directo a Google Maps:</strong> El ciclista es redirigido en 3 segundos a la ficha oficial de SCOTT Cali Sur para publicar su reseña de 5★.
+            </td>
+            <td class="impact-green">
+              Multiplica opiniones públicas, posiciona a SCOTT como el referente #1 de Cali Sur y atrae nuevos compradores.
+            </td>
+          </tr>
+          <tr>
+            <td><strong class="stars-14">1 a 4 Estrellas (★ a ★★★★)</strong></td>
+            <td>
+              <strong>Filtro Privado & Buzón Confidencial:</strong> Bloquea el acceso a Google Maps y abre un formulario confidencial preguntando en qué se puede mejorar. Notificación inmediata a gerencia de tienda.
+            </td>
+            <td class="impact-red">
+              Blindaje total. Permite al jefe de taller o gerente resolver cualquier inconformidad mecánica en privado antes de que afecte tu imagen.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Barra de Confianza -->
+      <div class="trust-strip">
+        <div class="trust-item">
+          <strong>⚡ Fricción Cero</strong>
+          <span>Sin instalar aplicaciones ni registros</span>
+        </div>
+        <div class="trust-item">
+          <strong>📲 100% Compatible</strong>
+          <span>iPhone (iOS) y Android vía NFC + QR</span>
+        </div>
+        <div class="trust-item">
+          <strong>🛡️ Escudo Anticríticas</strong>
+          <span>Filtrado privado antes de llegar a internet</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-bar">
+      IMPULSA &bull; Plataforma SaaS B2B y Hardware NFC &bull; Contacto: +57 301 685 7098 / +57 302 296 6045 &bull; https://impulsa.ai.studio
+    </div>
+  </div>
+
+  <!-- ==================== PÁGINA 2 ==================== -->
+  <div class="page">
+    <div>
+      <div class="header-top">
+        <span>IMPULSA | DOSSIER DE SERVICIOS Y PLANES OFICIALES</span>
+        <span>Página 2</span>
+      </div>
+
+      <div class="page2-intro">
+        <strong>💼 Solución Recomendada para SCOTT Cali Sur: Pack 2 Habladores Acrílicos ($115.000 COP)</strong><br>
+        Ubicación estratégica recomendada: <strong>1 en Caja Principal</strong> (venta de bicis e indumentaria) y <strong>1 en Mostrador del Taller</strong> (entrega de mantenimientos).
+      </div>
+
+      <!-- Sección Hardware Físico -->
+      <div class="section-title" style="margin-top: 0;">1. Hardware Físico Tap NFC + QR (Pago Único &bull; Cero Mensualidades)</div>
+      <div style="font-size: 8.5px; color: #475569; margin-bottom: 5px;">Equipos físicos listos para usar en mostrador, caja o taller. Construidos en acrílico cristal de 3mm con chips NTAG213 industriales (13.56 MHz) y Código QR HD. 100% compatibles con iOS y Android.</div>
+
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 32%;">Producto / Equipo</th>
+            <th style="width: 20%;">Inversión Única</th>
+            <th style="width: 48%;">Especificaciones & Lo que Incluye</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>1 Hablador Acrílico L-Stand</strong></td>
+            <td><span class="price-tag">$65.000 COP</span></td>
+            <td>1 Standee acrílico cristal 3mm autoportante (Formato A6). Chip NTAG213 + QR HD vectorizado. Enrutamiento directo al perfil de Google.</td>
+          </tr>
+          <tr>
+            <td>
+              <strong>Pack 2 Habladores Acrílicos</strong><br>
+              <span class="badge-pop">■ Recomendado para SCOTT</span>
+            </td>
+            <td>
+              <span class="price-tag">$115.000 COP</span><br>
+              <small style="color: #047857; font-weight: 700;">(Ahorro $15.000)</small>
+            </td>
+            <td>2 Standees acrílicos de mesa dual QR + NFC. Cobertura perfecta para caja y taller de servicio técnico. Propiedad total sin contratos.</td>
+          </tr>
+          <tr>
+            <td><strong>Combo Hablador + Placa Adhesiva</strong></td>
+            <td><span class="price-tag">$95.000 COP</span></td>
+            <td>1 Hablador acrílico de mesa L-Stand + 1 Placa adhesiva premium 3M (11.5x11.5 cm) para vitrina, pared o puerta de acceso.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Sección Planes Mensuales -->
+      <div class="section-title">2. Planes Mensuales y Suscripciones de Acompañamiento</div>
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 30%;">Plan / Modalidad</th>
+            <th style="width: 22%;">Tarifa Oficial</th>
+            <th style="width: 48%;">Cobertura & Beneficios Incluidos</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Plan Starter (30 Días Prueba)</strong></td>
+            <td><strong style="color: #059669;">GRATIS (30 días)</strong></td>
+            <td>Ideal para evaluar 1 punto comercial. Incluye módulo de calificación inteligente (filtro 5★ a Google / 1-4★ privado) y gestión automática.</td>
+          </tr>
+          <tr>
+            <td>
+              <strong>Plan Mensual IMPULSA</strong><br>
+              <span style="color: #d97706; font-size: 8px; font-weight: 700;">(Plan Star ⭐)</span>
+            </td>
+            <td>
+              <span class="price-tag">$95.000 COP / mes</span><br>
+              <small style="color: #64748b;">(Vía Wompi Bancolombia)</small>
+            </td>
+            <td>
+              Hasta 3 sucursales incluidas.<br>
+              &bull; Garantía de respuesta a comentarios en &lt; 4 horas.<br>
+              &bull; Filtro Dual Inteligente (5★ a Google / 1-4★ a WhatsApp privado).<br>
+              &bull; Informes mensuales de gestión e índice de satisfacción.<br>
+              &bull; Sucursal adicional: +$50.000 COP (pago único por sede extra).<br>
+              &bull; Combo Hardware Inicial Opcional: 1 Hablador + 2 Placas por +$50.000 COP pago único.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Sección Servicios Especiales -->
+      <div class="section-title">3. Servicios Especiales y Soluciones Adicionales</div>
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 30%;">Servicio Especializado</th>
+            <th style="width: 22%;">Tarifa Oficial</th>
+            <th style="width: 48%;">Entregables y Alcance Técnico</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Servicio VIP Optimización Perfil Google Maps</strong></td>
+            <td>
+              <span class="price-tag">$250.000 COP</span><br>
+              <small style="color: #64748b;">(Tarifa Única)</small>
+            </td>
+            <td>
+              <strong>Servicio Integral de Posicionamiento SEO Local:</strong><br>
+              &bull; Creación, validación y verificación oficial en Google Maps.<br>
+              &bull; Redacción SEO semántica de 750 caracteres con palabras clave de ciclismo/taller.<br>
+              &bull; Carga y curaduría de fotos profesionales de fachada y catálogo.<br>
+              &bull; <strong>1 Hablador Acrílico Físico NFC + QR incluido sin costo adicional.</strong>
+            </td>
+          </tr>
+          <tr>
+            <td><strong>Desarrollo Web Comercial Funcional (PWA)</strong></td>
+            <td>
+              <span class="price-tag">$750.000 – $1.300.000 COP</span><br>
+              <small style="color: #64748b;">(Según funciones)</small>
+            </td>
+            <td>
+              <strong>Sitio web funcional 100% optimizado para móviles (PWA):</strong><br>
+              &bull; Catálogo digital de bicicletas y servicios de taller con reservas online.<br>
+              &bull; Botonera directa de pedidos y consultas técnicas a WhatsApp.<br>
+              &bull; Integración de pasarelas de pago Wompi, Nequi y PSE.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Bottom Box -->
+      <div class="bottom-cta-box">
+        <div class="bottom-cta-title">¿Listo para posicionar a SCOTT Cali Sur como el referente #1 en Google Maps?</div>
+        <div class="bottom-cta-sub">Entrega personal o despacho express en 3 días hábiles en Cali. Hardware preconfigurado y listo para usar en mostrador.</div>
+        <div style="font-size: 9.5px; font-weight: 800; color: #0b2545;">
+          ■ WhatsApp Ventas & Activación Inmediata: +57 302 296 6045 &nbsp;|&nbsp; ■ Web: https://impulsa.ai.studio/#home
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-bar">
+      IMPULSA &bull; Plataforma SaaS B2B y Hardware NFC &bull; Contacto: +57 301 685 7098 / +57 302 296 6045 &bull; https://impulsa.ai.studio
+    </div>
+  </div>
+
+</body>
+</html>

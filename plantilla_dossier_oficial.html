@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>IMPULSA | Dossier Oficial Personalizado</title>
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 12mm 15mm 12mm 15mm;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    body {
+      background-color: #f1f5f9;
+      color: #1e293b;
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      padding: 14mm 16mm;
+      margin: 10px auto;
+      background: #ffffff;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    @media print {
+      body {
+        background: transparent;
+      }
+      .page {
+        margin: 0;
+        box-shadow: none;
+        page-break-after: always;
+        width: 100%;
+        min-height: 100vh;
+        padding: 0;
+      }
+      .no-print {
+        display: none !important;
+      }
+    }
+
+    /* Floating Print Button for Screen */
+    .print-bar {
+      max-width: 210mm;
+      margin: 15px auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #004b87;
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 8px;
+    }
+
+    .btn-print {
+      background: #00a86b;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      font-weight: bold;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    /* Header */
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      font-size: 9px;
+      font-weight: 700;
+      color: #64748b;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 4px;
+      margin-bottom: 8px;
+    }
+
+    .brand-title {
+      font-size: 26px;
+      font-weight: 900;
+      color: #003366;
+      letter-spacing: 0.5px;
+      line-height: 1;
+    }
+
+    .brand-subtitle {
+      font-size: 11px;
+      font-weight: 800;
+      color: #0066cc;
+      letter-spacing: 0.8px;
+      margin-top: 3px;
+      padding-bottom: 6px;
+      border-bottom: 2.5px solid #0066cc;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+    }
+
+    /* Personalized Box */
+    .personal-box {
+      border: 1px solid #93c5fd;
+      background-color: #f8fafc;
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-bottom: 12px;
+      position: relative;
+    }
+
+    .personal-box::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: #0055aa;
+      border-radius: 8px 0 0 8px;
+    }
+
+    .tag-personal {
+      font-size: 8.5px;
+      font-weight: 800;
+      color: #0055aa;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .personal-name {
+      font-size: 13px;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 2px;
+    }
+
+    .establishment-name {
+      font-size: 13px;
+      font-weight: 800;
+      color: #004499;
+      margin-bottom: 4px;
+    }
+
+    .personal-meta {
+      display: flex;
+      justify-content: space-between;
+      color: #475569;
+      font-size: 10px;
+      font-weight: 500;
+    }
+
+    /* Paragraph Hook */
+    .lead-hook {
+      border-left: 3.5px solid #0055aa;
+      padding-left: 10px;
+      font-size: 10.5px;
+      color: #1e293b;
+      margin-bottom: 12px;
+      line-height: 1.45;
+    }
+
+    /* Section Headings */
+    .section-title {
+      font-size: 11.5px;
+      font-weight: 800;
+      color: #002b49;
+      margin-top: 10px;
+      margin-bottom: 6px;
+    }
+
+    .section-desc {
+      font-size: 9.5px;
+      color: #475569;
+      margin-bottom: 6px;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 10px;
+      font-size: 9.5px;
+    }
+
+    th {
+      background: #002d54;
+      color: #ffffff;
+      font-weight: 700;
+      padding: 5px 8px;
+      text-align: left;
+      border: 1px solid #002d54;
+    }
+
+    td {
+      padding: 6px 8px;
+      border: 1px solid #cbd5e1;
+      vertical-align: top;
+      color: #1e293b;
+    }
+
+    tr:nth-child(even) td {
+      background-color: #f8fafc;
+    }
+
+    /* Stars / Highlights */
+    .stars-5 {
+      color: #eab308;
+      font-weight: 800;
+    }
+
+    .stars-14 {
+      color: #f59e0b;
+      font-weight: 800;
+    }
+
+    .impact-green {
+      color: #047857;
+      font-weight: 600;
+    }
+
+    .impact-red {
+      color: #b91c1c;
+      font-weight: 600;
+    }
+
+    .price-tag {
+      font-weight: 800;
+      color: #002d54;
+      font-size: 10px;
+    }
+
+    .badge-pop {
+      display: inline-block;
+      background: #0284c7;
+      color: white;
+      font-size: 7.5px;
+      font-weight: 800;
+      padding: 1px 4px;
+      border-radius: 3px;
+      margin-top: 2px;
+    }
+
+    /* Footer */
+    .footer-bar {
+      border-top: 1px solid #cbd5e1;
+      padding-top: 6px;
+      font-size: 8.5px;
+      color: #64748b;
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    /* PAGE 2 SPECIFIC STYLES */
+    .hablador-hero-box {
+      border: 1.5px solid #67e8f9;
+      background: #f0fdfa;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin: 10px 0 12px 0;
+    }
+
+    .hablador-top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .badge-dual {
+      background: #059669;
+      color: white;
+      font-size: 8px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 100px;
+      letter-spacing: 0.5px;
+    }
+
+    .hablador-layout {
+      display: grid;
+      grid-template-columns: 210px 1fr;
+      gap: 16px;
+      align-items: center;
+    }
+
+    /* Hablador Artwork Exact Replica */
+    .hablador-art {
+      width: 200px;
+      background: linear-gradient(180deg, #1b357d 0%, #174291 30%, #0d2864 100%);
+      border-radius: 16px;
+      padding: 14px 10px 8px 10px;
+      color: white;
+      text-align: center;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+      border: 2px solid #38bdf8;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
+
+    .art-logo-area {
+      margin-bottom: 6px;
+    }
+
+    .art-stars {
+      color: #fbbf24;
+      font-size: 13px;
+      letter-spacing: 2px;
+      line-height: 1;
+    }
+
+    .art-brand {
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+    }
+
+    .art-tagline {
+      font-size: 7.5px;
+      color: #cbd5e1;
+      margin-bottom: 6px;
+    }
+
+    .google-pill {
+      background: #ffffff;
+      color: #1e293b;
+      padding: 3px 8px;
+      border-radius: 20px;
+      font-size: 7.5px;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      margin-bottom: 6px;
+    }
+
+    .art-scan-txt {
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+      color: #ffffff;
+      margin-bottom: 4px;
+    }
+
+    .qr-container {
+      background: white;
+      padding: 8px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+
+    .qr-container img {
+      width: 125px;
+      height: 125px;
+      display: block;
+    }
+
+    .art-nfc-txt {
+      font-size: 8px;
+      color: #e2e8f0;
+      margin-top: 6px;
+      font-weight: 600;
+    }
+
+    .art-address-strip {
+      background: #0284c7;
+      color: white;
+      font-size: 6.5px;
+      font-weight: 600;
+      width: 100%;
+      padding: 3px 4px;
+      margin: 6px 0 4px 0;
+      border-radius: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .art-hook-txt {
+      font-size: 8px;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .art-footer-links {
+      font-size: 5.5px;
+      color: #94a3b8;
+      margin-top: 4px;
+      line-height: 1.2;
+    }
+
+    /* Right Test Instructions */
+    .test-box {
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      font-size: 9.5px;
+    }
+
+    .test-box-intro {
+      font-weight: 700;
+      color: #065f46;
+      margin-bottom: 8px;
+      font-size: 10px;
+    }
+
+    .test-alert {
+      background: #fef2f2;
+      border-left: 3.5px solid #ef4444;
+      color: #991b1b;
+    }
+
+    .test-success {
+      background: #f0fdf4;
+      border-left: 3.5px solid #10b981;
+      color: #065f46;
+    }
+
+    .bottom-cta-box {
+      border: 1px solid #93c5fd;
+      background: #f8fafc;
+      border-radius: 8px;
+      text-align: center;
+      padding: 10px;
+      margin-top: 8px;
+    }
+
+    .bottom-cta-title {
+      font-size: 11px;
+      font-weight: 800;
+      color: #003366;
+      margin-bottom: 3px;
+    }
+
+    .bottom-cta-sub {
+      font-size: 9px;
+      color: #475569;
+      margin-bottom: 6px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Floating Print Bar for UI -->
+  <div class="print-bar no-print">
+    <div>
+      <strong>📄 Dossier Oficial IMPULSA (2 Páginas A4)</strong> &bull; Listo para imprimir o descargar en PDF
+    </div>
+    <button class="btn-print" onclick="window.print()">🖨️ Imprimir / Guardar en PDF</button>
+  </div>
+
+  <!-- ==================== PÁGINA 1 ==================== -->
+  <div class="page">
+    <div>
+      <div class="header-top">
+        <span>IMPULSA | DOSSIER DE SERVICIOS Y PLANES OFICIALES</span>
+        <span>Página 1</span>
+      </div>
+
+      <div class="brand-title">IMPULSA</div>
+      <div class="brand-subtitle">SISTEMA INTEGRAL DE REPUTACIÓN Y FIDELIZACIÓN 5★ EN GOOGLE MAPS</div>
+
+      <!-- Cuadro Oficial Personalizado -->
+      <div class="personal-box">
+        <div class="tag-personal">DOCUMENTO OFICIAL PERSONALIZADO</div>
+        <div class="personal-name">Dirigido a: Gerente de Operaciones / Propietario</div>
+        <div class="establishment-name" id="doc_establishment">Establecimiento: Ecco Entrenamiento Deportivo</div>
+        <div class="personal-meta">
+          <span id="doc_address">📍 Cra 1a, oeste # 1-76, Normandia Sebastian de Belalcazar, Cali, Valle del Cauca, Colombia</span>
+          <span id="doc_date">🗓️ Emisión: 28 de octubre de 2026</span>
+        </div>
+      </div>
+
+      <div class="lead-hook" id="doc_hook">
+        <strong>IMPULSA</strong> transforma la experiencia presencial de los clientes de <strong id="doc_establishment_inline">Ecco Entrenamiento Deportivo</strong> en un flujo continuo de opiniones 5 estrellas en Google Maps mediante habladores físicos con tecnología dual Tap NFC + Código QR HD. Protege la reputación de tu establecimiento canalizando sugerencias de forma confidencial antes de que lleguen a internet.
+      </div>
+
+      <!-- Sección 1 -->
+      <div class="section-title">1. El Portal de Opinión Inteligente (Rangos de Calificación)</div>
+      <div class="section-desc">Al escanear el QR o hacer Tap NFC en mesa o recepción, se abre el portal optimizado sin instalar aplicaciones. El sistema evalúa la satisfacción del cliente en tiempo real:</div>
+
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 25%;">Rango de Estrellas</th>
+            <th style="width: 45%;">Destino y Comportamiento del Sistema</th>
+            <th style="width: 30%;">Impacto Comercial</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong class="stars-5">5 Estrellas (★★★★★)</strong></td>
+            <td>
+              <strong>Enrutamiento Directo a Google Maps:</strong> El cliente es redirigido automáticamente en 3 segundos a la ficha pública verificada de <span class="merchant-name-slot">Ecco Entrenamiento Deportivo</span> para publicar su reseña de 5★.
+            </td>
+            <td class="impact-green">
+              Multiplica opiniones públicas, posiciona el local en el Top 3 de Google Maps y atrae nuevos clientes.
+            </td>
+          </tr>
+          <tr>
+            <td><strong class="stars-14">1 a 4 Estrellas (★ a ★★★★)</strong></td>
+            <td>
+              <strong>Filtro Privado & Buzón Confidencial:</strong> Se bloquea el acceso público a Google Maps y se abre un formulario confidencial preguntando al cliente en qué se puede mejorar (nombre, WhatsApp y motivo). Notificación inmediata a gerencia.
+            </td>
+            <td class="impact-red">
+              Blindaje anticríticas públicas. Permite al dueño/gerente resolver la queja en privado vía WhatsApp en &lt;4h y fidelizar al cliente.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Sección 2 -->
+      <div class="section-title">2. Hardware Físico Tap NFC + QR (Pago Único &bull; Cero Mensualidades)</div>
+      <div class="section-desc">Equipos físicos listos para usar en mesas, mostradores o barra. Construidos en acrílico cristal de 3mm con chips NTAG213 industriales (13.56 MHz, ISO 14443A) y Código QR HD de respaldo. 100% compatibles con iOS y Android.</div>
+
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 32%;">Producto / Equipo</th>
+            <th style="width: 20%;">Inversión Única</th>
+            <th style="width: 48%;">Especificaciones & Lo que Incluye</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>1 Hablador Acrílico L-Stand</strong></td>
+            <td><span class="price-tag">$65.000 COP</span></td>
+            <td>1 Standee acrílico cristal 3mm autoportante (Formato A6). Chip NTAG213 + QR HD vectorizado. Enrutamiento directo al perfil de Google.</td>
+          </tr>
+          <tr>
+            <td>
+              <strong>Pack 2 Habladores Acrílicos</strong><br>
+              <span class="badge-pop">■ Más Vendido</span>
+            </td>
+            <td>
+              <span class="price-tag">$115.000 COP</span><br>
+              <small style="color: #047857; font-weight: 700;">(Ahorro $15.000)</small>
+            </td>
+            <td>2 Standees acrílicos de mesa dual QR + NFC. Cobertura para salón principal y barra/caja registradora. Propiedad total sin contratos.</td>
+          </tr>
+          <tr>
+            <td><strong>Combo Hablador + Placa Adhesiva</strong></td>
+            <td><span class="price-tag">$95.000 COP</span></td>
+            <td>1 Hablador acrílico de mesa L-Stand + 1 Placa adhesiva premium 3M (11.5x11.5 cm) para vidrio, pared o puerta de acceso.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Sección 3 -->
+      <div class="section-title">3. Planes Mensuales y Suscripciones de Acompañamiento</div>
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 30%;">Plan / Modalidad</th>
+            <th style="width: 22%;">Tarifa Oficial</th>
+            <th style="width: 48%;">Cobertura & Beneficios Incluidos</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Plan Starter (30 Días Prueba)</strong></td>
+            <td><strong style="color: #059669;">GRATIS (30 días)</strong></td>
+            <td>Ideal para evaluar 1 sucursal comercial. Incluye módulo de calificación inteligente (filtro 5★ a Google / 1-4★ privado) y gestión automática.</td>
+          </tr>
+          <tr>
+            <td>
+              <strong>Plan Mensual IMPULSA</strong><br>
+              <span style="color: #d97706; font-size: 8.5px; font-weight: 700;">(Plan Star ⭐)</span>
+            </td>
+            <td>
+              <span class="price-tag">$95.000 COP / mes</span><br>
+              <small style="color: #64748b;">(Vía Wompi Bancolombia)</small>
+            </td>
+            <td>
+              Hasta 3 sucursales comerciales incluidas.<br>
+              &bull; Garantía de respuesta a comentarios en &lt; 4 horas.<br>
+              &bull; Filtro Dual Inteligente (5★ a Google / 1-4★ a WhatsApp privado).<br>
+              &bull; Informes mensuales de gestión e índice de satisfacción.<br>
+              &bull; Sucursal adicional: +$50.000 COP (pago único por sede extra).<br>
+              &bull; Combo Hardware Inicial Opcional: 1 Hablador + 2 Placas por +$50.000 COP pago único.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="footer-bar">
+      IMPULSA &bull; Plataforma SaaS B2B y Hardware NFC &bull; Contacto: +57 301 685 7098 / +57 302 296 6045 &bull; https://impulsa.ai.studio
+    </div>
+  </div>
+
+  <!-- ==================== PÁGINA 2 ==================== -->
+  <div class="page">
+    <div>
+      <div class="header-top">
+        <span>IMPULSA | DOSSIER DE SERVICIOS Y PLANES OFICIALES</span>
+        <span>Página 2</span>
+      </div>
+
+      <!-- Sección 4 -->
+      <div class="section-title" style="margin-top: 0;">4. Servicios Especiales y Soluciones Adicionales</div>
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 30%;">Servicio Especializado</th>
+            <th style="width: 22%;">Tarifa Oficial</th>
+            <th style="width: 48%;">Entregables y Alcance Técnico</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Servicio VIP Optimización Perfil Google Maps</strong></td>
+            <td>
+              <span class="price-tag">$250.000 COP</span><br>
+              <small style="color: #64748b;">(Tarifa Única)</small>
+            </td>
+            <td>
+              <strong>Servicio Integral de Posicionamiento SEO Local:</strong><br>
+              &bull; Creación, validación y verificación oficial en Google Maps.<br>
+              &bull; Redacción SEO semántica de 750 caracteres y auditoría NAP.<br>
+              &bull; Carga y curaduría de fotos profesionales de fachada y catálogo.<br>
+              &bull; <strong>1 Hablador Acrílico Físico NFC + QR incluido sin costo adicional.</strong>
+            </td>
+          </tr>
+          <tr>
+            <td><strong>Desarrollo Web Comercial Funcional (PWA)</strong></td>
+            <td>
+              <span class="price-tag">$750.000 – $1.300.000 COP</span><br>
+              <small style="color: #64748b;">(Según funciones)</small>
+            </td>
+            <td>
+              <strong>Sitio web funcional 100% optimizado para móviles (PWA):</strong><br>
+              &bull; Menú/Carta digital QR interactiva o catálogo de servicios.<br>
+              &bull; Sistema de reservas de mesas o agendamiento de citas online.<br>
+              &bull; Botonera directa de pedidos a WhatsApp e integración de pagos Wompi/Nequi/PSE.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Hablador Oficial Personalizado & Prueba en Vivo -->
+      <div class="hablador-hero-box">
+        <div class="hablador-top-bar">
+          <div>
+            <span style="font-size: 11.5px; font-weight: 800; color: #002b49;">🏷️ HABLADOR OFICIAL PERSONALIZADO & PRUEBA EN VIVO</span><br>
+            <span style="font-size: 9px; color: #475569;">Diseño idéntico al generado en la consola para <strong id="doc_establishment_tag" style="color: #004499;">Ecco Entrenamiento Deportivo</strong></span>
+          </div>
+          <span class="badge-dual">DUAL QR + NFC ACTIVO</span>
+        </div>
+
+        <div class="hablador-layout">
+          <!-- Standee Visual Real Replica -->
+          <div class="hablador-art">
+            <div class="art-stars">★★★★★</div>
+            <div class="art-brand">IMPULSA</div>
+            <div class="art-tagline">Reputación & Reseñas de Google</div>
+
+            <div class="google-pill">
+              <span style="color: #4285F4;">G</span><span style="color: #EA4335;">o</span><span style="color: #FBBC05;">o</span><span style="color: #4285F4;">g</span><span style="color: #34A853;">l</span><span style="color: #EA4335;">e</span>
+              <span style="color: #f59e0b;">★★★★★</span>
+              <span>¡Déjanos tu opinión!</span>
+            </div>
+
+            <div class="art-scan-txt">ESCANEA AQUÍ</div>
+
+            <div class="qr-container">
+              <!-- QR funcional con URL real -->
+              <img id="hablador_qr_img" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://impulsa.ai.studio/%23home" alt="QR del Hablador">
+            </div>
+
+            <div class="art-nfc-txt">o acerca tu teléfono aquí (NFC)</div>
+
+            <div class="art-address-strip" id="hablador_address_strip">
+              Cra 1a, oeste # 1-76, Normandia Sebastian de Belalcazar, Cali
+            </div>
+
+            <div class="art-hook-txt">
+              Tu experiencia nos ayuda a crecer.<br>
+              ¡Toma solo 5 segundos! 👏
+            </div>
+
+            <div class="art-footer-links">
+              aiimplementaciones@gmail.com &bull; https://impulsa.ai.studio/#home<br>
+              Instagram: @aiimplementaciones
+            </div>
+          </div>
+
+          <!-- Instructions on the Right -->
+          <div>
+            <div class="test-box-intro">
+              📱 ¡Haz la prueba interactiva ahora mismo desde tu celular!
+            </div>
+            <p style="font-size: 9px; color: #475569; margin-bottom: 8px;">
+              Apunta la cámara de tu smartphone al código QR del hablador oficial que ves a la izquierda (o acércalo por NFC) y realiza estas dos comprobaciones para comprobar en tiempo real cómo opera nuestro <strong>Filtro Inteligente de Reputación</strong>:
+            </p>
+
+            <div class="test-box test-alert">
+              <strong>⚠️ PRUEBA 1: Califica con 1 a 4 estrellas (★ a ★★★★)</strong><br>
+              Comprobarás cómo el sistema <strong>bloquea automáticamente el acceso público a Google Maps</strong>. Se abre de inmediato nuestro buzón confidencial para recoger la queja y enviarla de forma privada a tu WhatsApp y bandeja gerencial, neutralizando la crisis antes de que afecte tu promedio.
+            </div>
+
+            <div class="test-box test-success">
+              <strong>🌟 PRUEBA 2: Califica con 5 estrellas (★★★★★)</strong><br>
+              Experimentarás la <strong>redirección ultrarrápida en 3 segundos</strong> directamente a tu perfil oficial verificado en Google Maps. El comensal satisfecho publica su reseña 5 estrellas en segundos, impulsando tu negocio hacia el Top 3 local.
+            </div>
+
+            <div style="font-size: 8.5px; color: #64748b; margin-top: 6px;">
+              📐 <strong>Formato Acrílico A6 (10 &times; 15 cm)</strong> &bull; <strong>QR HD de ~4.9 cm</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Box -->
+      <div class="bottom-cta-box">
+        <div class="bottom-cta-title">¿Listo para multiplicar tus reseñas de 5 estrellas y proteger la reputación de tu comercio?</div>
+        <div class="bottom-cta-sub">Contáctanos para solicitar la muestra digital 3D sin costo o la entrega presencial de tus habladores oficiales.</div>
+        <div style="font-size: 9.5px; font-weight: 700; color: #003366;">
+          ■ WhatsApp Ventas & Activación Inmediata: +57 302 296 6045 &nbsp;|&nbsp; ■ Web: https://impulsa.ai.studio/#home
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-bar">
+      IMPULSA &bull; Plataforma SaaS B2B y Hardware NFC &bull; Contacto: +57 301 685 7098 / +57 302 296 6045 &bull; https://impulsa.ai.studio
+    </div>
+  </div>
+
+  <script>
+    // Parámetros URL para personalización automática en 1 clic
+    // Ejemplo: ?nombre=Restaurante+El+Solar&direccion=Calle+15+%23+100-20,+Cali&cargo=Propietario&qr=https://impulsa.ai.studio/%23home
+    const params = new URLSearchParams(window.location.search);
+    const nombre = params.get('nombre');
+    const direccion = params.get('direccion');
+    const qrUrl = params.get('qr');
+
+    if (nombre) {
+      document.title = `IMPULSA Dossier - ${nombre}`;
+      document.getElementById('doc_establishment').textContent = `Establecimiento: ${nombre}`;
+      document.getElementById('doc_establishment_inline').textContent = nombre;
+      document.getElementById('doc_establishment_tag').textContent = nombre;
+      document.querySelectorAll('.merchant-name-slot').forEach(el => el.textContent = nombre);
+    }
+    if (direccion) {
+      document.getElementById('doc_address').textContent = `📍 ${direccion}`;
+      document.getElementById('hablador_address_strip').textContent = direccion;
+    }
+    if (qrUrl) {
+      document.getElementById('hablador_qr_img').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrUrl)}`;
+    }
+  </script>
+
+</body>
+</html>

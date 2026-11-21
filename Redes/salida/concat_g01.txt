@@ -1,0 +1,4 @@
+file 'C:/Users/USUARIO/.gemini/antigravity/scratch/impulsa/Recursos/VIDEOS/30 GUIONES/Guion 01 La injusticia de la rese?a negativa/Gancho 01.mp4'
+file 'C:/Users/USUARIO/.gemini/antigravity/scratch/impulsa/Recursos/VIDEOS/30 GUIONES/Guion 01 La injusticia de la rese?a negativa/Dolor 01.mp4'
+file 'C:/Users/USUARIO/.gemini/antigravity/scratch/impulsa/Recursos/VIDEOS/30 GUIONES/Guion 01 La injusticia de la rese?a negativa/Solucion 01.mp4'
+file 'C:/Users/USUARIO/.gemini/antigravity/scratch/impulsa/Recursos/VIDEOS/30 GUIONES/Guion 01 La injusticia de la rese?a negativa/CTA 01.mp4'

@@ -1,0 +1,222 @@
+/* IMPULSA · sistema visual para redes
+   Paleta tomada del logo oficial (impulsa_logo.svg) y de style.css de la app. */
+
+@font-face {
+  font-family: 'Outfit';
+  src: url('../assets/Outfit.ttf') format('truetype-variations'),
+       url('../assets/Outfit.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+}
+
+:root {
+  --ink: #070C1D;
+  --ink-2: #0C132B;
+  --navy: #0B132B;
+  --indigo: #4F46E5;
+  --indigo-light: #6366F1;
+  --cyan: #22D3EE;
+  --cyan-deep: #06B6D4;
+  --gold: #FACC15;
+  --gold-deep: #EAB308;
+  --paper: #F8FAFC;
+  --muted: #A9B6CC;
+  --line: rgba(148, 163, 184, 0.22);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  width: 1080px;
+  height: 1350px;
+  overflow: hidden;
+  background: var(--ink);
+}
+
+body {
+  font-family: 'Outfit', sans-serif;
+  color: var(--paper);
+  -webkit-font-smoothing: antialiased;
+}
+
+.lienzo {
+  position: relative;
+  width: 1080px;
+  height: 1350px;
+  overflow: hidden;
+  padding: 88px 84px 80px;
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(120% 80% at 82% 6%, rgba(79, 70, 229, 0.34) 0%, rgba(79, 70, 229, 0) 58%),
+    radial-gradient(90% 70% at 6% 96%, rgba(6, 182, 212, 0.20) 0%, rgba(6, 182, 212, 0) 60%),
+    linear-gradient(168deg, #0B132B 0%, #070C1D 62%, #05080F 100%);
+}
+
+/* grano fino: evita el degradado plastificado */
+.lienzo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/></filter><rect width='180' height='180' filter='url(%23n)' opacity='0.55'/></svg>");
+}
+
+.cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  z-index: 2;
+}
+
+.marca { display: flex; align-items: center; gap: 18px; }
+.marca img { width: 66px; height: 66px; display: block; }
+.marca .nombre {
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: 0.20em;
+  line-height: 1;
+}
+.marca .bajada {
+  margin-top: 8px;
+  font-size: 17px;
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.cabecera .red {
+  font-size: 19px;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  text-align: right;
+  line-height: 1.4;
+}
+
+.regla {
+  height: 1px;
+  margin-top: 34px;
+  background: linear-gradient(90deg, rgba(148,163,184,0) 0%, var(--line) 22%, var(--line) 78%, rgba(148,163,184,0) 100%);
+  position: relative;
+  z-index: 2;
+}
+
+.contenido {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+}
+
+.antetitulo {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 21px;
+  font-weight: 600;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: var(--cyan);
+  margin-bottom: 30px;
+}
+.antetitulo::before {
+  content: '';
+  width: 40px;
+  height: 3px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--cyan), var(--indigo-light));
+}
+
+h1 {
+  font-size: 100px;
+  line-height: 0.98;
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+h1 .oro {
+  background: linear-gradient(96deg, #FDE68A 0%, var(--gold) 46%, #F59E0B 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+h1 .cian {
+  background: linear-gradient(96deg, #A5F3FC 0%, var(--cyan) 55%, #3B82F6 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.entradilla {
+  margin-top: 34px;
+  font-size: 33px;
+  line-height: 1.45;
+  font-weight: 300;
+  color: #CBD5E1;
+  max-width: 780px;
+}
+
+/* estrellas */
+.estrellas { display: flex; gap: 12px; align-items: center; }
+.estrella { width: 46px; height: 46px; }
+.estrella svg { width: 100%; height: 100%; display: block; }
+
+/* pie */
+.pie {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 28px;
+}
+
+.boton {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  padding: 26px 40px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #FDE68A 0%, var(--gold) 55%, var(--gold-deep) 100%);
+  color: #1A1400;
+  font-size: 29px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  box-shadow: 0 18px 50px -14px rgba(250, 204, 21, 0.55);
+}
+.boton .flecha { font-size: 30px; line-height: 1; }
+
+.datos {
+  text-align: right;
+  font-size: 22px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+.datos strong { color: var(--paper); font-weight: 500; }
+
+/* marca de agua */
+.fantasma {
+  position: absolute;
+  right: -150px;
+  top: -80px;
+  opacity: 0.05;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.sello {
+  position: absolute;
+  z-index: 1;
+  left: 84px;
+  bottom: 250px;
+  font-size: 15px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgba(148, 163, 184, 0.5);
+  writing-mode: vertical-rl;
+}

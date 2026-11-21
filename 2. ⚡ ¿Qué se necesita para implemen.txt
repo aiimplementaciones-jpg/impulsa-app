@@ -1,0 +1,22 @@
+2. ⚡ ¿Qué se necesita para implementar la Fase 2 (Agente de Interacción)?
+
+El módulo de redes sociales actualmente cuenta con la interfaz de exportación visual y el diseño de plantillas de post para Instagram/Facebook. Para que el Agente de Interacción sea 100% autónomo y funcional en producción, necesitamos:
+
+    Credenciales de APIs (Tokens de Acceso de Plataformas):
+
+        Meta Graph API (Instagram & Facebook): Necesitamos una cuenta de desarrollador de Meta para configurar el envío automatizado de imágenes y pies de foto mediante el endpoint de Container/Media.
+
+        WhatsApp Cloud API / Twilio: Si se desea que el agente contacte directamente o notifique a los colaboradores sobre nuevos testimonios positivos a través de chats automatizados.
+
+    Modelos de Lenguaje de Extrema Precisión (Gemini 2.5/3.5):
+
+        Escribiremos prompts estructurados que analicen el comentario del cliente (por ejemplo: "¡Excelente atención de Laura, los tacos deliciosos!") y generen automáticamente el copy de Instagram, sugiriendo hashtags adecuados, la imagen del colaborador asociada y un tono de marca consistente.
+
+    Persistencia en Base de Datos (Cola de Publicaciones):
+
+        Crear una tabla en Supabase/Firestore llamada social_posts_queue o similar para almacenar los borradores del agente, permitiendo al administrador aprobar, editar o programar la hora exacta de la publicación.
+
+    Servidor de Proxy Seguro / Webhooks:
+
+        La API de Meta e Instagram requiere validación SSL y endpoints configurados para recibir el estado de las publicaciones o las interacciones de los clientes en tiempo real. Esto se manejaría mediante rutas backend seguras (/api/social/*).
+
