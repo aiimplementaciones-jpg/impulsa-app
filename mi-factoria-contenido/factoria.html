@@ -1,0 +1,2019 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Factoría de Contenido IA — Panel de Agentes + Estudio de Diseño</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&family=Montserrat:wght@800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    :root {
+      --bg-base: #090b10;
+      --bg-panel: #11151f;
+      --bg-card: #171c29;
+      --bg-hover: #1f2637;
+      --border: #262f45;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --accent: #6366f1;
+      --accent-hover: #4f46e5;
+      --accent-glow: rgba(99, 102, 241, 0.25);
+      --emerald: #10b981;
+      --emerald-bg: rgba(16, 185, 129, 0.12);
+      --amber: #f59e0b;
+      --amber-bg: rgba(245, 158, 11, 0.14);
+      --rose: #f43f5e;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* TOP HEADER */
+    header {
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      flex-shrink: 0;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 240px;
+    }
+
+    .brand-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 19px;
+      box-shadow: 0 4px 14px var(--accent-glow);
+    }
+
+    .brand h1 {
+      font-size: 15.5px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .brand p {
+      font-size: 11.5px;
+      color: var(--text-muted);
+    }
+
+    .prompt-bar {
+      flex: 1;
+      max-width: 780px;
+      display: flex;
+      gap: 10px;
+    }
+
+    .prompt-input-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+    }
+
+    .prompt-input {
+      width: 100%;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 11px 16px;
+      border-radius: 10px;
+      font-size: 13.5px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .prompt-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #7c3aed);
+      color: #fff;
+      border: none;
+      padding: 0 20px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 13.5px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      white-space: nowrap;
+      transition: transform 0.15s, opacity 0.2s;
+      box-shadow: 0 4px 14px var(--accent-glow);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-1px);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background: var(--bg-card);
+      color: var(--text-main);
+      border: 1px solid var(--border);
+      padding: 7px 13px;
+      border-radius: 8px;
+      font-size: 12.5px;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: var(--bg-hover);
+      border-color: #3b4766;
+    }
+
+    /* MAIN LAYOUT */
+    .workspace {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    aside {
+      width: 280px;
+      background: var(--bg-panel);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+
+    .sidebar-header {
+      padding: 14px 16px 10px;
+      font-size: 11.5px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .project-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 6px 10px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .project-item {
+      padding: 11px 13px;
+      border-radius: 10px;
+      background: var(--bg-card);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .project-item:hover {
+      background: var(--bg-hover);
+    }
+
+    .project-item.active {
+      border-color: var(--accent);
+      background: rgba(99, 102, 241, 0.1);
+    }
+
+    .project-title {
+      font-size: 13.5px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      line-height: 1.35;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .project-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .stage-dots {
+      display: flex;
+      gap: 4px;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #2d3748;
+    }
+
+    .dot.done {
+      background: var(--emerald);
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--bg-base);
+    }
+
+    /* 5-STEP PIPELINE BAR */
+    .pipeline-bar {
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 20px;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .step-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .step-card:hover {
+      border-color: #3e4c6d;
+    }
+
+    .step-card.active-tab {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-glow);
+    }
+
+    .step-card.running {
+      border-color: var(--amber);
+      background: var(--amber-bg);
+    }
+
+    .step-info {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      min-width: 0;
+    }
+
+    .step-icon {
+      font-size: 17px;
+      flex-shrink: 0;
+    }
+
+    .step-label {
+      font-size: 12.5px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .step-sub {
+      font-size: 10.5px;
+      color: var(--text-muted);
+      margin-top: 1px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .step-badge {
+      font-size: 10.5px;
+      font-weight: 600;
+      padding: 3px 7px;
+      border-radius: 99px;
+      background: #232b3e;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    .step-badge.done {
+      background: var(--emerald-bg);
+      color: var(--emerald);
+    }
+
+    .step-badge.running {
+      background: var(--amber-bg);
+      color: var(--amber);
+      animation: pulse 1.2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.45; }
+    }
+
+    /* TOOLBAR & VIEWER */
+    .content-toolbar {
+      padding: 10px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(17, 21, 31, 0.6);
+      flex-shrink: 0;
+    }
+
+    .file-path-pill {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      color: var(--text-muted);
+      background: var(--bg-card);
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+    }
+
+    .toolbar-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .viewer-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px 32px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .markdown-body {
+      width: 100%;
+      max-width: 880px;
+      line-height: 1.7;
+      font-size: 15px;
+      color: #e2e8f0;
+      padding-bottom: 60px;
+    }
+
+    .markdown-body h1 {
+      font-size: 25px;
+      font-weight: 800;
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+      color: #fff;
+    }
+
+    .markdown-body h2 {
+      font-size: 18.5px;
+      font-weight: 700;
+      margin: 24px 0 10px;
+      color: #a5b4fc;
+    }
+
+    .markdown-body h3 {
+      font-size: 15.5px;
+      font-weight: 600;
+      margin: 16px 0 8px;
+      color: #f8fafc;
+    }
+
+    .markdown-body p { margin-bottom: 12px; }
+    .markdown-body ul, .markdown-body ol { margin: 0 0 14px 22px; }
+    .markdown-body li { margin-bottom: 5px; }
+    .markdown-body code {
+      font-family: 'JetBrains Mono', monospace;
+      background: #1e2638;
+      padding: 2px 6px;
+      border-radius: 5px;
+      font-size: 12.5px;
+      color: #fda4af;
+    }
+    .markdown-body pre {
+      background: #0d1017;
+      border: 1px solid var(--border);
+      padding: 14px;
+      border-radius: 10px;
+      overflow-x: auto;
+      margin-bottom: 16px;
+    }
+    .markdown-body pre code { background: none; padding: 0; color: #cbd5e1; }
+    .markdown-body blockquote {
+      border-left: 4px solid var(--accent);
+      background: rgba(99, 102, 241, 0.08);
+      padding: 12px 16px;
+      border-radius: 0 8px 8px 0;
+      margin-bottom: 14px;
+    }
+    .markdown-body hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 22px 0;
+    }
+    .markdown-body table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 18px;
+    }
+    .markdown-body th, .markdown-body td {
+      border: 1px solid var(--border);
+      padding: 9px 12px;
+      text-align: left;
+    }
+    .markdown-body th { background: var(--bg-card); }
+
+    .editor-textarea {
+      width: 100%;
+      max-width: 880px;
+      height: 100%;
+      min-height: 480px;
+      background: var(--bg-panel);
+      color: var(--text-main);
+      border: 1px solid var(--accent);
+      border-radius: 10px;
+      padding: 18px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13.5px;
+      line-height: 1.6;
+      resize: none;
+      outline: none;
+    }
+
+    /* ==========================================
+       ESTUDIO DE DISEÑO (TAB 5)
+       ========================================== */
+    .design-studio {
+      width: 100%;
+      max-width: 1440px;
+      display: grid;
+      grid-template-columns: 370px 1fr 330px;
+      gap: 18px;
+      align-items: start;
+      padding-bottom: 40px;
+    }
+
+    .studio-panel {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .panel-title {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #a5b4fc;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+    }
+
+    .dropzone {
+      border: 1.5px dashed #3b4766;
+      background: rgba(23, 28, 41, 0.65);
+      border-radius: 10px;
+      padding: 16px 12px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .dropzone:hover, .dropzone.dragover {
+      border-color: var(--accent);
+      background: rgba(99, 102, 241, 0.1);
+    }
+
+    .dropzone p {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .thumb-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      max-height: 185px;
+      overflow-y: auto;
+    }
+
+    .thumb-item {
+      position: relative;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 2px solid transparent;
+      background: #0b0e15;
+      aspect-ratio: 1;
+      cursor: pointer;
+    }
+
+    .thumb-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .thumb-item.selected {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-glow);
+    }
+
+    .thumb-actions {
+      position: absolute;
+      inset: auto 0 0 0;
+      background: rgba(9, 11, 16, 0.85);
+      display: flex;
+      justify-content: space-around;
+      padding: 3px;
+      font-size: 10px;
+    }
+
+    .thumb-btn {
+      background: none;
+      border: none;
+      color: #cbd5e1;
+      cursor: pointer;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 4px;
+      border-radius: 4px;
+    }
+
+    .thumb-btn:hover {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .suggestion-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .suggestion-card:hover, .suggestion-card.active {
+      border-color: var(--accent);
+      background: rgba(99, 102, 241, 0.1);
+    }
+
+    .suggestion-card h4 {
+      font-size: 12px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 4px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .suggestion-card p {
+      font-size: 11px;
+      color: var(--text-muted);
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      line-height: 1.4;
+    }
+
+    .chip-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .chip {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .chip:hover {
+      border-color: var(--accent);
+      background: rgba(99, 102, 241, 0.15);
+    }
+
+    /* CANVAS CENTER PANEL */
+    .canvas-stage-wrap {
+      background: #07090e;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .canvas-Format-bar {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .canvas-viewport {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: radial-gradient(circle at center, #141926 0%, #07090e 100%);
+      border-radius: 8px;
+      padding: 14px;
+      min-height: 380px;
+      overflow: hidden;
+    }
+
+    #designCanvas {
+      max-width: 100%;
+      max-height: 460px;
+      border-radius: 6px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.65);
+      cursor: grab;
+      background: #0f131d;
+    }
+
+    #designCanvas:active {
+      cursor: grabbing;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .control-group label {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .control-input, .control-select, .control-textarea {
+      width: 100%;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 8px 10px;
+      border-radius: 7px;
+      font-size: 12.5px;
+      font-family: inherit;
+      outline: none;
+    }
+
+    .control-input:focus, .control-select:focus, .control-textarea:focus {
+      border-color: var(--accent);
+    }
+
+    .control-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    /* LIVE LOG DRAWER */
+    .log-drawer {
+      background: #06080c;
+      border-top: 1px solid var(--border);
+      height: 180px;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      transition: height 0.25s;
+    }
+
+    .log-drawer.collapsed {
+      height: 36px;
+    }
+
+    .log-header {
+      padding: 7px 20px;
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+
+    .log-body {
+      flex: 1;
+      padding: 10px 20px;
+      overflow-y: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      line-height: 1.55;
+      color: #94a3b8;
+      white-space: pre-wrap;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+
+    .empty-state h3 {
+      font-size: 18px;
+      color: var(--text-main);
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- BARRA SUPERIOR -->
+  <header>
+    <div class="brand">
+      <div class="brand-icon">🚀</div>
+      <div>
+        <h1>Factoría de Contenido IA</h1>
+        <p>Pipeline de 5 Agentes + Estudio Visual</p>
+      </div>
+    </div>
+
+    <form class="prompt-bar" id="pipelineForm">
+      <div class="prompt-input-wrap">
+        <input
+          type="text"
+          id="temaInput"
+          class="prompt-input"
+          placeholder="Escribe el tema o idea inicial (ej. Cómo automatizar ventas por WhatsApp con IA)..."
+          required
+        />
+      </div>
+      <button type="submit" class="btn-primary" id="runBtn">
+        <span>⚡ Generar Todo (4 Agentes)</span>
+      </button>
+    </form>
+  </header>
+
+  <div class="workspace">
+    <!-- SIDEBAR DE TEMAS -->
+    <aside>
+      <div class="sidebar-header">
+        <span>📚 Temas Generados</span>
+        <button class="btn-secondary" style="padding: 3px 8px; font-size: 11px;" onclick="loadProjects()">↻</button>
+      </div>
+      <div class="project-list" id="projectList"></div>
+    </aside>
+
+    <!-- ÁREA PRINCIPAL -->
+    <main>
+      <!-- PESTAÑAS DE LOS 5 MÓDULOS -->
+      <div class="pipeline-bar">
+        <div class="step-card active-tab" id="card-idea" onclick="selectTab('idea')">
+          <div class="step-info">
+            <span class="step-icon">🔍</span>
+            <div>
+              <div class="step-label">1. Investigador</div>
+              <div class="step-sub">Dolores, ángulos y CTR</div>
+            </div>
+          </div>
+          <span class="step-badge" id="badge-idea">Pendiente</span>
+        </div>
+
+        <div class="step-card" id="card-guion" onclick="selectTab('guion')">
+          <div class="step-info">
+            <span class="step-icon">✍️</span>
+            <div>
+              <div class="step-label">2. Guionista YT</div>
+              <div class="step-sub">Video largo + Short</div>
+            </div>
+          </div>
+          <span class="step-badge" id="badge-guion">Pendiente</span>
+        </div>
+
+        <div class="step-card" id="card-instagram" onclick="selectTab('instagram')">
+          <div class="step-info">
+            <span class="step-icon">📱</span>
+            <div>
+              <div class="step-label">3. Instagram</div>
+              <div class="step-sub">Carrusel, Reel y Copy</div>
+            </div>
+          </div>
+          <span class="step-badge" id="badge-instagram">Pendiente</span>
+        </div>
+
+        <div class="step-card" id="card-prompts" onclick="selectTab('prompts')">
+          <div class="step-info">
+            <span class="step-icon">🎨</span>
+            <div>
+              <div class="step-label">4. Arte & Prompts</div>
+              <div class="step-sub">Especificaciones base</div>
+            </div>
+          </div>
+          <span class="step-badge" id="badge-prompts">Pendiente</span>
+        </div>
+
+        <div class="step-card" id="card-disenos" onclick="selectTab('disenos')">
+          <div class="step-info">
+            <span class="step-icon">🖼️</span>
+            <div>
+              <div class="step-label">5. Estudio Diseño</div>
+              <div class="step-sub">Referencias + Edición IA</div>
+            </div>
+          </div>
+          <span class="step-badge done" id="badge-disenos">Estudio</span>
+        </div>
+      </div>
+
+      <!-- TOOLBAR SUPERIOR -->
+      <div class="content-toolbar" id="markdownToolbar">
+        <span class="file-path-pill" id="currentFilePath">Selecciona o genera un tema</span>
+        <div class="toolbar-actions" id="markdownActions">
+          <button class="btn-secondary" id="rerunStageBtn" onclick="rerunCurrentStage()">
+            🔄 Re-ejecutar este Agente
+          </button>
+          <button class="btn-secondary" id="editBtn" onclick="toggleEditMode()">
+            ✏️ Editar Markdown
+          </button>
+          <button class="btn-secondary" id="copyBtn" onclick="copyCurrentContent()">
+            📋 Copiar Contenido
+          </button>
+        </div>
+      </div>
+
+      <!-- CONTENEDOR DINÁMICO (MARKDOWN O ESTUDIO DE DISEÑO) -->
+      <div class="viewer-container" id="viewerContainer">
+        <div class="markdown-body" id="markdownViewer"></div>
+      </div>
+
+      <!-- CONSOLA EN VIVO -->
+      <div class="log-drawer collapsed" id="logDrawer">
+        <div class="log-header" onclick="toggleLogs()">
+          <span id="logStatusText">🖥️ Consola de Agentes en Vivo (clic para expandir/contraer)</span>
+          <span id="logToggleIcon">▲</span>
+        </div>
+        <div class="log-body" id="logOutput">Listo para ejecutar el pipeline de agentes...</div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    let projects = [];
+    let currentProject = null;
+    let currentTab = 'idea';
+    let isEditing = false;
+    let isRunning = false;
+
+    // Estado del Estudio de Diseño
+    let designData = null;
+    let selectedRefRelPath = '';
+    let selectedOverlayRelPath = '';
+    let selectedPromptText = '';
+
+    // Estado del Lienzo Interactivo (Canvas)
+    const canvasState = {
+      format: '16:9', // '16:9' (1280x720), '4:5' (1080x1350), '9:16' (1080x1920)
+      bgImage: null,
+      overlayImage: null,
+      bgZoom: 1,
+      bgOffsetX: 0,
+      bgOffsetY: 0,
+      lightingPreset: 'split-neon', // 'none', 'split-neon', 'top-dark-35', 'dramatic-vignette'
+      headline: '4.2★ = -$3,000/MES',
+      headlineX: 0.06,
+      headlineY: 0.16,
+      headlineSize: 68,
+      headlineBg: '#e11d48',
+      headlineColor: '#ffffff',
+      subheadline: 'Instala un Cortafuegos de Reputación',
+      subheadlineX: 0.06,
+      subheadlineY: 0.28,
+      subheadlineSize: 34,
+      badgeText: '⭐ 4.9★ Google Maps',
+      badgeX: 0.65,
+      badgeY: 0.82,
+      overlayX: 0.76,
+      overlayY: 0.12,
+      overlayScale: 0.22,
+      draggingTarget: null,
+      dragStartX: 0,
+      dragStartY: 0,
+    };
+
+    const STAGE_NAMES = {
+      idea: 'Agente Investigador (01-investigador)',
+      guion: 'Agente Guionista YouTube (02-guionista)',
+      instagram: 'Agente Adaptador Instagram (03-redes)',
+      prompts: 'Agente Dirección Visual (04-multimedia)',
+      disenos: 'Agente Diseñador Visual (05-disenador)',
+    };
+
+    async function loadProjects(selectSlug = null) {
+      const res = await fetch('/api/projects');
+      const data = await res.json();
+      projects = data.projects || [];
+      renderProjectList();
+
+      if (selectSlug) {
+        await openProject(selectSlug);
+      } else if (!currentProject && projects.length > 0) {
+        await openProject(projects[0].slug);
+      } else if (currentProject) {
+        await openProject(currentProject.slug);
+      } else {
+        renderEmptyState();
+      }
+    }
+
+    function renderProjectList() {
+      const container = document.getElementById('projectList');
+      if (projects.length === 0) {
+        container.innerHTML = `<div style="padding: 16px; color: var(--text-muted); font-size: 13px;">Aún no hay temas generados. Escribe uno arriba para comenzar.</div>`;
+        return;
+      }
+
+      container.innerHTML = projects
+        .map((p) => {
+          const isActive = currentProject && currentProject.slug === p.slug;
+          return `
+            <div class="project-item ${isActive ? 'active' : ''}" onclick="openProject('${p.slug}')">
+              <div class="project-title">${escapeHtml(p.title)}</div>
+              <div class="project-meta">
+                <span>${p.slug.slice(0, 26)}${p.slug.length > 26 ? '…' : ''}</span>
+                <div class="stage-dots" title="Progreso (Idea, Guion, IG, Prompts, Diseños)">
+                  <span class="dot ${p.stages.idea ? 'done' : ''}"></span>
+                  <span class="dot ${p.stages.guion ? 'done' : ''}"></span>
+                  <span class="dot ${p.stages.instagram ? 'done' : ''}"></span>
+                  <span class="dot ${p.stages.prompts ? 'done' : ''}"></span>
+                  <span class="dot ${p.stages.disenos ? 'done' : ''}"></span>
+                </div>
+              </div>
+            </div>
+          `;
+        })
+        .join('');
+    }
+
+    async function openProject(slug) {
+      const res = await fetch(`/api/projects/${encodeURIComponent(slug)}`);
+      currentProject = await res.json();
+      isEditing = false;
+      updateBadges();
+      renderProjectList();
+      await renderCurrentTab();
+    }
+
+    function updateBadges(runningKey = null) {
+      ['idea', 'guion', 'instagram', 'prompts', 'disenos'].forEach((key) => {
+        const badge = document.getElementById(`badge-${key}`);
+        const card = document.getElementById(`card-${key}`);
+        if (!badge || !card) return;
+        card.classList.toggle('active-tab', currentTab === key);
+        card.classList.toggle('running', runningKey === key);
+
+        if (runningKey === key) {
+          badge.className = 'step-badge running';
+          badge.textContent = 'Ejecutando...';
+        } else if (key === 'disenos') {
+          badge.className = 'step-badge done';
+          badge.textContent = 'Activo ✨';
+        } else if (currentProject && currentProject.files && currentProject.files[key]) {
+          badge.className = 'step-badge done';
+          badge.textContent = 'Listo ✓';
+        } else {
+          badge.className = 'step-badge';
+          badge.textContent = 'Pendiente';
+        }
+      });
+    }
+
+    async function selectTab(tabKey) {
+      currentTab = tabKey;
+      isEditing = false;
+      updateBadges();
+      await renderCurrentTab();
+    }
+
+    async function renderCurrentTab() {
+      const viewer = document.getElementById('viewerContainer');
+      const pathPill = document.getElementById('currentFilePath');
+      const mdActions = document.getElementById('markdownActions');
+      const editBtn = document.getElementById('editBtn');
+
+      if (!currentProject) {
+        renderEmptyState();
+        return;
+      }
+
+      pathPill.textContent = currentProject.paths[currentTab] || '';
+
+      if (currentTab === 'disenos') {
+        mdActions.style.display = 'none';
+        await loadAndRenderDesignStudio();
+        return;
+      }
+
+      mdActions.style.display = 'flex';
+      const rawContent = currentProject.files[currentTab];
+
+      if (isEditing) {
+        editBtn.innerHTML = '💾 Guardar Cambios';
+        viewer.innerHTML = `<textarea id="markdownEditor" class="editor-textarea">${escapeHtml(rawContent || '')}</textarea>`;
+        return;
+      }
+
+      editBtn.innerHTML = '✏️ Editar Markdown';
+
+      if (!rawContent) {
+        viewer.innerHTML = `
+          <div class="empty-state">
+            <h3>Esta etapa aún no ha sido generada</h3>
+            <p style="margin-bottom: 16px;">Haz clic abajo para ejecutar ${STAGE_NAMES[currentTab]}.</p>
+            <button class="btn-primary" style="margin: 0 auto; padding: 10px 20px;" onclick="rerunCurrentStage()">
+              ⚡ Ejecutar ${STAGE_NAMES[currentTab]}
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      viewer.innerHTML = `<div class="markdown-body">${marked.parse(rawContent)}</div>`;
+    }
+
+    /* ==============================================================
+       MÓDULO 5: ESTUDIO DE DISEÑO (REFERENCIAS + IA + COMPOSITOR)
+       ============================================================== */
+    async function loadAndRenderDesignStudio() {
+      const viewer = document.getElementById('viewerContainer');
+      const res = await fetch(`/api/projects/${encodeURIComponent(currentProject.slug)}/designs`);
+      designData = await res.json();
+
+      // Si hay textos sugeridos por los agentes y el headline aún es genérico, pre-cargar el primero
+      if (designData.suggestions && designData.suggestions.textOverlays.length > 0) {
+        canvasState.headline = designData.suggestions.textOverlays[0];
+        if (designData.suggestions.textOverlays[1]) {
+          canvasState.subheadline = designData.suggestions.textOverlays[1];
+        }
+      }
+
+      const promptsHtml =
+        designData.suggestions.prompts.length > 0
+          ? designData.suggestions.prompts
+              .map(
+                (p, i) => `
+              <div class="suggestion-card ${selectedPromptText === p.prompt ? 'active' : ''}" onclick="applyAgentPromptSuggestion(${i})">
+                <h4>
+                  <span>✨ ${escapeHtml(p.label)}</span>
+                  <span style="color: var(--emerald);">${p.format}</span>
+                </h4>
+                <p>${escapeHtml(p.prompt)}</p>
+              </div>
+            `
+              )
+              .join('')
+          : `<div style="font-size:12px; color:var(--text-muted);">Ejecuta primero el Agente 4 para extraer prompts automáticos, o escribe tus propias instrucciones abajo.</div>`;
+
+      const textChipsHtml =
+        designData.suggestions.textOverlays.length > 0
+          ? designData.suggestions.textOverlays
+              .map(
+                (t, idx) =>
+                  `<button type="button" class="chip" onclick="applySuggestedText(${idx})">+ ${escapeHtml(t)}</button>`
+              )
+              .join('')
+          : '';
+
+      const conceptNotesHtml =
+        designData.suggestions.conceptNotes.length > 0
+          ? `<div style="font-size:11.5px; color:#cbd5e1; background:var(--bg-card); padding:10px; border-radius:8px; border:1px solid var(--border); max-height:120px; overflow-y:auto;">
+               <strong style="color:#a5b4fc; display:block; margin-bottom:4px;">📋 Directrices del Agente 04:</strong>
+               ${designData.suggestions.conceptNotes.map((n) => `<div style="margin-bottom:4px;">• ${escapeHtml(n)}</div>`).join('')}
+             </div>`
+          : '';
+
+      const workspaceSelectOptions = (designData.workspaceImages || [])
+        .map((img) => `<option value="${escapeHtml(img.relPath)}">${escapeHtml(img.name)}</option>`)
+        .join('');
+
+      viewer.innerHTML = `
+        <div class="design-studio">
+          <!-- COLUMNA 1: IMÁGENES DE REFERENCIA Y AGENTE IA -->
+          <div class="studio-panel">
+            <div class="panel-title">
+              <span>1. Imágenes de Referencia</span>
+              <span style="font-size:11px; color:var(--text-muted);" id="refCountLabel">${designData.references.length} subidas</span>
+            </div>
+
+            <!-- Drag & Drop Upload -->
+            <div class="dropzone" id="refDropzone" onclick="document.getElementById('refFileInput').click()">
+              <div style="font-size: 22px;">📤</div>
+              <strong style="font-size: 13px;">Sube o arrastra tu imagen de referencia</strong>
+              <p>PNG, JPG o WebP (Fotos de producto, logos, capturas o rostros)</p>
+              <input type="file" id="refFileInput" accept="image/*" multiple style="display:none" onchange="handleRefFiles(this.files)" />
+            </div>
+
+            <!-- Importar rápido desde las imágenes del proyecto impulsa -->
+            <div class="control-group">
+              <label>📂 O importar imagen existente en tu carpeta Impulsa:</label>
+              <div style="display:flex; gap:6px;">
+                <select id="workspaceImgSelect" class="control-select">
+                  <option value="">-- Selecciona una imagen del proyecto --</option>
+                  ${workspaceSelectOptions}
+                </select>
+                <button type="button" class="btn-secondary" onclick="importWorkspaceImage()">Usar</button>
+              </div>
+            </div>
+
+            <!-- Galería de Referencias Subidas -->
+            <div class="thumb-grid" id="refGallery">
+              ${renderThumbnailsHtml(designData.references, true)}
+            </div>
+
+            <div class="panel-title" style="margin-top:4px;">
+              <span>2. Sugerencias de tus Agentes</span>
+            </div>
+
+            ${conceptNotesHtml}
+
+            <div style="display:flex; flex-direction:column; gap:8px; max-height:190px; overflow-y:auto;">
+              ${promptsHtml}
+            </div>
+
+            <div class="control-group">
+              <label>🪄 Cambios a aplicar con el Agente Diseñador IA:</label>
+              <textarea id="aiDesignInstructions" class="control-textarea" rows="3" placeholder="Ej: Toma mi imagen de referencia, aplica iluminación dividida rojo/esmeralda como sugiere el guion y añade el escudo holográfico de 4.9 estrellas..."></textarea>
+            </div>
+
+            <button type="button" class="btn-primary" id="runAiDesignerBtn" style="padding:11px 16px; width:100%;" onclick="runAiDesignerAgent()">
+              🪄 Transformar / Generar con Agente IA (05-disenador)
+            </button>
+          </div>
+
+          <!-- COLUMNA 2: LIENZO COMPOSITOR EN VIVO -->
+          <div class="canvas-stage-wrap">
+            <div class="canvas-Format-bar">
+              <div style="display:flex; gap:6px;">
+                <button type="button" class="btn-secondary" id="fmt-16-9" onclick="setCanvasFormat('16:9')">📺 YouTube Miniatura (16:9)</button>
+                <button type="button" class="btn-secondary" id="fmt-4-5" onclick="setCanvasFormat('4:5')">📱 Instagram Portada (4:5)</button>
+                <button type="button" class="btn-secondary" id="fmt-9-16" onclick="setCanvasFormat('9:16')">🎬 Reel / Short (9:16)</button>
+              </div>
+              <div style="display:flex; gap:8px;">
+                <button type="button" class="btn-secondary" onclick="saveCanvasToProject()">💾 Guardar en Proyecto</button>
+                <button type="button" class="btn-primary" style="padding:7px 14px;" onclick="downloadCanvasPng()">⬇️ Descargar PNG</button>
+              </div>
+            </div>
+
+            <div class="canvas-viewport">
+              <canvas id="designCanvas" width="1280" height="720"></canvas>
+            </div>
+
+            <div style="width:100%; display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--text-muted);">
+              <span>💡 <strong>Tip interactivo:</strong> Arrastra cualquier texto, insignia o logo directamente sobre la imagen con el mouse.</span>
+              <button type="button" class="btn-secondary" style="padding:4px 10px; font-size:11px;" onclick="resetCanvasPositions()">Centrar Elementos</button>
+            </div>
+
+            <!-- Galería de Diseños Generados / Guardados -->
+            <div style="width:100%; border-top:1px solid var(--border); padding-top:12px; margin-top:4px;">
+              <div style="font-size:12px; font-weight:700; color:#a5b4fc; margin-bottom:8px; display:flex; justify-content:space-between;">
+                <span>🎨 Piezas Generadas y Guardadas en este Tema (${designData.generated.length})</span>
+                <span style="font-weight:400; color:var(--text-muted);">Haz clic en cualquiera para cargarla en el lienzo</span>
+              </div>
+              <div class="thumb-grid" style="grid-template-columns: repeat(6, 1fr); max-height:110px;" id="genGallery">
+                ${renderThumbnailsHtml(designData.generated, false)}
+              </div>
+            </div>
+          </div>
+
+          <!-- COLUMNA 3: CONTROLES DE CAMBIOS SUGERIDOS POR EL GUION -->
+          <div class="studio-panel">
+            <div class="panel-title">
+              <span>3. Aplicar Cambios del Guion</span>
+            </div>
+
+            <div class="control-group">
+              <label>💬 Textos Gancho extraídos de tus Agentes (1 clic):</label>
+              <div class="chip-list">
+                ${textChipsHtml}
+              </div>
+            </div>
+
+            <div class="control-group">
+              <label>🎨 Iluminación y Atmósfera sugerida por Agente 04:</label>
+              <select id="lightingSelect" class="control-select" onchange="canvasState.lightingPreset = this.value; drawDesignCanvas();">
+                <option value="split-neon">⚡ Contraste Dual (Rojo Alerta vs. Verde Esmeralda)</option>
+                <option value="top-dark-35">🌑 Aire Oscuro Superior 35% (Portada Instagram)</option>
+                <option value="dramatic-vignette">🔥 Viñeta Comercial Alto Contraste</option>
+                <option value="none">🖼️ Original sin filtro de iluminación</option>
+              </select>
+            </div>
+
+            <div class="control-group">
+              <label>🔤 Texto Principal (Gancho CTR):</label>
+              <input type="text" id="headlineInput" class="control-input" value="${escapeHtml(canvasState.headline)}" oninput="canvasState.headline = this.value; drawDesignCanvas();" />
+            </div>
+
+            <div class="control-row">
+              <div class="control-group">
+                <label>Color Pastilla</label>
+                <input type="color" id="headlineBgInput" class="control-input" style="height:34px; padding:2px;" value="${canvasState.headlineBg}" oninput="canvasState.headlineBg = this.value; drawDesignCanvas();" />
+              </div>
+              <div class="control-group">
+                <label>Tamaño Letra</label>
+                <input type="range" min="32" max="110" value="${canvasState.headlineSize}" oninput="canvasState.headlineSize = Number(this.value); drawDesignCanvas();" />
+              </div>
+            </div>
+
+            <div class="control-group">
+              <label>📝 Subtítulo / Complemento:</label>
+              <input type="text" id="subheadlineInput" class="control-input" value="${escapeHtml(canvasState.subheadline)}" oninput="canvasState.subheadline = this.value; drawDesignCanvas();" />
+            </div>
+
+            <div class="control-group">
+              <label>🛡️ Insignia Visual Rápida (Según Guion):</label>
+              <div class="chip-list" style="margin-bottom:6px;">
+                <button type="button" class="chip" onclick="setBadgeText('⭐ 4.9★ Google Maps')">⭐ 4.9★</button>
+                <button type="button" class="chip" onclick="setBadgeText('⚠️ 1★ BLOQUEADA')">⚠️ 1★ Bloqueada</button>
+                <button type="button" class="chip" onclick="setBadgeText('⚡ RESPUESTA EN 8 SEG')">⚡ 8 Seg</button>
+                <button type="button" class="chip" onclick="setBadgeText('')">Sin insignia</button>
+              </div>
+              <input type="text" id="badgeInput" class="control-input" value="${escapeHtml(canvasState.badgeText)}" oninput="canvasState.badgeText = this.value; drawDesignCanvas();" />
+            </div>
+
+            <div class="control-row">
+              <div class="control-group">
+                <label>🔍 Zoom Imagen Base</label>
+                <input type="range" min="0.5" max="2.5" step="0.05" value="${canvasState.bgZoom}" oninput="canvasState.bgZoom = Number(this.value); drawDesignCanvas();" />
+              </div>
+              <div class="control-group">
+                <label>🏷️ Escala Logo/Overlay</label>
+                <input type="range" min="0.08" max="0.6" step="0.02" value="${canvasState.overlayScale}" oninput="canvasState.overlayScale = Number(this.value); drawDesignCanvas();" />
+              </div>
+            </div>
+
+            ${
+              designData.designLog
+                ? `<div style="border-top:1px solid var(--border); padding-top:10px; font-size:11.5px; color:#cbd5e1; max-height:130px; overflow-y:auto;">
+                     <strong style="color:var(--emerald);">📝 Bitácora del Agente 05:</strong>
+                     <div style="margin-top:4px;">${marked.parse(designData.designLog)}</div>
+                   </div>`
+                : ''
+            }
+          </div>
+        </div>
+      `;
+
+      setupDropzoneEvents();
+      setupCanvasInteractions();
+
+      // Si hay una referencia o imagen generada, cargarla automáticamente en el lienzo
+      if (!canvasState.bgImage) {
+        if (designData.generated.length > 0) {
+          loadImageAsCanvasBg(designData.generated[0].relPath);
+        } else if (designData.references.length > 0) {
+          loadImageAsCanvasBg(designData.references[0].relPath);
+        }
+      }
+      setCanvasFormat(canvasState.format);
+    }
+
+    function renderThumbnailsHtml(items, isReference) {
+      if (!items || items.length === 0) {
+        return `<div style="grid-column: 1 / -1; font-size:11.5px; color:var(--text-muted); padding:8px 0;">Sin imágenes aún.</div>`;
+      }
+      return items
+        .map((img) => {
+          const isSel = selectedRefRelPath === img.relPath;
+          const imgUrl = `/api/image?path=${encodeURIComponent(img.relPath)}`;
+          return `
+            <div class="thumb-item ${isSel ? 'selected' : ''}" title="${escapeHtml(img.name)}">
+              <img src="${imgUrl}" onclick="loadImageAsCanvasBg('${img.relPath}')" />
+              <div class="thumb-actions">
+                <button type="button" class="thumb-btn" onclick="loadImageAsCanvasBg('${img.relPath}')">Fondo</button>
+                <button type="button" class="thumb-btn" onclick="loadImageAsCanvasOverlay('${img.relPath}')">+Logo</button>
+              </div>
+            </div>
+          `;
+        })
+        .join('');
+    }
+
+    function setupDropzoneEvents() {
+      const dz = document.getElementById('refDropzone');
+      if (!dz) return;
+      dz.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dz.classList.add('dragover');
+      });
+      dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+      dz.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dz.classList.remove('dragover');
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+          handleRefFiles(e.dataTransfer.files);
+        }
+      });
+    }
+
+    async function handleRefFiles(fileList) {
+      if (!currentProject || !fileList.length) return;
+      for (const file of fileList) {
+        const dataUrl = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.readAsDataURL(file);
+        });
+        const res = await fetch(`/api/projects/${encodeURIComponent(currentProject.slug)}/upload-reference`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fileName: file.name, dataUrl }),
+        });
+        const saved = await res.json();
+        if (saved.relPath) {
+          loadImageAsCanvasBg(saved.relPath);
+        }
+      }
+      await loadAndRenderDesignStudio();
+    }
+
+    async function importWorkspaceImage() {
+      const select = document.getElementById('workspaceImgSelect');
+      if (!select || !select.value || !currentProject) return;
+      const res = await fetch(`/api/projects/${encodeURIComponent(currentProject.slug)}/upload-reference`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ workspaceFile: select.value }),
+      });
+      const saved = await res.json();
+      if (saved.relPath) {
+        loadImageAsCanvasBg(saved.relPath);
+      }
+      await loadAndRenderDesignStudio();
+    }
+
+    function loadImageAsCanvasBg(relPath) {
+      selectedRefRelPath = relPath;
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        canvasState.bgImage = img;
+        canvasState.bgZoom = 1;
+        canvasState.bgOffsetX = 0;
+        canvasState.bgOffsetY = 0;
+        drawDesignCanvas();
+      };
+      img.src = `/api/image?path=${encodeURIComponent(relPath)}&t=${Date.now()}`;
+    }
+
+    function loadImageAsCanvasOverlay(relPath) {
+      if (selectedOverlayRelPath === relPath && canvasState.overlayImage) {
+        canvasState.overlayImage = null;
+        selectedOverlayRelPath = '';
+        drawDesignCanvas();
+        return;
+      }
+      selectedOverlayRelPath = relPath;
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        canvasState.overlayImage = img;
+        drawDesignCanvas();
+      };
+      img.src = `/api/image?path=${encodeURIComponent(relPath)}&t=${Date.now()}`;
+    }
+
+    function applyAgentPromptSuggestion(index) {
+      if (!designData || !designData.suggestions.prompts[index]) return;
+      const item = designData.suggestions.prompts[index];
+      selectedPromptText = item.prompt;
+      setCanvasFormat(item.format || '16:9');
+      if (item.format === '4:5') {
+        canvasState.lightingPreset = 'top-dark-35';
+        const sel = document.getElementById('lightingSelect');
+        if (sel) sel.value = 'top-dark-35';
+      } else {
+        canvasState.lightingPreset = 'split-neon';
+        const sel = document.getElementById('lightingSelect');
+        if (sel) sel.value = 'split-neon';
+      }
+      const instr = document.getElementById('aiDesignInstructions');
+      if (instr && !instr.value) {
+        instr.value = `Aplica este concepto visual sobre mi referencia (${item.label}): mantén la identidad del producto/negocio y aplica la iluminación y composición descritas.`;
+      }
+      drawDesignCanvas();
+    }
+
+    function applySuggestedText(idx) {
+      if (!designData || !designData.suggestions.textOverlays[idx]) return;
+      const text = designData.suggestions.textOverlays[idx];
+      canvasState.headline = text;
+      const inp = document.getElementById('headlineInput');
+      if (inp) inp.value = text;
+      drawDesignCanvas();
+    }
+
+    function setBadgeText(text) {
+      canvasState.badgeText = text;
+      const inp = document.getElementById('badgeInput');
+      if (inp) inp.value = text;
+      drawDesignCanvas();
+    }
+
+    function setCanvasFormat(fmt) {
+      canvasState.format = fmt;
+      const canvas = document.getElementById('designCanvas');
+      if (!canvas) return;
+      if (fmt === '16:9') {
+        canvas.width = 1280;
+        canvas.height = 720;
+      } else if (fmt === '4:5') {
+        canvas.width = 1080;
+        canvas.height = 1350;
+      } else {
+        canvas.width = 1080;
+        canvas.height = 1920;
+      }
+      drawDesignCanvas();
+    }
+
+    function resetCanvasPositions() {
+      canvasState.headlineX = 0.06;
+      canvasState.headlineY = 0.16;
+      canvasState.subheadlineX = 0.06;
+      canvasState.subheadlineY = 0.28;
+      canvasState.badgeX = 0.62;
+      canvasState.badgeY = 0.82;
+      canvasState.overlayX = 0.76;
+      canvasState.overlayY = 0.12;
+      canvasState.bgOffsetX = 0;
+      canvasState.bgOffsetY = 0;
+      drawDesignCanvas();
+    }
+
+    function drawDesignCanvas() {
+      const canvas = document.getElementById('designCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width;
+      const H = canvas.height;
+
+      // 1. Fondo base oscuro
+      const bgGrad = ctx.createLinearGradient(0, 0, W, H);
+      bgGrad.addColorStop(0, '#0f172a');
+      bgGrad.addColorStop(1, '#090d16');
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, W, H);
+
+      // 2. Imagen de referencia / fondo con soporte de Zoom y Pan
+      if (canvasState.bgImage) {
+        const img = canvasState.bgImage;
+        const scale = Math.max(W / img.width, H / img.height) * canvasState.bgZoom;
+        const drawW = img.width * scale;
+        const drawH = img.height * scale;
+        const drawX = (W - drawW) / 2 + canvasState.bgOffsetX;
+        const drawY = (H - drawH) / 2 + canvasState.bgOffsetY;
+        ctx.drawImage(img, drawX, drawY, drawW, drawH);
+      } else {
+        // Cuadrícula sutil cuando no hay imagen aún
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.08)';
+        ctx.lineWidth = 1;
+        for (let x = 0; x < W; x += 48) {
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, H);
+          ctx.stroke();
+        }
+        for (let y = 0; y < H; y += 48) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(W, y);
+          ctx.stroke();
+        }
+      }
+
+      // 3. Presets de iluminación sugeridos por el Agente 04
+      if (canvasState.lightingPreset === 'split-neon') {
+        const leftGlow = ctx.createRadialGradient(0, H * 0.5, 20, 0, H * 0.5, W * 0.65);
+        leftGlow.addColorStop(0, 'rgba(225, 29, 72, 0.42)');
+        leftGlow.addColorStop(1, 'rgba(225, 29, 72, 0)');
+        ctx.fillStyle = leftGlow;
+        ctx.fillRect(0, 0, W, H);
+
+        const rightGlow = ctx.createRadialGradient(W, H * 0.5, 20, W, H * 0.5, W * 0.65);
+        rightGlow.addColorStop(0, 'rgba(16, 185, 129, 0.38)');
+        rightGlow.addColorStop(1, 'rgba(16, 185, 129, 0)');
+        ctx.fillStyle = rightGlow;
+        ctx.fillRect(0, 0, W, H);
+      } else if (canvasState.lightingPreset === 'top-dark-35') {
+        const topDark = ctx.createLinearGradient(0, 0, 0, H * 0.52);
+        topDark.addColorStop(0, 'rgba(7, 9, 14, 0.95)');
+        topDark.addColorStop(0.65, 'rgba(7, 9, 14, 0.78)');
+        topDark.addColorStop(1, 'rgba(7, 9, 14, 0)');
+        ctx.fillStyle = topDark;
+        ctx.fillRect(0, 0, W, H);
+      } else if (canvasState.lightingPreset === 'dramatic-vignette') {
+        const rad = ctx.createRadialGradient(W / 2, H / 2, W * 0.2, W / 2, H / 2, W * 0.75);
+        rad.addColorStop(0, 'rgba(0,0,0,0)');
+        rad.addColorStop(1, 'rgba(5, 7, 12, 0.78)');
+        ctx.fillStyle = rad;
+        ctx.fillRect(0, 0, W, H);
+      }
+
+      // 4. Imagen superpuesta / Logo (+Logo)
+      if (canvasState.overlayImage) {
+        const oImg = canvasState.overlayImage;
+        const oW = W * canvasState.overlayScale;
+        const oH = (oImg.height / oImg.width) * oW;
+        const oX = canvasState.overlayX * W;
+        const oY = canvasState.overlayY * H;
+        ctx.save();
+        ctx.shadowColor = 'rgba(0,0,0,0.6)';
+        ctx.shadowBlur = 18;
+        ctx.drawImage(oImg, oX, oY, oW, oH);
+        ctx.restore();
+      }
+
+      // 5. Título Principal (con pastilla de alto contraste sugerida por Agente 04)
+      if (canvasState.headline) {
+        ctx.save();
+        const fontSize = canvasState.headlineSize;
+        ctx.font = `900 ${fontSize}px 'Montserrat', 'Inter', sans-serif`;
+        const text = canvasState.headline.toUpperCase();
+        const metrics = ctx.measureText(text);
+        const padX = 28;
+        const padY = 18;
+        const boxX = canvasState.headlineX * W;
+        const boxY = canvasState.headlineY * H;
+        const boxW = metrics.width + padX * 2;
+        const boxH = fontSize + padY * 2;
+
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.65)';
+        ctx.shadowBlur = 24;
+        ctx.shadowOffsetY = 8;
+        ctx.fillStyle = canvasState.headlineBg;
+        roundRect(ctx, boxX, boxY, boxW, boxH, 14);
+        ctx.fill();
+
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetY = 0;
+        ctx.fillStyle = canvasState.headlineColor;
+        ctx.textBaseline = 'middle';
+        ctx.fillText(text, boxX + padX, boxY + boxH / 2 + 2);
+        ctx.restore();
+      }
+
+      // 6. Subtítulo de apoyo
+      if (canvasState.subheadline) {
+        ctx.save();
+        const subSize = canvasState.subheadlineSize;
+        ctx.font = `700 ${subSize}px 'Inter', sans-serif`;
+        const text = canvasState.subheadline;
+        const metrics = ctx.measureText(text);
+        const padX = 20;
+        const padY = 12;
+        const boxX = canvasState.subheadlineX * W;
+        const boxY = canvasState.subheadlineY * H;
+        const boxW = metrics.width + padX * 2;
+        const boxH = subSize + padY * 2;
+
+        ctx.fillStyle = 'rgba(9, 11, 16, 0.85)';
+        roundRect(ctx, boxX, boxY, boxW, boxH, 10);
+        ctx.fill();
+
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.18)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.fillStyle = '#f8fafc';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(text, boxX + padX, boxY + boxH / 2 + 1);
+        ctx.restore();
+      }
+
+      // 7. Insignia flotante (Badge de calificación / Cortafuegos)
+      if (canvasState.badgeText) {
+        ctx.save();
+        const bSize = 36;
+        ctx.font = `800 ${bSize}px 'Inter', sans-serif`;
+        const text = canvasState.badgeText;
+        const metrics = ctx.measureText(text);
+        const padX = 24;
+        const padY = 14;
+        const boxX = canvasState.badgeX * W;
+        const boxY = canvasState.badgeY * H;
+        const boxW = metrics.width + padX * 2;
+        const boxH = bSize + padY * 2;
+
+        ctx.shadowColor = 'rgba(16, 185, 129, 0.45)';
+        ctx.shadowBlur = 22;
+        ctx.fillStyle = '#064e3b';
+        roundRect(ctx, boxX, boxY, boxW, boxH, 999);
+        ctx.fill();
+
+        ctx.strokeStyle = '#10b981';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = '#ecfdf5';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(text, boxX + padX, boxY + boxH / 2 + 1);
+        ctx.restore();
+      }
+    }
+
+    function roundRect(ctx, x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
+    function setupCanvasInteractions() {
+      const canvas = document.getElementById('designCanvas');
+      if (!canvas) return;
+
+      const getNormPos = (e) => {
+        const rect = canvas.getBoundingClientRect();
+        return {
+          nx: (e.clientX - rect.left) / rect.width,
+          ny: (e.clientY - rect.top) / rect.height,
+          px: ((e.clientX - rect.left) / rect.width) * canvas.width,
+          py: ((e.clientY - rect.top) / rect.height) * canvas.height,
+        };
+      };
+
+      canvas.addEventListener('mousedown', (e) => {
+        const { nx, ny, px, py } = getNormPos(e);
+        // Comprobar cercanía a badge, overlay, subheadline, headline o fondo
+        if (
+          canvasState.badgeText &&
+          Math.abs(nx - canvasState.badgeX) < 0.28 &&
+          Math.abs(ny - canvasState.badgeY) < 0.1
+        ) {
+          canvasState.draggingTarget = 'badge';
+        } else if (
+          canvasState.overlayImage &&
+          Math.abs(nx - canvasState.overlayX) < 0.25 &&
+          Math.abs(ny - canvasState.overlayY) < 0.2
+        ) {
+          canvasState.draggingTarget = 'overlay';
+        } else if (
+          canvasState.subheadline &&
+          Math.abs(nx - canvasState.subheadlineX) < 0.45 &&
+          Math.abs(ny - canvasState.subheadlineY) < 0.08
+        ) {
+          canvasState.draggingTarget = 'subheadline';
+        } else if (
+          canvasState.headline &&
+          Math.abs(nx - canvasState.headlineX) < 0.55 &&
+          Math.abs(ny - canvasState.headlineY) < 0.12
+        ) {
+          canvasState.draggingTarget = 'headline';
+        } else {
+          canvasState.draggingTarget = 'bg';
+        }
+        canvasState.dragStartX = px;
+        canvasState.dragStartY = py;
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (!canvasState.draggingTarget) return;
+        const canvasEl = document.getElementById('designCanvas');
+        if (!canvasEl) return;
+        const { nx, ny, px, py } = getNormPos(e);
+
+        if (canvasState.draggingTarget === 'headline') {
+          canvasState.headlineX = Math.max(0.01, Math.min(0.85, nx - 0.1));
+          canvasState.headlineY = Math.max(0.02, Math.min(0.9, ny - 0.04));
+        } else if (canvasState.draggingTarget === 'subheadline') {
+          canvasState.subheadlineX = Math.max(0.01, Math.min(0.85, nx - 0.1));
+          canvasState.subheadlineY = Math.max(0.02, Math.min(0.9, ny - 0.03));
+        } else if (canvasState.draggingTarget === 'badge') {
+          canvasState.badgeX = Math.max(0.01, Math.min(0.85, nx - 0.08));
+          canvasState.badgeY = Math.max(0.02, Math.min(0.92, ny - 0.03));
+        } else if (canvasState.draggingTarget === 'overlay') {
+          canvasState.overlayX = Math.max(0.0, Math.min(0.9, nx - 0.05));
+          canvasState.overlayY = Math.max(0.0, Math.min(0.9, ny - 0.05));
+        } else if (canvasState.draggingTarget === 'bg') {
+          canvasState.bgOffsetX += px - canvasState.dragStartX;
+          canvasState.bgOffsetY += py - canvasState.dragStartY;
+          canvasState.dragStartX = px;
+          canvasState.dragStartY = py;
+        }
+        drawDesignCanvas();
+      });
+
+      window.addEventListener('mouseup', () => {
+        canvasState.draggingTarget = null;
+      });
+    }
+
+    async function saveCanvasToProject() {
+      const canvas = document.getElementById('designCanvas');
+      if (!canvas || !currentProject) return;
+      const dataUrl = canvas.toDataURL('image/png');
+      const res = await fetch(`/api/projects/${encodeURIComponent(currentProject.slug)}/save-design`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          label: `composicion-${canvasState.format.replace(':', 'x')}`,
+          dataUrl,
+        }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        await loadAndRenderDesignStudio();
+        await loadProjects(currentProject.slug);
+      }
+    }
+
+    function downloadCanvasPng() {
+      const canvas = document.getElementById('designCanvas');
+      if (!canvas || !currentProject) return;
+      const a = document.createElement('a');
+      a.download = `${currentProject.slug}-${canvasState.format.replace(':', 'x')}.png`;
+      a.href = canvas.toDataURL('image/png');
+      a.click();
+    }
+
+    function runAiDesignerAgent() {
+      if (!currentProject || isRunning) return;
+      isRunning = true;
+
+      const btn = document.getElementById('runAiDesignerBtn');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '⏳ Agente Diseñador 05 ejecutándose...';
+      }
+
+      updateBadges('disenos');
+      toggleLogs(true);
+      const instructions = (document.getElementById('aiDesignInstructions')?.value || '').trim();
+
+      const logOutput = document.getElementById('logOutput');
+      logOutput.textContent = `🎨 Iniciando Agente Diseñador Visual (05-disenador)...\n`;
+      if (selectedRefRelPath) {
+        appendLog(`📎 Imagen de referencia activa: ${selectedRefRelPath}\n`);
+      }
+
+      const params = new URLSearchParams({
+        slug: currentProject.slug,
+        refPath: selectedRefRelPath,
+        format: canvasState.format,
+        instructions,
+        basePrompt: selectedPromptText,
+      });
+
+      const es = new EventSource(`/api/design-stream?${params.toString()}`);
+
+      es.addEventListener('log', (e) => {
+        const data = JSON.parse(e.data);
+        appendLog(data.text);
+      });
+
+      es.addEventListener('done', async (e) => {
+        const data = JSON.parse(e.data);
+        es.close();
+        isRunning = false;
+        updateBadges(null);
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '🪄 Transformar / Generar con Agente IA (05-disenador)';
+        }
+        document.getElementById('logStatusText').textContent = '✅ ¡Diseño IA finalizado!';
+        appendLog(`\n✅ ¡Proceso del Agente Diseñador completado!\n`);
+        if (data.outRelPath) {
+          loadImageAsCanvasBg(data.outRelPath);
+        }
+        await loadAndRenderDesignStudio();
+      });
+
+      es.addEventListener('error', (e) => {
+        let msg = 'El agente finalizó con un aviso.';
+        try {
+          if (e.data) msg = JSON.parse(e.data).message;
+        } catch (_) {}
+        es.close();
+        isRunning = false;
+        updateBadges(null);
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '🪄 Transformar / Generar con Agente IA (05-disenador)';
+        }
+        appendLog(`\n⚠️ ${msg}\n`);
+        loadAndRenderDesignStudio();
+      });
+    }
+
+    function renderEmptyState() {
+      document.getElementById('viewerContainer').innerHTML = `
+        <div class="empty-state">
+          <h3>Bienvenido a tu Factoría de Contenido IA</h3>
+          <p>Escribe un tema en la barra superior y presiona "Generar Todo" para que tus agentes creen la investigación, el guion, el contenido de Instagram, los prompts y habiliten el Estudio de Diseño.</p>
+        </div>
+      `;
+    }
+
+    async function toggleEditMode() {
+      if (!currentProject || currentTab === 'disenos') return;
+      if (!isEditing) {
+        isEditing = true;
+        await renderCurrentTab();
+      } else {
+        const newContent = document.getElementById('markdownEditor').value;
+        await fetch(`/api/projects/${encodeURIComponent(currentProject.slug)}/${currentTab}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content: newContent }),
+        });
+        currentProject.files[currentTab] = newContent;
+        isEditing = false;
+        updateBadges();
+        await renderCurrentTab();
+        loadProjects(currentProject.slug);
+      }
+    }
+
+    async function copyCurrentContent() {
+      if (!currentProject || !currentProject.files[currentTab]) return;
+      await navigator.clipboard.writeText(currentProject.files[currentTab]);
+      const btn = document.getElementById('copyBtn');
+      const original = btn.innerHTML;
+      btn.innerHTML = '✅ ¡Copiado!';
+      setTimeout(() => (btn.innerHTML = original), 1800);
+    }
+
+    function toggleLogs(forceOpen = null) {
+      const drawer = document.getElementById('logDrawer');
+      const icon = document.getElementById('logToggleIcon');
+      if (forceOpen === true) {
+        drawer.classList.remove('collapsed');
+      } else if (forceOpen === false) {
+        drawer.classList.add('collapsed');
+      } else {
+        drawer.classList.toggle('collapsed');
+      }
+      icon.textContent = drawer.classList.contains('collapsed') ? '▲' : '▼';
+    }
+
+    function appendLog(text) {
+      const logOutput = document.getElementById('logOutput');
+      logOutput.textContent += text;
+      logOutput.scrollTop = logOutput.scrollHeight;
+    }
+
+    function startPipeline({ tema, slug = '', stage = 'all' }) {
+      if (isRunning) return;
+      isRunning = true;
+
+      const runBtn = document.getElementById('runBtn');
+      runBtn.disabled = true;
+      runBtn.innerHTML = '⏳ Ejecutando Agentes...';
+
+      const logOutput = document.getElementById('logOutput');
+      logOutput.textContent = `🚀 Iniciando pipeline para: "${tema || slug}"...\n`;
+      toggleLogs(true);
+
+      const params = new URLSearchParams({ tema, slug, stage });
+      const es = new EventSource(`/api/run-stream?${params.toString()}`);
+
+      es.addEventListener('init', (e) => {
+        const data = JSON.parse(e.data);
+        appendLog(`🔖 Slug asignado: ${data.slug}\n---------------------------------------------------\n`);
+      });
+
+      es.addEventListener('step-start', (e) => {
+        const data = JSON.parse(e.data);
+        currentTab = data.key;
+        updateBadges(data.key);
+        document.getElementById('logStatusText').textContent = `⚡ Ejecutando [${data.stepNum}/4] ${data.name}...`;
+        appendLog(`\n▶ [${data.stepNum}/4] Ejecutando ${data.name} (${data.agent})...\n`);
+      });
+
+      es.addEventListener('log', (e) => {
+        const data = JSON.parse(e.data);
+        appendLog(data.text);
+      });
+
+      es.addEventListener('step-complete', async (e) => {
+        const data = JSON.parse(e.data);
+        appendLog(`\n✅ Etapa completada: ${data.key}\n`);
+        if (currentProject) {
+          currentProject.files[data.key] = data.content;
+        }
+        await loadProjects(slug || undefined);
+      });
+
+      es.addEventListener('done', async (e) => {
+        const data = JSON.parse(e.data);
+        es.close();
+        isRunning = false;
+        runBtn.disabled = false;
+        runBtn.innerHTML = '⚡ Generar Todo (4 Agentes)';
+        document.getElementById('logStatusText').textContent = '✅ ¡Pipeline completado con éxito!';
+        appendLog(`\n===================================================\n🎉 ¡Pipeline completado con éxito!\n`);
+        await loadProjects(data.slug);
+      });
+
+      es.addEventListener('error', (e) => {
+        let msg = 'Error durante la ejecución del agente.';
+        try {
+          if (e.data) msg = JSON.parse(e.data).message;
+        } catch (_) {}
+        es.close();
+        isRunning = false;
+        runBtn.disabled = false;
+        runBtn.innerHTML = '⚡ Generar Todo (4 Agentes)';
+        updateBadges(null);
+        document.getElementById('logStatusText').textContent = '⚠️ Ejecución detenida con aviso';
+        appendLog(`\n⚠️ ${msg}\n`);
+      });
+    }
+
+    document.getElementById('pipelineForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const tema = document.getElementById('temaInput').value.trim();
+      if (!tema) return;
+      startPipeline({ tema, stage: 'all' });
+    });
+
+    function rerunCurrentStage() {
+      if (!currentProject || isRunning || currentTab === 'disenos') return;
+      startPipeline({
+        tema: currentProject.slug.replace(/-/g, ' '),
+        slug: currentProject.slug,
+        stage: currentTab,
+      });
+    }
+
+    function escapeHtml(str) {
+      return (str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    loadProjects();
+  </script>
+</body>
+</html>
